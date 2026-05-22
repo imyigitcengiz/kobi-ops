@@ -53,11 +53,13 @@ Logda beklenen:
 [gy-dashboard] daphne 0.0.0.0:8000
 ```
 
-## Veri taşıma
+## Veri taşıma (önerilen: SQLite)
 
-1. Eski sistem: `/tools/yedekler/` → `.json.gz`
-2. Yeni panel: aynı sayfadan import (otomatik `migrate` + veri)
-3. Eski `media/` → sunucuda volume: `docker cp ./media/. <container>:/data/media/`
+1. Lokal: `/tools/yedekler/` → **db.sqlite3 İndir**
+2. Sunucu: aynı sayfa → **SQLite İçe Aktar** → dosya `/data/db.sqlite3` olur
+3. Lokal `media/` → `docker cp ./media/. <container>:/data/media/`
+
+Alternatif: JSON.gz (aynı sayfada).
 
 ## Sorun giderme
 
