@@ -98,6 +98,13 @@ def resolve_customer_route_permission(path, method):
     if any(part in path for part in ('/duzenle/', '/hizli-duzenle/', '/urunler/')):
         return CUSTOMERS_EDIT_PERM
 
+    if '/medya/yukle/' in path:
+        if method == 'POST':
+            return (CUSTOMERS_EDIT_PERM, SERVICES_MANAGE_PERM)
+        return (CUSTOMERS_VIEW_PERM, CUSTOMERS_EDIT_PERM, SERVICES_MANAGE_PERM)
+    if '/medya/' in path and method in ('POST', 'DELETE'):
+        return (CUSTOMERS_EDIT_PERM, SERVICES_MANAGE_PERM, 'tools.media_delete')
+
     if '/api/' in path or '/secim/' in path:
         if method == 'POST' and '/urunler/' in path:
             return CUSTOMERS_EDIT_PERM

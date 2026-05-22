@@ -6,7 +6,9 @@ from django.dispatch import receiver
 
 from config.live_sync import publish_live_event
 
-from .models import ServiceRecord
+from common.media_compress import compress_model_file_field
+
+from .models import ServiceRecord, ServiceImage
 
 
 
@@ -119,4 +121,9 @@ def on_service_types_changed(sender, instance, action, **kwargs):
             message=f"Servis #{instance.id} arıza tipleri güncellendi.",
 
         )
+
+
+@receiver(pre_save, sender=ServiceImage)
+def compress_service_image_on_save(sender, instance, **kwargs):
+    compress_model_file_field(instance, 'image', model=ServiceImage)
 

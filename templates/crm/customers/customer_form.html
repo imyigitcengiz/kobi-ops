@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<form method="post" class="max-w-2xl bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+<form method="post" enctype="multipart/form-data" class="max-w-2xl bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
     {% csrf_token %}
     {% for field in form %}
     <div class="space-y-2">
@@ -33,9 +33,19 @@
         <a href="{% url 'customers' %}" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-center">İptal</a>
     </div>
 </form>
+
+{% if object %}
+<div class="max-w-2xl mt-8 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+    {% include 'common/customer_media_panel.html' with customer_id=object.id default_scope='customer' can_upload_media=can_upload_media %}
+</div>
+{% else %}
+<p class="max-w-2xl mt-4 text-sm text-slate-500">Müşteri kaydedildikten sonra medya ve belge yükleyebilirsiniz.</p>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+{% if object %}<script src="{% static 'js/customer-media.js' %}"></script>{% endif %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const phoneInput = document.querySelector('input[name="phone"]');

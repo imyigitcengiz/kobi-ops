@@ -63,7 +63,10 @@
         <select name="kind" class="mt-1 w-full min-w-[140px] px-3 py-2.5 border border-slate-200 rounded-xl text-sm">
             <option value="">Tümü</option>
             <option value="image" {% if filter_kind == 'image' %}selected{% endif %}>Görsel</option>
-            <option value="document" {% if filter_kind == 'document' %}selected{% endif %}>Belge</option>
+            <option value="video" {% if filter_kind == 'video' %}selected{% endif %}>Video</option>
+            <option value="audio" {% if filter_kind == 'audio' %}selected{% endif %}>Ses</option>
+            <option value="document" {% if filter_kind == 'document' %}selected{% endif %}>Belge / Döküman</option>
+            <option value="archive" {% if filter_kind == 'archive' %}selected{% endif %}>Arşiv (ZIP…)</option>
             <option value="other" {% if filter_kind == 'other' %}selected{% endif %}>Diğer</option>
         </select>
     </div>
@@ -89,9 +92,22 @@
                 data-url="{{ item.url }}" data-name="{{ item.name }}" data-kind="{{ item.kind }}">
             {% if item.kind == 'image' %}
             <img src="{{ item.url }}" alt="{{ item.name }}" class="w-full media-thumb bg-slate-100" loading="lazy">
+            {% elif item.kind == 'video' %}
+            <div class="w-full media-thumb bg-slate-900 flex items-center justify-center text-white relative">
+                <i data-lucide="video" class="w-12 h-12"></i>
+                <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-black/50 px-2 py-0.5 rounded">VIDEO</span>
+            </div>
+            {% elif item.kind == 'audio' %}
+            <div class="w-full media-thumb bg-violet-50 flex items-center justify-center text-violet-600">
+                <i data-lucide="music" class="w-12 h-12"></i>
+            </div>
             {% elif item.kind == 'document' %}
-            <div class="w-full media-thumb bg-slate-100 flex items-center justify-center text-red-500">
+            <div class="w-full media-thumb bg-red-50 flex items-center justify-center text-red-600">
                 <i data-lucide="file-text" class="w-12 h-12"></i>
+            </div>
+            {% elif item.kind == 'archive' %}
+            <div class="w-full media-thumb bg-amber-50 flex items-center justify-center text-amber-700">
+                <i data-lucide="archive" class="w-12 h-12"></i>
             </div>
             {% else %}
             <div class="w-full media-thumb bg-slate-100 flex items-center justify-center text-slate-400">
@@ -105,7 +121,7 @@
                     <p class="font-bold text-sm text-slate-900 truncate" title="{{ item.title }}">{{ item.title }}</p>
                     <p class="text-xs text-slate-500 truncate" title="{{ item.subtitle }}">{{ item.subtitle }}</p>
                 </div>
-                <span class="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">{{ item.category_label }}</span>
+                <span class="shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">{{ item.kind_label }}</span>
             </div>
             <p class="text-[11px] text-slate-400 font-mono truncate">{{ item.relpath }}</p>
             <div class="flex items-center justify-between text-xs text-slate-500">
@@ -188,6 +204,10 @@ document.querySelectorAll('[data-media-preview]').forEach((btn) => {
         const modal = document.getElementById('mediaPreviewModal');
         if (kind === 'image') {
             body.innerHTML = `<img src="${url}" alt="" class="max-w-full max-h-[80vh] object-contain mx-auto">`;
+        } else if (kind === 'video') {
+            body.innerHTML = `<video src="${url}" controls class="max-w-full max-h-[80vh] mx-auto rounded-xl"></video>`;
+        } else if (kind === 'audio') {
+            body.innerHTML = `<audio src="${url}" controls class="w-full max-w-lg mx-auto"></audio>`;
         } else {
             body.innerHTML = `<a href="${url}" target="_blank" class="text-violet-600 font-bold text-lg underline">Dosyayı aç: ${name}</a>`;
         }

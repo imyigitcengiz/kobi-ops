@@ -27,6 +27,11 @@
                 <a href="{% url 'services' %}" class="px-4 py-2.5 rounded-xl bg-white text-brand-800 text-sm font-bold hover:bg-sky-50">
                     Servis Listesi
                 </a>
+                {% if user_perms.tools_media %}
+                <a href="{% url 'tools_media_library' %}" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-semibold backdrop-blur inline-flex items-center gap-2">
+                    <i data-lucide="images" class="w-4 h-4"></i> Medya
+                </a>
+                {% endif %}
             </div>
         </div>
     </section>

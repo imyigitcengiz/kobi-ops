@@ -10,12 +10,12 @@ from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
 
-IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.heic', '.heif'}
-DOCUMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.csv', '.rtf', '.odt', '.ods'}
+from common.media_files import classify_media_kind, kind_label
 
 CATEGORY_LABELS = {
     'service': 'Servis / Arıza',
     'contract': 'Sözleşme & Belge',
+    'customer': 'Müşteri dosyası',
     'scan': 'Tarama',
     'profile': 'Profil',
     'site': 'Site',
@@ -32,7 +32,7 @@ class MediaItem:
     url: str
     name: str
     category: str
-    kind: str  # image | document | other
+    kind: str  # image | video | audio | document | archive | other
     size: int
     modified_at: datetime | None
     source: str  # database | filesystem
@@ -45,6 +45,7 @@ class MediaItem:
     link_url: str | None
     can_delete: bool
     category_label: str = ''
+    kind_label: str = ''
     size_display: str = ''
 
 
@@ -67,7 +68,13 @@ def _classify_category(relpath: str) -> str:
         return 'profile'
     if joined.startswith('site/'):
         return 'site'
-    if any(joined.startswith(p) for p in ('contracts/', 'sozlesme/', 'belgeler/', 'documents/', 'customers/')):
+    if joined.startswith('customers/'):
+        if '/sozlesme/' in joined:
+            return 'contract'
+        if '/servis/' in joined:
+            return 'service'
+        return 'customer'
+    if any(joined.startswith(p) for p in ('contracts/', 'sozlesme/', 'belgeler/', 'documents/')):
         return 'contract'
 
     blob = lower.replace('/', ' ')
@@ -77,15 +84,6 @@ def _classify_category(relpath: str) -> str:
         return 'scan'
     if joined.startswith(('scans/', 'tarama/', 'taramalar/')):
         return 'scan'
-    return 'other'
-
-
-def _classify_kind(filename: str) -> str:
-    ext = Path(filename).suffix.lower()
-    if ext in IMAGE_EXTENSIONS:
-        return 'image'
-    if ext in DOCUMENT_EXTENSIONS:
-        return 'document'
     return 'other'
 
 
@@ -111,10 +109,47 @@ def _safe_resolve(relpath: str) -> Path | None:
 
 def _build_db_index() -> dict[str, dict]:
     from core_settings.models import SiteSettings
+    from customers.models import CustomerMedia
     from services.models import ServiceImage
     from users.models import UserProfile
 
     index: dict[str, dict] = {}
+
+    scope_category = {
+        CustomerMedia.SCOPE_SERVICE: 'service',
+        CustomerMedia.SCOPE_CONTRACT: 'contract',
+        CustomerMedia.SCOPE_CUSTOMER: 'customer',
+    }
+    scope_title = {
+        CustomerMedia.SCOPE_SERVICE: 'Servis dosyası',
+        CustomerMedia.SCOPE_CONTRACT: 'Sözleşme / belge',
+        CustomerMedia.SCOPE_CUSTOMER: 'Müşteri dosyası',
+    }
+
+    for media in CustomerMedia.objects.select_related('customer', 'service'):
+        if not media.file:
+            continue
+        rel = _normalize_relpath(media.file.name)
+        size_note = ''
+        if media.file_size_original and media.file_size_stored and media.compress_method:
+            size_note = f' · {media.compress_method}'
+        index[rel] = {
+            'source': 'database',
+            'record_type': 'customer_media',
+            'record_id': media.pk,
+            'title': media.title or scope_title.get(media.scope, 'Dosya'),
+            'subtitle': f'{media.customer.name} · {media.scope_label}{size_note}',
+            'customer_name': media.customer.name,
+            'service_id': media.service_id,
+            'link_url': (
+                f'/services-dashboard/services/{media.service_id}/duzenle/'
+                if media.service_id
+                else f'/contact/musteriler/{media.customer_id}/duzenle/'
+            ),
+            'can_delete': True,
+            'created_at': media.created_at,
+            'forced_category': scope_category.get(media.scope),
+        }
 
     for img in ServiceImage.objects.select_related(
         'service', 'service__customer', 'service__status',
@@ -199,11 +234,11 @@ def scan_media_library(
 
                 stat = full.stat()
                 meta = db_index.get(rel, {})
-                item_category = _classify_category(rel)
+                item_category = meta.get('forced_category') or _classify_category(rel)
                 if category and item_category != category:
                     continue
 
-                file_kind = _classify_kind(filename)
+                file_kind = classify_media_kind(filename)
                 if kind and file_kind != kind:
                     continue
 
@@ -239,6 +274,7 @@ def scan_media_library(
                         link_url=meta.get('link_url'),
                         can_delete=meta.get('can_delete', True),
                         category_label=CATEGORY_LABELS.get(item_category, 'Diğer'),
+                        kind_label=kind_label(file_kind),
                         size_display=_format_size(stat.st_size),
                     )
                 )
@@ -299,6 +335,16 @@ def delete_media_item(*, record_type: str | None, record_id: int | None, relpath
                 obj.image.delete(save=False)
             obj.delete()
             return True, 'Servis görseli silindi.'
+
+    if record_type == 'customer_media' and record_id:
+        from customers.models import CustomerMedia
+
+        obj = CustomerMedia.objects.filter(pk=record_id).first()
+        if obj:
+            if obj.file:
+                obj.file.delete(save=False)
+            obj.delete()
+            return True, 'Müşteri medyası silindi.'
 
     if record_type == 'site_logo' and record_id:
         from core_settings.models import SiteSettings

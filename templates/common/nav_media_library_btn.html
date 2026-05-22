@@ -1,0 +1,13 @@
+{% if user_perms.tools_media %}
+<a href="{% url 'tools_media_library' %}"
+   class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors
+   {% if request.resolver_match.url_name == 'tools_media_library' %}
+   bg-sky-50 text-sky-700 border-sky-200
+   {% else %}
+   text-slate-600 border-slate-200 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-200
+   {% endif %}"
+   title="Tüm yüklenen dosyalar">
+    <i data-lucide="images" class="w-4 h-4"></i>
+    <span class="hidden sm:inline">Medya</span>
+</a>
+{% endif %}

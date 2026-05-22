@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import TemplateView
 
-from common.decorators import permission_required
+from users.mixins import PermissionRequiredMixin
 from tools.media_library import CATEGORY_LABELS, delete_media_item, scan_media_library
 
 
@@ -39,8 +39,9 @@ class ToolsMediaLibraryView(TemplateView):
         return context
 
 
-class ToolsMediaDeleteView(View):
-    @permission_required('tools.media_delete')
+class ToolsMediaDeleteView(PermissionRequiredMixin, View):
+    permission_required = 'tools.media_delete'
+
     def post(self, request):
         relpath = (request.POST.get('relpath') or '').strip()
         record_type = (request.POST.get('record_type') or '').strip() or None

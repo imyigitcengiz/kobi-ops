@@ -1,0 +1,18 @@
+Sunucuya kopyalanacak minimum dosyalar (GitHub olmadan)
+======================================================
+
+Yöntem A — İmaj dosyası ile:
+  1. gy-dashboard-py-image.tar          (export-image.ps1 ile üretilir)
+  2. .env.docker                        (deploy\docker\.env.example kopyası, düzenlenmiş)
+  3. deploy\docker\docker-compose.server.yml
+
+Sunucuda:
+  docker load -i gy-dashboard-py-image.tar
+  docker compose -f deploy/docker/docker-compose.server.yml --env-file .env.docker up -d
+
+Yöntem B — Tüm proje klasörü ile:
+  Proje zip → sunucuda aç → .env.docker düzenle → docker compose up -d --build
+
+Kalıcı veri: Docker volume "gy_dashboard_data" (/data içinde db + media)
+
+İlk giriş: admin / admin  (DJANGO_ENSURE_SUPERADMIN=1, sonra 0 yapın)

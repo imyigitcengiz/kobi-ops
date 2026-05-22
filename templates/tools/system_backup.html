@@ -9,7 +9,25 @@
         Tools
     </a>
     <h1 class="text-2xl font-bold text-slate-900">Sistem Yedekleri</h1>
-    <p class="text-slate-600 mt-1">Tam sistem yedeğini indirin veya önceki yedeği geri yükleyin.</p>
+    <p class="text-slate-600 mt-1">Veritabanı + migration durumu birlikte yedeklenir; geri yüklemede önce şema (migrate) senkron edilir.</p>
+</div>
+
+<div class="mb-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm">
+    <p class="font-bold text-slate-800 flex items-center gap-2">
+        <i data-lucide="database" class="w-4 h-4 text-violet-600"></i>
+        Güncel veritabanı migration durumu
+    </p>
+    <p class="text-slate-600 mt-1">
+        <strong>{{ backup_status.migration_count }}</strong> uygulanmış migration kaydı.
+        Yeni yedekler <code class="text-xs bg-white px-1 rounded">{{ backup_status.format_version }}</code> formatında migration listesini de içerir.
+    </p>
+    {% if backup_status.migrations %}
+    <ul class="mt-2 text-xs font-mono text-slate-500 space-y-0.5 max-h-28 overflow-y-auto">
+        {% for m in backup_status.migrations %}
+        <li>{{ m.app }}.{{ m.name }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 </div>
 
 {% if messages %}
@@ -26,7 +44,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h2 class="text-lg font-bold text-slate-900">Yedek İndir</h2>
-            <p class="text-xs text-slate-400 mt-1">Sıkıştırılmış (.json.gz) tam sistem yedeği indirin.</p>
+            <p class="text-xs text-slate-400 mt-1">Sıkıştırılmış (.json.gz): tüm kayıtlar + uygulanmış migration listesi.</p>
         </div>
         <form method="post" class="inline">
             {% csrf_token %}
@@ -39,7 +57,10 @@
 
     <div class="border-t border-slate-100 pt-6">
         <h2 class="text-lg font-bold text-slate-900 mb-2">Yedek Geri Yükle</h2>
-        <p class="text-xs text-slate-400 mb-4">.json veya .json.gz dosyası yükleyin. İşlem mevcut verileri değiştirir — önce yedek alın.</p>
+        <p class="text-xs text-slate-400 mb-4">
+            .json veya .json.gz yükleyin. İçe aktarmada önce <strong>migrate</strong> çalışır, sonra veriler yüklenir.
+            Eski (düz liste) ve yeni (migration’lı) yedek formatları desteklenir. Önce güncel yedek alın.
+        </p>
         <form method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-3 sm:items-center">
             {% csrf_token %}
             <input type="hidden" name="import_backup" value="1">

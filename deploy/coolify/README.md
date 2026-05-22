@@ -38,6 +38,10 @@ DJANGO_SECURE_SSL=1
 2. Sunucu ayağa kalkınca aynı sayfadan import  
 3. `media/` klasörünü `/data/media` volume’e kopyalayın  
 
+## Medya sıkıştırma
+
+Yüklenen dosyalar sunucuda türüne göre işlenir: resimler yeniden boyutlandırılır (JPEG/WebP), video ve ses `ffmpeg` ile sıkıştırılır (Docker imajında kurulu). Arşiv ve belgeler olduğu gibi saklanır.
+
 ## Sorun giderme
 
 | Belirti | Çözüm |

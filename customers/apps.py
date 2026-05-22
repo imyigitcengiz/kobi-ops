@@ -7,3 +7,4 @@ class CustomersConfig(AppConfig):
 
     def ready(self):
         from . import signals  # noqa: F401
+        from . import media_signals  # noqa: F401

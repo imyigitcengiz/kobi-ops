@@ -37,6 +37,7 @@
                 <span class="text-sm text-slate-500">{{ site_settings.site_name }}</span>
             </div>
             <div class="flex items-center gap-2" data-nav-popup-zone>
+                {% include 'common/nav_media_library_btn.html' %}
                 {% if user_access.contact %}<a href="{% url 'contact_hub' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">Contact</a>{% endif %}
                 {% if user_access.services %}<a href="{% url 'dashboard' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">Servis</a>{% endif %}
                 {% if user_access.sales %}<a href="{% url 'sales_lead_dashboard' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">Satış</a>{% endif %}

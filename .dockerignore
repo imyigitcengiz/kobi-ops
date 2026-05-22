@@ -23,3 +23,6 @@ tools/whatsapp_bridge/.wwebjs_auth
 tools/whatsapp_bridge/session
 *.md
 !deploy/coolify/README.md
+!deploy/docker/README.md
+gy-dashboard-py-image.tar
+.env.docker

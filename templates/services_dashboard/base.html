@@ -70,6 +70,18 @@
                 <span class="font-medium text-sm">Müşteriler</span>
             </a>
             {% endif %}
+            {% if user_perms.tools_media or user_access.tools %}
+            <div class="pt-4 mt-4 border-t border-slate-800">
+                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Dosyalar</p>
+                {% include 'common/nav_media_library_sidebar.html' %}
+                {% if user_access.tools %}
+                <a href="{% url 'tools_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i data-lucide="hammer" class="w-5 h-5"></i>
+                    <span class="font-medium text-sm">Tools</span>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
             {% if user_access.sales %}
             <div class="pt-4 mt-4 border-t border-slate-800">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Satış Modülü</p>
@@ -114,7 +126,8 @@
                 <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Ara..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm">
             </form>
 
-            <div class="flex items-center gap-4 relative">
+            <div class="flex items-center gap-3 relative">
+                {% include 'common/nav_media_library_btn.html' %}
                 <button class="p-2 text-slate-500 hover:bg-slate-50 rounded-lg relative">
                     <i data-lucide="bell" class="w-5 h-5"></i>
                     <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>

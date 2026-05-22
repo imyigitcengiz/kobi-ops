@@ -15,6 +15,11 @@ from customers.views import (
     bulk_manage_customers,
     customers_picker_api,
 )
+from customers.media_views import (
+    customer_media_list_api,
+    customer_media_upload_api,
+    customer_media_delete_api,
+)
 from core_settings.views import (
     SolutionNetworkView,
     TeamNetworkView,
@@ -50,6 +55,9 @@ urlpatterns = [
     path('musteriler/api/<int:pk>/urunler/', update_customer_products, name='update_customer_products'),
     path('musteriler/<int:pk>/hizli-duzenle/', customer_quick_edit_api, name='customer_quick_edit_api'),
     path('musteriler/secim/', customers_picker_api, name='customers_picker_api'),
+    path('musteriler/<int:customer_id>/medya/', customer_media_list_api, name='customer_media_list_api'),
+    path('musteriler/<int:customer_id>/medya/yukle/', customer_media_upload_api, name='customer_media_upload_api'),
+    path('musteriler/medya/<int:pk>/sil/', customer_media_delete_api, name='customer_media_delete_api'),
     path('cozum-agi/', SolutionNetworkView.as_view(), name='solution_network'),
     path('ekip/', TeamNetworkView.as_view(), name='team_network'),
     path('personel/', PersonnelNetworkView.as_view(), name='personnel_network'),

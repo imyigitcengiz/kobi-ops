@@ -1,0 +1,12 @@
+{% if user_perms.tools_media %}
+<a href="{% url 'tools_media_library' %}"
+   class="flex items-center gap-3 px-3 py-2 rounded-xl transition-colors
+   {% if request.resolver_match.url_name == 'tools_media_library' %}
+   {{ active_class|default:'bg-brand-600 text-white shadow-lg shadow-brand-900/20' }}
+   {% else %}
+   text-slate-400 hover:text-white hover:bg-slate-800
+   {% endif %}">
+    <i data-lucide="images" class="w-5 h-5"></i>
+    <span class="font-medium text-sm">Medya Yöneticisi</span>
+</a>
+{% endif %}

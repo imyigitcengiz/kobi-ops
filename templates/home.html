@@ -88,6 +88,13 @@
                     <p class="text-sm text-slate-500 mt-2">Satış işlemleri ve raporlar.</p>
                 </a>
                 {% endif %}
+                {% if user_perms.tools_media %}
+                <a href="{% url 'tools_media_library' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-sky-200 transition-all p-6">
+                    <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:bg-sky-600 group-hover:text-white transition-colors"><i data-lucide="images" class="w-6 h-6"></i></div>
+                    <h3 class="text-lg font-bold text-slate-900">Medya Yöneticisi</h3>
+                    <p class="text-sm text-slate-500 mt-2">Servis fotoğrafları, sözleşmeler ve tüm dosyalar.</p>
+                </a>
+                {% endif %}
                 {% if user_access.tools %}
                 <a href="{% url 'tools_hub' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all p-6">
                     <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:bg-slate-700 group-hover:text-white transition-colors"><i data-lucide="hammer" class="w-6 h-6"></i></div>

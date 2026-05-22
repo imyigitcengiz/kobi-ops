@@ -7,7 +7,8 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-slate-900">Servisler</h2>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap gap-3 items-center">
+            {% include 'common/nav_media_library_btn.html' %}
             {% if user_perms.services_print %}
             <a href="{% url 'service_bulk_print' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" target="_blank" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-semibold hover:bg-blue-100 transition-colors flex items-center gap-2">
                 <i data-lucide="printer" class="w-4 h-4"></i> Tümünü Yazdır

@@ -9,6 +9,16 @@
 
 {% block content %}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% if user_perms.tools_media %}
+    <a href="{% url 'tools_media_library' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-sky-300 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:bg-sky-100">
+            <i data-lucide="images" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Medya Yöneticisi</h2>
+        <p class="text-sm text-slate-500 mt-2">Müşteri, servis ve sözleşme dosyalarının tamamı.</p>
+    </a>
+    {% endif %}
+
     {% if user_perms.contact_customers_view or user_perms.contact_customers %}
     <a href="{% url 'customers' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-brand-300 hover:shadow-md transition-all">
         <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-100">

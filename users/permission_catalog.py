@@ -94,6 +94,7 @@ DEFAULT_ROLES = {
             'access.home', 'access.services', 'access.contact',
             'services.manage', 'services.print', 'services.whatsapp',
             'contact.customers_view', 'contact.customers',
+            'tools.media',
         ],
     },
     'sales': {
@@ -104,6 +105,7 @@ DEFAULT_ROLES = {
             'access.home', 'access.sales', 'access.contact',
             'sales.manage', 'sales.reports', 'sales.export',
             'contact.customers_view', 'contact.customers', 'contact.payroll',
+            'tools.media',
         ],
     },
     'accounting': {

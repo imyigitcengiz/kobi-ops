@@ -236,6 +236,18 @@ if not DEBUG:
         SECURE_HSTS_SECONDS = 31536000
         SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
+# Büyük video/belge yüklemeleri (medya paneli)
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get('DJANGO_UPLOAD_MAX_MEMORY', 52 * 1024 * 1024))
+DATA_UPLOAD_MAX_NUMBER_FILES = int(os.environ.get('DJANGO_UPLOAD_MAX_FILES', 20))
+
+# Sunucuda medya sıkıştırma (türüne göre)
+MEDIA_COMPRESS_ENABLED = os.environ.get('MEDIA_COMPRESS_ENABLED', '1').lower() in ('1', 'true', 'yes')
+MEDIA_IMAGE_MAX_SIDE = int(os.environ.get('MEDIA_IMAGE_MAX_SIDE', '1920'))
+MEDIA_IMAGE_MAX_QUALITY = int(os.environ.get('MEDIA_IMAGE_MAX_QUALITY', '85'))
+MEDIA_IMAGE_FORMAT = os.environ.get('MEDIA_IMAGE_FORMAT', 'JPEG').upper()
+MEDIA_FFMPEG_PATH = os.environ.get('MEDIA_FFMPEG_PATH', 'ffmpeg')
+MEDIA_FFMPEG_TIMEOUT = int(os.environ.get('MEDIA_FFMPEG_TIMEOUT', '300'))
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -262,6 +274,11 @@ LOGGING = {
             'propagate': False,
         },
         'asyncio': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'PIL': {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': False,

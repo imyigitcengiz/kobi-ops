@@ -69,6 +69,12 @@
                 <span class="font-medium text-sm">Müşteriler</span>
             </a>
             {% endif %}
+            {% if user_perms.tools_media %}
+            <a href="{% url 'tools_media_library' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'tools_media_library' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="images" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Medya Yöneticisi</span>
+            </a>
+            {% endif %}
             {% if user_access.services %}
             <div class="pt-4 mt-4 border-t border-slate-800">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Servis Modülü</p>
@@ -98,6 +104,7 @@
                 {% block header_title %}<h1 class="text-lg font-bold text-slate-900">Satış Kayıtları</h1>{% endblock %}
             </div>
             <div class="flex items-center gap-3">
+                {% include 'common/nav_media_library_btn.html' %}
                 {% block header_actions %}
                 {% if user_perms.sales_manage %}
                 <a href="{% url 'sales_lead_create' %}" class="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-xl hover:bg-brand-700 text-sm font-semibold shadow-lg shadow-brand-200">

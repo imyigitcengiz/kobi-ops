@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
-from core_settings.backup import export_backup_response, import_backup_file
+from core_settings.backup import backup_status_summary, export_backup_response, import_backup_file
 from core_settings.forms import AISettingsForm
 from core_settings.models import SiteSettings
 from customers.models import Customer
@@ -49,6 +49,11 @@ class ToolsAIPanelView(TemplateView):
 
 class ToolsSystemBackupView(TemplateView):
     template_name = 'tools/system_backup.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['backup_status'] = backup_status_summary()
+        return context
 
     def post(self, request, *args, **kwargs):
         if 'export_backup' in request.POST:

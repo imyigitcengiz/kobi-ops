@@ -30,6 +30,8 @@ from .whatsapp_status_prompt import (
 )
 from core_settings.models import ServiceTeam, ServicePersonnel, StatusOption, PriorityOption, SiteSettings
 from core_settings.status_defaults import apply_service_list_visibility, ensure_default_statuses
+from customers.media_utils import ingest_customer_media_uploads
+from customers.models import CustomerMedia
 from .customer_services import (
     build_service_customer_groups,
     customer_services_payload,
@@ -117,6 +119,16 @@ def _build_service_snapshot(service):
             'contract_date': customer.contract_date.isoformat() if customer.contract_date else '',
         }
     }
+
+
+def _ingest_service_media_uploads(request, service):
+    """Servis formundan gelen medya dosyalarını kaydeder (görsel + belge)."""
+    ingest_customer_media_uploads(
+        request,
+        customer=service.customer,
+        service=service,
+        scope=CustomerMedia.SCOPE_SERVICE,
+    )
 
 
 def _create_service_history(service, action, user=None):
@@ -393,6 +405,7 @@ class ServiceCreateView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(build_service_form_context())
+        context['can_upload_media'] = True
         return context
 
     def get_initial(self):
@@ -412,9 +425,7 @@ class ServiceCreateView(PermissionRequiredMixin, CreateView):
             customer.products.add(product)
             
         _create_service_history(self.object, "Servis kaydı oluşturuldu.", self.request.user)
-        images = self.request.FILES.getlist('images')
-        for img in images:
-            ServiceImage.objects.create(service=self.object, image=img)
+        _ingest_service_media_uploads(self.request, self.object)
 
         service = ServiceRecord.objects.select_related(
             'customer', 'status', 'priority',
@@ -433,6 +444,7 @@ class ServiceUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(build_service_form_context(self.object))
+        context['can_upload_media'] = True
         return context
 
     def form_valid(self, form):
@@ -458,9 +470,7 @@ class ServiceUpdateView(PermissionRequiredMixin, UpdateView):
         for product in self.object.products.all():
             customer.products.add(product)
             
-        images = self.request.FILES.getlist('images')
-        for img in images:
-            ServiceImage.objects.create(service=self.object, image=img)
+        _ingest_service_media_uploads(self.request, self.object)
         return response
 
 class ServiceDeleteView(PermissionRequiredMixin, DeleteView):

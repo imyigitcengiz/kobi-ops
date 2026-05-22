@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libjpeg62-turbo \
     zlib1g \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -20,7 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p /data/media staticfiles \
+# Windows CRLF → Linux entrypoint hatasını önle
+RUN sed -i 's/\r$//' deploy/coolify/docker-entrypoint.sh \
+    && mkdir -p /data/media staticfiles \
     && chmod +x deploy/coolify/docker-entrypoint.sh
 
 EXPOSE 8000
