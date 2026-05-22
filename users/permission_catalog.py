@@ -62,6 +62,10 @@ PERMISSIONS = [
      'AI paneli, sohbet ve API ayarları.'),
     ('tools.backup', 'Yedekleme & geri yükleme', 'Tools', PERMISSION_KIND_ACTION, 440,
      'Sistem yedeği alma ve geri yükleme.'),
+    ('tools.media', 'Medya kütüphanesi', 'Tools', PERMISSION_KIND_ACTION, 450,
+     'Tüm yüklenen dosyaları görüntüleme ve önizleme.'),
+    ('tools.media_delete', 'Medya silme', 'Tools', PERMISSION_KIND_ACTION, 455,
+     'Medya kütüphanesinden dosya silme.'),
 ]
 
 DEFAULT_ROLES = {
@@ -79,7 +83,7 @@ DEFAULT_ROLES = {
             'access.home', 'access.services', 'access.contact', 'access.tools',
             'services.manage', 'services.bulk', 'services.print', 'services.whatsapp',
             'contact.customers_view', 'contact.customers', 'contact.firms', 'contact.teams', 'contact.personnel', 'contact.solution',
-            'tools.whatsapp', 'tools.whatsapp_scenarios',
+            'tools.whatsapp', 'tools.whatsapp_scenarios', 'tools.media', 'tools.media_delete',
         ],
     },
     'service': {
@@ -141,6 +145,8 @@ ROUTE_PERMISSIONS = [
     ('/sales-lead/yeni/', 'sales.manage'),
     ('/sales-lead/', 'access.sales'),
     ('/tools/yedekler/', 'tools.backup'),
+    ('/tools/medya/sil/', 'tools.media_delete'),
+    ('/tools/medya/', 'tools.media'),
     ('/tools/ai/', 'tools.ai'),
     ('/tools/whatsapp', 'tools.whatsapp'),
     ('/tools/', 'access.tools'),

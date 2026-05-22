@@ -58,6 +58,23 @@
     </a>
     {% endif %}
 
+    {% if user_perms.tools_media %}
+    <a href="{% url 'tools_media_library' %}"
+       class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-sky-200 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+            <i data-lucide="images" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Medya Kütüphanesi</h2>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+            Servis fotoğrafları, sözleşmeler, taramalar ve tüm yüklemeler.
+        </p>
+        <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-sky-600 group-hover:text-sky-700">
+            Kütüphaneyi aç
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </span>
+    </a>
+    {% endif %}
+
     {% if user_perms.tools_backup %}
     <a href="{% url 'tools_system_backup' %}"
        class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all p-6">
@@ -75,7 +92,7 @@
     </a>
     {% endif %}
 </div>
-{% if not user_perms.tools_whatsapp and not user_perms.tools_ai and not user_perms.tools_backup %}
+{% if not user_perms.tools_whatsapp and not user_perms.tools_ai and not user_perms.tools_media and not user_perms.tools_backup %}
 <p class="mt-8 text-sm text-slate-500">Bu modülde görüntüleyebileceğiniz araç bulunmuyor.</p>
 {% endif %}
 {% endblock %}
