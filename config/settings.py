@@ -166,6 +166,10 @@ DATABASES = {
     }
 }
 
+_db_path = os.environ.get('DJANGO_DB_PATH', '').strip()
+if _db_path:
+    DATABASES['default']['NAME'] = Path(_db_path)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -207,6 +211,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+_media_root = os.environ.get('DJANGO_MEDIA_ROOT', '').strip()
+if _media_root:
+    MEDIA_ROOT = Path(_media_root)
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -221,6 +228,8 @@ if not DEBUG:
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_HTTPONLY = True
     if os.environ.get('DJANGO_SECURE_SSL', '').lower() in ('1', 'true', 'yes'):
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+        USE_X_FORWARDED_HOST = True
         SECURE_SSL_REDIRECT = True
         SESSION_COOKIE_SECURE = True
         CSRF_COOKIE_SECURE = True

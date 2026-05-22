@@ -1,0 +1,23 @@
+# Yerel test veya Coolify "Docker Compose" modu
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      DAPHNE_HOST: "0.0.0.0"
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: "degistirin-local-test"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "http://localhost:8000"
+      DATA_DIR: "/data"
+      DJANGO_DB_PATH: "/data/db.sqlite3"
+      DJANGO_MEDIA_ROOT: "/data/media"
+      DJANGO_WHATSAPP_BRIDGE_AUTO_START: "0"
+    volumes:
+      - gy_dashboard_data:/data
+
+volumes:
+  gy_dashboard_data:

@@ -1,3 +1,5 @@
+import os
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -16,5 +18,6 @@ urlpatterns = [
     path('ortak/', include('config.ortak_urls')),
 ]
 
-if settings.DEBUG:
+_serve_media = os.environ.get('DJANGO_SERVE_MEDIA', '1').lower() not in ('0', 'false', 'no')
+if settings.DEBUG or _serve_media:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
