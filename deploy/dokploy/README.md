@@ -92,7 +92,8 @@ Push = Dokploy yeniden build/deploy (ayrı `sync.sh` gerekmez).
 
 | Belirti | Çözüm |
 |---------|--------|
-| App Restarting | Logs: `DJANGO_SECRET_KEY` — `.env` + `env_file: .env` |
+| App **Restarting** / `DJANGO_SECRET_KEY zorunludur` | Compose → **Environment** → `DJANGO_SECRET_KEY` ekle → **Redeploy**. `KeyError: guard_persistent_data` aynı sebep (settings yüklenemedi). |
+| `.env` container'a gitmiyor | `docker-compose.yml` içinde `env_file: - .env` olmalı; Environment sekmesindeki değişkenler deploy sonrası container'da görünmeli |
 | DisallowedHost | `DJANGO_ALLOWED_HOSTS` domain ile aynı |
 | CSRF | `DJANGO_CSRF_TRUSTED_ORIGINS` https ile |
 | WhatsApp kapalı | `whatsapp-bridge` log; `WHATSAPP_BRIDGE_URL` servis adı |
