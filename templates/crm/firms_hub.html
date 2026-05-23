@@ -9,7 +9,7 @@
         <i data-lucide="arrow-left" class="w-4 h-4"></i> {{ gy.rehber }}
     </a>
     <h1 class="text-2xl font-bold text-slate-900">Firmalar</h1>
-    <p class="text-slate-600 mt-1">Tek rehber: manuel kayıt, kazınan firmalar, çözüm ortağı, bayi ve iş ortakları. Toplu mesaj ve etiket yönetimi burada yapılır.</p>
+    <p class="text-slate-600 mt-1">Firma rehberi: kayıt, etiket, bölge ve toplu gönderim. Mesaj geçmişi <a href="{% url 'marketing_campaign_messages' %}" class="text-rose-600 font-semibold underline">Pazarlama</a> menüsündedir.</p>
 </div>
 
 <div class="flex flex-wrap gap-2 mb-6">
@@ -155,7 +155,8 @@
         <button type="button" id="addFirmBtn" class="px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-bold">Manuel kayıt ekle</button>
         <button type="button" id="clearMemoryBtn" class="px-3 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold">Rehberi temizle</button>
         <a href="{% url 'contact_tag_manager' %}" class="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-xl text-xs font-bold hover:bg-indigo-200">Etiket yönetimi</a>
-        <button type="button" id="showMessagesTabBtn" class="px-3 py-1.5 bg-slate-800 text-white rounded-xl text-xs font-bold ml-auto">Firma / kampanya mesajları</button>
+        <a href="{% url 'marketing_campaign_messages' %}" class="px-3 py-1.5 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold hover:bg-rose-200 ml-auto">Kampanya mesajları</a>
+        <a href="{% url 'marketing_firm_messages' %}" class="px-3 py-1.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-100">Firma mesajları</a>
     </div>
 
     <div class="overflow-x-auto max-h-[480px] overflow-y-auto">
@@ -179,52 +180,6 @@
     </div>
 </div>
 
-<!-- Gönderilen mesajlar paneli -->
-<div id="messagesPanel" class="hidden bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-    <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Mesaj geçmişi</h2>
-        <div class="flex gap-2 items-center flex-wrap">
-            <select id="msgSendTypeFilter" class="p-2 bg-white border border-slate-200 rounded-xl text-sm">
-                <option value="all">Tüm gönderim türleri</option>
-                <option value="customer">Müşteri</option>
-                <option value="scraped_firm">Kazınan firma</option>
-                <option value="partner">Çözüm ortağı</option>
-                <option value="dealer">Bayi</option>
-                <option value="business">İş ortağı</option>
-                <option value="private">Özel (toplu)</option>
-                <option value="campaign">Kampanya</option>
-                <option value="auto">Otomatik senaryo</option>
-            </select>
-            <select id="msgStatusFilter" class="p-2 bg-white border border-slate-200 rounded-xl text-sm">
-                <option value="sent">Gönderildi</option>
-                <option value="failed">Başarısız</option>
-                <option value="skipped">Atlandı</option>
-                <option value="all">Tümü</option>
-            </select>
-            <input id="msgSearchInput" type="text" placeholder="Alıcı / telefon / mesaj ara..." class="p-2 bg-white border border-slate-200 rounded-xl text-sm min-w-[180px]">
-            <button type="button" id="msgSearchBtn" class="px-3 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold">Ara</button>
-            <button type="button" id="hideMessagesPanelBtn" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">Kapat</button>
-        </div>
-    </div>
-    <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
-        <table class="w-full text-sm text-left">
-            <thead class="bg-slate-50 border-b border-slate-100 sticky top-0">
-                <tr>
-                    <th class="px-4 py-3 font-bold text-slate-700">Alıcı</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Telefon</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Gönderim türü</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Kampanya</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Durum</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Tarih</th>
-                    <th class="px-4 py-3 font-bold text-slate-700">Mesaj</th>
-                </tr>
-            </thead>
-            <tbody id="messagesBody">
-                <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Yükleniyor…</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
 </div><!-- /rehberPanel -->
 
 <div id="addFirmModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
@@ -296,7 +251,7 @@
     const TAGS_URL = '{% url "contact_tags" %}';
     const BULK_URL = '{% url "contact_firms_bulk" %}';
     const CLEAR_URL = '{% url "contact_firms_memory_clear" %}';
-    const MESSAGES_URL = '{% url "contact_sent_messages" %}';
+    const FIRM_MESSAGES_PAGE = '{% url "marketing_firm_messages" %}';
 
     let allTags = [];
 
@@ -439,7 +394,7 @@
             tr.className = 'hover:bg-slate-50';
             const selectable = !!r.firm_id;
             const msgCell = (r.globally_messaged || (r.messages_sent || 0) > 0)
-                ? `<button type="button" class="view-msgs text-xs text-violet-600 font-semibold underline" data-firm-id="${r.firm_id}">${r.messages_sent || 1} mesaj →</button>`
+                ? `<a href="${FIRM_MESSAGES_PAGE}?firm_id=${r.firm_id}" class="text-xs text-rose-600 font-semibold underline">${r.messages_sent || 1} mesaj →</a>`
                 : messageBadge(r);
             tr.innerHTML = `
                 <td class="px-4 py-3">
@@ -456,7 +411,6 @@
             memoryBody.appendChild(tr);
         });
         document.querySelectorAll('.memory-row-check').forEach(cb => cb.addEventListener('change', updateSelectionState));
-        document.querySelectorAll('.view-msgs').forEach(btn => btn.addEventListener('click', () => showFirmMessages(parseInt(btn.dataset.firmId, 10))));
         selectAllMemory.disabled = !document.querySelector('.memory-row-check:not(:disabled)');
     }
 
@@ -701,69 +655,6 @@
         } catch (e) { alert(e.message); }
     });
 
-    function statusLabel(st) {
-        const map = { sent: 'Gönderildi', failed: 'Hata', skipped: 'Atlandı', pending: 'Bekliyor', sending: 'Gönderiliyor' };
-        return map[st] || st;
-    }
-
-    function renderMessages(rows) {
-        const body = document.getElementById('messagesBody');
-        body.innerHTML = '';
-        if (!rows.length) {
-            body.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Mesaj bulunamadı.</td></tr>';
-            return;
-        }
-        rows.forEach(m => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-t border-slate-100 hover:bg-slate-50';
-            const stClass = m.status === 'sent' ? 'text-green-600' : m.status === 'failed' ? 'text-red-600' : 'text-slate-500';
-            tr.innerHTML = `
-                <td class="px-4 py-2 font-semibold">${escapeHtml(m.recipient_name)}</td>
-                <td class="px-4 py-2 whitespace-nowrap">${escapeHtml(m.phone)}</td>
-                <td class="px-4 py-2 text-xs"><span class="px-2 py-0.5 rounded-lg bg-slate-100 font-semibold">${escapeHtml(m.send_type_label || '—')}</span></td>
-                <td class="px-4 py-2 text-xs">${escapeHtml(m.collection_name || '—')}</td>
-                <td class="px-4 py-2 text-xs font-bold ${stClass}">${escapeHtml(statusLabel(m.status))}</td>
-                <td class="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">${escapeHtml((m.sent_at || m.created_at || '').slice(0, 16).replace('T', ' '))}</td>
-                <td class="px-4 py-2 text-xs text-slate-600 max-w-xs truncate" title="${escapeHtml(m.message)}">${escapeHtml(m.message.slice(0, 80))}${m.message.length > 80 ? '…' : ''}</td>`;
-            body.appendChild(tr);
-        });
-    }
-
-    async function loadMessages(extraParams) {
-        const params = new URLSearchParams({
-            page_size: '100',
-            status: document.getElementById('msgStatusFilter').value,
-            scope: 'firm',
-        });
-        const sendType = document.getElementById('msgSendTypeFilter')?.value;
-        if (sendType && sendType !== 'all') params.set('send_type', sendType);
-        const q = document.getElementById('msgSearchInput').value.trim();
-        if (q) params.set('q', q);
-        if (extraParams) Object.entries(extraParams).forEach(([k, v]) => params.set(k, v));
-        const res = await fetch(`${MESSAGES_URL}?${params}`);
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Mesajlar yüklenemedi.');
-        renderMessages(data.results || []);
-    }
-
-    function showFirmMessages(firmId) {
-        document.getElementById('messagesPanel').classList.remove('hidden');
-        document.getElementById('msgStatusFilter').value = 'all';
-        document.getElementById('msgSearchInput').value = '';
-        loadMessages({ firm_id: firmId }).catch(err => alert(err.message));
-        document.getElementById('messagesPanel').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    document.getElementById('showMessagesTabBtn')?.addEventListener('click', () => {
-        document.getElementById('messagesPanel').classList.remove('hidden');
-        loadMessages().catch(err => alert(err.message));
-        document.getElementById('messagesPanel').scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('hideMessagesPanelBtn')?.addEventListener('click', () => document.getElementById('messagesPanel').classList.add('hidden'));
-    document.getElementById('msgSearchBtn')?.addEventListener('click', () => loadMessages().catch(err => alert(err.message)));
-    document.getElementById('msgStatusFilter')?.addEventListener('change', () => loadMessages().catch(err => alert(err.message)));
-    document.getElementById('msgSendTypeFilter')?.addEventListener('change', () => loadMessages().catch(err => alert(err.message)));
-
     document.getElementById('bulkMessageBtn')?.addEventListener('click', async () => {
         const ids = collectSelectedFirmIds();
         if (!ids.length) return alert('Firma seçin.');
@@ -822,8 +713,6 @@
             refreshStats(await fetchJson('{% url "contact_firms_memory" %}?page_size=1'));
         } catch (err) { alert(err.message); }
     });
-    document.getElementById('msgSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('msgSearchBtn')?.click(); });
-
     memorySearchBtn?.addEventListener('click', () => loadMemory(memorySearchInput?.value.trim() || '').catch(err => alert(err.message)));
     memorySearchInput?.addEventListener('keydown', e => { if (e.key === 'Enter') memorySearchBtn?.click(); });
 

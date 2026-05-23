@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from django.views.generic import RedirectView
 
 from common.views import ContactHubView
@@ -43,6 +43,7 @@ from tools.firm_views import (
 )
 
 urlpatterns = [
+    path('pazarlama/', include('config.marketing_urls')),
     path('', ContactHubView.as_view(), name='contact_hub'),
     path('musteriler/', CustomerListView.as_view(), name='customers'),
     path('musteriler/yeni/', CustomerCreateView.as_view(), name='customer_create'),

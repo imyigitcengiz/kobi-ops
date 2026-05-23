@@ -317,10 +317,31 @@ def sent_messages_api(request):
     qs = WhatsappOutboundMessage.objects.select_related('collection', 'firm', 'customer').order_by(
         '-sent_at', '-created_at',
     )
+    firm_send_types = (
+        WhatsappOutboundMessage.SEND_SCRAPED,
+        WhatsappOutboundMessage.SEND_PARTNER,
+        WhatsappOutboundMessage.SEND_DEALER,
+        WhatsappOutboundMessage.SEND_BUSINESS,
+        WhatsappOutboundMessage.SEND_PRIVATE,
+    )
     if scope == 'customer':
         qs = qs.filter(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+    elif scope == 'campaign':
+        qs = qs.filter(
+            Q(send_type=WhatsappOutboundMessage.SEND_CAMPAIGN) | Q(collection_id__isnull=False),
+        )
     elif scope == 'firm':
-        qs = qs.exclude(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+        qs = qs.filter(
+            send_type__in=firm_send_types,
+            collection_id__isnull=True,
+        )
+    elif scope == 'personnel':
+        qs = qs.filter(
+            send_type=WhatsappOutboundMessage.SEND_AUTO,
+            customer_id__isnull=True,
+            firm_id__isnull=True,
+            collection_id__isnull=True,
+        )
     if status and status != 'all':
         qs = qs.filter(status=status)
     if collection_id:

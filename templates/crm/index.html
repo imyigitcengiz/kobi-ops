@@ -34,8 +34,16 @@
         <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-100">
             <i data-lucide="building-2" class="w-6 h-6"></i>
         </div>
-        <h2 class="text-lg font-bold text-slate-900">Firmalar</h2>
-        <p class="text-sm text-slate-500 mt-2">Manuel kayıt, kazınan firmalar, ortaklar — toplu mesaj ve etiketler. Maps araması panel içinde.</p>
+        <h2 class="text-lg font-bold text-slate-900">Firma rehberi</h2>
+        <p class="text-sm text-slate-500 mt-2">Kayıt, etiket, Maps kazıma ve toplu gönderim — mesaj geçmişi Pazarlama’da.</p>
+    </a>
+
+    <a href="{% url 'marketing_campaign_messages' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-rose-300 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4 group-hover:bg-rose-100">
+            <i data-lucide="megaphone" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Pazarlama mesajları</h2>
+        <p class="text-sm text-slate-500 mt-2">Kampanya, firma, müşteri ve personel WhatsApp geçmişi ayrı listelerde.</p>
     </a>
 
     <a href="{% url 'contact_tag_manager' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-indigo-300 hover:shadow-md transition-all">
@@ -44,16 +52,6 @@
         </div>
         <h2 class="text-lg font-bold text-slate-900">Etiket Yönetimi</h2>
         <p class="text-sm text-slate-500 mt-2">Firma etiketlerini oluştur, düzenle ve sil.</p>
-    </a>
-    {% endif %}
-
-    {% if user_perms.tools_whatsapp_scenarios %}
-    <a href="{% url 'tools_whatsapp_baglan' %}#senaryolar" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-green-300 hover:shadow-md transition-all">
-        <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4 group-hover:bg-green-100">
-            <i data-lucide="message-circle" class="w-6 h-6"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">WhatsApp Senaryoları</h2>
-        <p class="text-sm text-slate-500 mt-2">Otomatik mesaj kuralları ve hat bağlantıları.</p>
     </a>
     {% endif %}
 

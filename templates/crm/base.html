@@ -51,28 +51,61 @@
                 <i data-lucide="layout-grid" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Özet</span>
             </a>
+
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Müşteriler</p>
             {% if user_perms.contact_customers_view or user_perms.contact_customers %}
             <a href="{% url 'customers' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'customers' or request.resolver_match.url_name == 'customer_create' or request.resolver_match.url_name == 'customer_update' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="users" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Müşteriler</span>
+                <span class="font-medium text-sm">Müşteri rehberi</span>
             </a>
             {% endif %}
+
             {% if user_perms.contact_firms %}
-            <a href="{% url 'contact_firmalar' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'contact_firmalar' or request.resolver_match.url_name == 'contact_firma_bul' or request.resolver_match.url_name == 'contact_firma_kazi' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Firmalar</p>
+            <a href="{% url 'contact_firmalar' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'contact_firmalar' or request.resolver_match.url_name == 'contact_firma_bul' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="building-2" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Firmalar</span>
+                <span class="font-medium text-sm">Firma rehberi</span>
             </a>
             <a href="{% url 'contact_tag_manager' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'contact_tag_manager' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="tags" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Etiketler</span>
             </a>
             {% endif %}
-            {% if user_perms.tools_whatsapp_scenarios %}
-            <a href="{% url 'tools_whatsapp_baglan' %}#senaryolar" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-                <i data-lucide="message-circle" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">WhatsApp Senaryoları</span>
+
+            {% if user_perms.contact_firms or user_perms.contact_customers_view or user_perms.contact_customers or user_perms.contact_personnel or user_perms.tools_whatsapp_scenarios %}
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Pazarlama</p>
+            {% if user_perms.contact_firms %}
+            <a href="{% url 'marketing_campaign_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'marketing_campaign_messages' or request.resolver_match.url_name == 'marketing_messages' %}bg-rose-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="megaphone" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Kampanya mesajları</span>
+            </a>
+            <a href="{% url 'marketing_firm_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'marketing_firm_messages' %}bg-rose-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="send" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Firma mesajları</span>
             </a>
             {% endif %}
+            {% if user_perms.contact_customers_view or user_perms.contact_customers %}
+            <a href="{% url 'marketing_customer_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'marketing_customer_messages' %}bg-rose-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Müşteri mesajları</span>
+            </a>
+            {% endif %}
+            {% if user_perms.contact_personnel or user_perms.tools_whatsapp_scenarios %}
+            <a href="{% url 'marketing_personnel_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'marketing_personnel_messages' %}bg-rose-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="id-card" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Personel mesajları</span>
+            </a>
+            {% endif %}
+            {% if user_perms.tools_whatsapp_scenarios %}
+            <a href="{% url 'tools_whatsapp_baglan' %}#senaryolar" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+                <i data-lucide="workflow" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">WhatsApp senaryoları</span>
+            </a>
+            {% endif %}
+            {% endif %}
+
+            {% if user_perms.contact_teams or user_perms.contact_personnel or user_perms.contact_payroll %}
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Ekip & personel</p>
             {% if user_perms.contact_teams %}
             <a href="{% url 'team_network' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'team_network' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="users-round" class="w-5 h-5"></i>
@@ -81,13 +114,15 @@
             {% endif %}
             {% if user_perms.contact_personnel or user_perms.contact_payroll %}
             <a href="{% url 'personnel_network' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'personnel_network' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="id-card" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Personel</span>
+                <i data-lucide="badge-check" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Personel kayıtları</span>
             </a>
             {% endif %}
+            {% endif %}
+
             {% if user_perms.tools_media or user_access.tools %}
             <div class="pt-4 mt-4 border-t border-slate-800">
-                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Dosyalar</p>
+                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Dosyalar & araçlar</p>
                 {% include 'common/nav_media_library_sidebar.html' with active_class='bg-brand-600 text-white' %}
                 {% if user_access.tools %}
                 <a href="{% url 'tools_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
@@ -103,7 +138,7 @@
                 {% if user_perms.tools_whatsapp %}
                 <a href="{% url 'tools_whatsapp_baglan' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
                     <i data-lucide="smartphone" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">WhatsApp</span>
+                    <span class="font-medium text-sm">WhatsApp bağlan</span>
                 </a>
                 {% endif %}
             </div>
