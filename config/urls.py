@@ -5,8 +5,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from analytics.views import HomeView
+from common.views import healthz
 
 urlpatterns = [
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
     path('', include('users.urls')),

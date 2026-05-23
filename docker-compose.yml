@@ -19,7 +19,7 @@ services:
       - gy_data:/data
     depends_on:
       whatsapp-bridge:
-        condition: service_healthy
+        condition: service_started
 
   whatsapp-bridge:
     build:

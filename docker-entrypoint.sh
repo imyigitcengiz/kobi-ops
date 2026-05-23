@@ -36,10 +36,10 @@ if [ "${DJANGO_ENSURE_SUPERADMIN:-0}" = "1" ]; then
   python manage.py ensure_superadmin 2>/dev/null || true
 fi
 
-if [ "${DJANGO_WHATSAPP_BRIDGE_CAN_SPAWN:-0}" != "1" ] && [ -n "${WHATSAPP_BRIDGE_URL:-}" ]; then
+if [ "${DJANGO_WHATSAPP_BRIDGE_WAIT_ON_START:-0}" = "1" ] && [ "${DJANGO_WHATSAPP_BRIDGE_CAN_SPAWN:-0}" != "1" ] && [ -n "${WHATSAPP_BRIDGE_URL:-}" ]; then
   echo "[gy-dashboard] WhatsApp köprüsü bekleniyor (${WHATSAPP_BRIDGE_URL})..."
-  python manage.py wait_whatsapp_bridge --timeout "${DJANGO_WHATSAPP_BRIDGE_WAIT_TIMEOUT:-120}" \
-    || echo "[gy-dashboard] UYARI: köprü henüz hazır değil — whatsapp-bridge servisini kontrol edin."
+  python manage.py wait_whatsapp_bridge --timeout "${DJANGO_WHATSAPP_BRIDGE_WAIT_TIMEOUT:-30}" \
+    || echo "[gy-dashboard] UYARI: köprü henüz hazır değil — panel yine de başlıyor."
 fi
 
 echo "[gy-dashboard] daphne ${HOST}:${PORT}"

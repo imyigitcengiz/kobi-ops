@@ -96,6 +96,7 @@ Push = Dokploy yeniden build/deploy (ayrı `sync.sh` gerekmez).
 | `.env` container'a gitmiyor | `docker-compose.yml` içinde `env_file: - .env` olmalı; Environment sekmesindeki değişkenler deploy sonrası container'da görünmeli |
 | DisallowedHost | `DJANGO_ALLOWED_HOSTS` domain ile aynı |
 | **404** (sayfa yok) | `DJANGO_SECURE_SSL=0`, adres **http://** (https değil), Domain **HTTPS kapalı**, **Redeploy**. `/giris/` dene. |
+| Panel geldi → **502** → **404** | `app` restart döngüsü: Logs kontrol, `whatsapp-bridge` RAM, **Redeploy**. `http://…/healthz/` → `ok` olmalı. `DJANGO_SECURE_SSL=0`. |
 | CSRF | `DJANGO_CSRF_TRUSTED_ORIGINS` — sslip için `http://tam-host` |
 | WhatsApp kapalı | `whatsapp-bridge` log; `WHATSAPP_BRIDGE_URL` servis adı |
 | Veri sıfırlandı | Volume silinmiş; `gy_data` koru |
