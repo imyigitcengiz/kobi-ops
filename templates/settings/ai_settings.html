@@ -1,13 +1,9 @@
-{% extends 'tools/base.html' %}
+{% extends 'settings/base.html' %}
 
 {% block title %}AI Ayarları{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <a href="{% url 'tools_hub' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-violet-600 mb-4">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        Tools
-    </a>
     <h1 class="text-2xl font-bold text-slate-900">Yapay Zeka (AI) Ayarları</h1>
     <p class="text-slate-600 mt-1">Veri analizi ve asistan hizmetleri için API anahtarlarını yapılandırın.</p>
 </div>
@@ -21,7 +17,7 @@
             <p class="text-sm text-slate-500">Durum:
                 <strong class="text-slate-800">{% if ai_enabled %}Sohbet widget aktif{% else %}Pasif{% endif %}</strong>
             </p>
-            <a href="{% url 'tools_ai_panel' %}" class="text-sm font-semibold text-violet-600 hover:text-violet-700">AI Paneline git →</a>
+            <a href="{% url 'settings_ai_reporting' %}" class="text-sm font-semibold text-violet-600 hover:text-violet-700">AI Raporlama ve Sohbet →</a>
         </div>
     </div>
 

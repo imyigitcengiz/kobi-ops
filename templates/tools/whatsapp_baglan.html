@@ -1,5 +1,5 @@
 {% extends 'tools/base.html' %}
-{% block title %}WhatsApp Bağlan{% endblock %}
+{% block title %}WhatsApp{% endblock %}
 {% block content %}
 {% csrf_token %}
 <div class="max-w-3xl mx-auto">
@@ -7,9 +7,29 @@
         <a href="{% url 'tools_hub' %}" class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-green-600 mb-3">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Tools
         </a>
-        <h1 class="text-2xl font-bold text-slate-900">WhatsApp Bağlan</h1>
-        <p class="text-slate-600 mt-1">Her hat için bir bağlantı ekleyin, QR kodu tarayın. Bir kez bağlandıktan sonra uygulama yeniden açılsa bile oturum korunur.</p>
+        <h1 class="text-2xl font-bold text-slate-900">WhatsApp</h1>
+        <p class="text-slate-600 mt-1">Hat bağlantıları, yazdırma konum isteme mesajı ve otomatik senaryolar.</p>
     </div>
+
+    <section class="mb-8 p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Servis yazdırma — konum isteme mesajı</h2>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+            Müşteride konum linki yoksa toplu yazdırmadaki <strong>QR / Konum</strong> sütunu bu metinle WhatsApp açar.
+            Değişkenler: <code class="text-[11px] bg-slate-100 px-1 rounded">{site_name}</code>
+            <code class="text-[11px] bg-slate-100 px-1 rounded">{ariza}</code>
+            (arıza tipi veya <em>servis</em>)
+        </p>
+        <textarea id="waLocationRequestTemplate" rows="4" class="w-full mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm">{{ whatsapp_location_request_template }}</textarea>
+        <p id="waLocationRequestStatus" class="text-xs mt-2 text-slate-500"></p>
+        <div class="mt-3 p-3 rounded-xl bg-violet-50 border border-violet-100">
+            <p class="text-[10px] font-bold text-violet-700 uppercase mb-1">Önizleme (örnek)</p>
+            <p id="waLocationRequestPreview" class="text-xs text-violet-900 whitespace-pre-wrap"></p>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" id="waLocationRequestSaveBtn" class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700">Mesajı kaydet</button>
+            <button type="button" id="waLocationRequestResetBtn" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200">Varsayılana dön</button>
+        </div>
+    </section>
 
     <div id="bridgeDeployHint" class="{% if whatsapp_bridge_can_spawn %}hidden{% endif %} mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-950">
         <p class="font-bold">Sunucu / Docker kurulumu (Coolify)</p>
@@ -108,6 +128,67 @@
     function csrf() { return document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''; }
     function connUrl(id, suffix) { return `/tools/whatsapp/baglantilar/${id}/${suffix || ''}`; }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    const LOCATION_MSG_URL = '{% url "tools_whatsapp_location_request_template" %}';
+    let waLocationDefaultTemplate = '';
+
+    function initLocationRequestTemplate() {
+        const textarea = document.getElementById('waLocationRequestTemplate');
+        const preview = document.getElementById('waLocationRequestPreview');
+        const status = document.getElementById('waLocationRequestStatus');
+        if (!textarea) return;
+
+        async function refreshPreviewFromServer() {
+            const res = await fetch(LOCATION_MSG_URL);
+            const data = await res.json();
+            if (!data.ok) return;
+            waLocationDefaultTemplate = data.default_template || '';
+            if (!textarea.value.trim()) textarea.value = data.template || '';
+            if (preview) preview.textContent = data.preview || '';
+        }
+
+        async function saveTemplate(template) {
+            const res = await fetch(LOCATION_MSG_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+                body: JSON.stringify({ template }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error || 'Kaydedilemedi');
+            if (preview) preview.textContent = data.preview || '';
+            if (status) {
+                status.textContent = 'Kaydedildi. Yeni toplu yazdırmalarda bu metin kullanılır.';
+                status.className = 'text-xs mt-2 text-green-700 font-medium';
+            }
+        }
+
+        document.getElementById('waLocationRequestSaveBtn')?.addEventListener('click', async () => {
+            try {
+                await saveTemplate(textarea.value.trim());
+            } catch (err) {
+                if (status) {
+                    status.textContent = err.message || 'Hata';
+                    status.className = 'text-xs mt-2 text-red-600 font-medium';
+                }
+            }
+        });
+
+        document.getElementById('waLocationRequestResetBtn')?.addEventListener('click', async () => {
+            try {
+                if (!waLocationDefaultTemplate) await refreshPreviewFromServer();
+                textarea.value = waLocationDefaultTemplate;
+                await saveTemplate(textarea.value);
+            } catch (err) {
+                if (status) {
+                    status.textContent = err.message || 'Hata';
+                    status.className = 'text-xs mt-2 text-red-600 font-medium';
+                }
+            }
+        });
+
+        refreshPreviewFromServer().catch(() => {});
+    }
+    initLocationRequestTemplate();
 
     function escapeHtml(s) {
         return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -278,7 +359,7 @@
     async function startBridge() {
         const btn = document.getElementById('startBridgeBtn');
         btn.disabled = true;
-        btn.textContent = 'Başlatılıyor…';
+        btn.textContent = 'Hazırlanıyor…';
         try {
             const res = await fetch(START_BRIDGE_URL, {
                 method: 'POST',
@@ -288,8 +369,13 @@
             const data = await res.json();
             if (data.error && !data.started && !data.already_running) {
                 alert(data.error);
+            } else if (data.deps_installed) {
+                btn.textContent = 'Bağımlılıklar kuruldu, köprü açılıyor…';
+            } else if (data.message) {
+                btn.textContent = data.message.slice(0, 48);
             }
-            for (let i = 0; i < 15; i++) {
+            const waits = data.deps_installed ? 30 : 15;
+            for (let i = 0; i < waits; i++) {
                 await sleep(1500);
                 const list = await fetchList();
                 if (!list.bridge_offline) break;

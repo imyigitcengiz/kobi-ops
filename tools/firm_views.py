@@ -310,10 +310,17 @@ def sent_messages_api(request):
     collection_id = request.GET.get('collection_id')
     firm_id = request.GET.get('firm_id')
     send_type = (request.GET.get('send_type') or '').strip()
+    scope = (request.GET.get('scope') or 'firm').strip().lower()
     page = max(int(request.GET.get('page') or 1), 1)
     page_size = min(max(int(request.GET.get('page_size') or 50), 1), 200)
 
-    qs = WhatsappOutboundMessage.objects.select_related('collection', 'firm').order_by('-sent_at', '-created_at')
+    qs = WhatsappOutboundMessage.objects.select_related('collection', 'firm', 'customer').order_by(
+        '-sent_at', '-created_at',
+    )
+    if scope == 'customer':
+        qs = qs.filter(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+    elif scope == 'firm':
+        qs = qs.exclude(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
     if status and status != 'all':
         qs = qs.filter(status=status)
     if collection_id:
@@ -356,6 +363,7 @@ def sent_messages_api(request):
             'collection_id': m.collection_id,
             'collection_name': m.collection.name if m.collection else '',
             'firm_id': m.firm_id,
+            'customer_id': m.customer_id,
             'send_type': m.send_type or '',
             'send_type_label': m.get_send_type_display() if m.send_type else (m.get_source_display() if m.source else '—'),
             'error_message': m.error_message,

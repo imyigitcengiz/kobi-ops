@@ -17,6 +17,33 @@
 
   let selectedServiceTypeIds = new Set(initialServiceTypes.map(Number));
 
+  function getCheckedProductIds() {
+    return sync.collectProductIds(document, 'input[name="products"]:checked');
+  }
+
+  function mergeServiceTypeIntoCatalog(item) {
+    const idx = catalog.service_types.findIndex((x) => x.id === item.id);
+    const merged = {
+      ...(idx >= 0 ? catalog.service_types[idx] : {}),
+      ...item,
+      product_ids: item.product_ids || catalog.service_types[idx]?.product_ids || [],
+    };
+    if (idx >= 0) catalog.service_types[idx] = merged;
+    else catalog.service_types.push(merged);
+    return merged;
+  }
+
+  function linkServiceTypeToProducts(serviceTypeId, productIds) {
+    productIds.forEach((pid) => {
+      const product = catalog.products.find((p) => p.id === pid);
+      if (!product) return;
+      if (!product.service_type_ids) product.service_type_ids = [];
+      if (!product.service_type_ids.includes(serviceTypeId)) {
+        product.service_type_ids.push(serviceTypeId);
+      }
+    });
+  }
+
   function renderServiceTypes() {
     sync.renderFilteredServiceTypes({
       catalog,
@@ -28,6 +55,31 @@
       hintEl: serviceTypeHint,
       selectedServiceTypeIds,
     });
+    attachServiceTypeEditButtons();
+  }
+
+  function attachServiceTypeEditButtons() {
+    serviceTypeContainer?.querySelectorAll('label').forEach((label) => {
+      const cb = label.querySelector('.service-type-cb');
+      if (!cb || label.querySelector('.service-type-edit-btn')) return;
+      const id = parseInt(cb.value, 10);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className =
+        'service-type-edit-btn ml-auto p-1 text-slate-400 hover:text-brand-600 hover:bg-white rounded-lg opacity-70 group-hover:opacity-100 transition-all shrink-0';
+      btn.title = 'Arıza tipini düzenle';
+      btn.setAttribute('aria-label', 'Düzenle');
+      btn.innerHTML =
+        '<i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i>';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const item = catalog.service_types.find((s) => s.id === id);
+        if (item) openQuickModal('service_type', item);
+      });
+      label.appendChild(btn);
+    });
+    if (window.lucide) lucide.createIcons();
   }
 
   function bindServiceTypeContainer() {
@@ -71,19 +123,47 @@
     if (preview) preview.style.backgroundColor = hex || '#3b82f6';
   }
 
+  function fillServiceTypeProductCheckboxes(item = null) {
+    const box = document.getElementById('quickServiceTypeProducts');
+    if (!box) return;
+    const checkedProductIds = getCheckedProductIds();
+    const selectedProductIds = new Set(item?.product_ids || []);
+    const products = catalog.products.filter((p) => checkedProductIds.includes(p.id));
+
+    if (!products.length) {
+      box.innerHTML =
+        '<p class="text-xs text-amber-700 py-1">Önce formda en az bir ürün seçin; ardından bu tipi ürünlere bağlayabilirsiniz.</p>';
+      return;
+    }
+
+    box.innerHTML = products
+      .map(
+        (p) => `<label class="flex items-center gap-2 text-sm py-1">
+        <input type="checkbox" class="quick-st-product-cb rounded" value="${p.id}" ${
+          selectedProductIds.has(p.id) || (!item && checkedProductIds.includes(p.id))
+            ? 'checked'
+            : ''
+        }>
+        <span class="w-2 h-2 rounded-full shrink-0" style="background-color:${p.color}"></span>${p.name}</label>`
+      )
+      .join('');
+  }
+
   function openQuickModal(kind, item = null) {
     const modal = document.getElementById('quickOptionModal');
     const title = document.getElementById('quickOptionModalTitle');
     const colorWrap = document.getElementById('quickOptionColorWrap');
     const productStWrap = document.getElementById('quickOptionProductTypesWrap');
+    const serviceTypeProductsWrap = document.getElementById('quickOptionServiceTypeProductsWrap');
     document.getElementById('quickOptionType').value = kind;
     document.getElementById('quickOptionId').value = item ? String(item.id) : '';
     document.getElementById('quickOptionName').value = item ? item.name : '';
 
     const label = quickLabels[kind] || 'seçenek';
     title.textContent = item ? `${label} düzenle` : `Yeni ${label}`;
-    colorWrap.classList.toggle('hidden', kind === 'whatsapp' || kind === 'service_type');
+    colorWrap.classList.toggle('hidden', kind === 'whatsapp');
     productStWrap.classList.toggle('hidden', kind !== 'product');
+    serviceTypeProductsWrap?.classList.toggle('hidden', kind !== 'service_type');
 
     if (kind === 'product') {
       const box = document.getElementById('quickProductServiceTypes');
@@ -95,6 +175,10 @@
         <span class="w-2 h-2 rounded-full" style="background-color:${st.color}"></span>${st.name}</label>`
         )
         .join('');
+    }
+
+    if (kind === 'service_type') {
+      fillServiceTypeProductCheckboxes(item);
     }
 
     setQuickModalColor(item?.color || '#3b82f6');
@@ -121,11 +205,18 @@
       const id = parseInt(checked[0].value, 10);
       item = catalog.products.find((p) => p.id === id);
     } else if (kind === 'service_type') {
-      const ids = [...selectedServiceTypeIds];
-      if (ids.length !== 1) {
-        return alert('Arıza tipi düzenlemek için tam olarak bir tip işaretleyin.');
+      const checkedBoxes = serviceTypeContainer?.querySelectorAll('.service-type-cb:checked') || [];
+      if (checkedBoxes.length === 1) {
+        const id = parseInt(checkedBoxes[0].value, 10);
+        item = catalog.service_types.find((s) => s.id === id);
+      } else if (selectedServiceTypeIds.size === 1) {
+        item = catalog.service_types.find((s) => s.id === [...selectedServiceTypeIds][0]);
       }
-      item = catalog.service_types.find((s) => s.id === ids[0]);
+      if (!item) {
+        return alert(
+          'Arıza tipi düzenlemek için listeden bir tip işaretleyin veya satırdaki kalem simgesine tıklayın.'
+        );
+      }
     }
     if (!item) return alert('Kayıt bulunamadı.');
     openQuickModal(kind, item);
@@ -139,13 +230,15 @@
       document.querySelector('#quickOptionModal .color-picker-value')?.value || '#3b82f6';
     if (!name) return alert('İsim girin');
 
-    const body = { type: kind, name };
-    if (kind !== 'service_type') {
-      body.color = color;
-    }
+    const body = { type: kind, name, color };
     if (kind === 'product') {
       body.service_type_ids = Array.from(
         document.querySelectorAll('.quick-product-st-cb:checked')
+      ).map((cb) => parseInt(cb.value, 10));
+    }
+    if (kind === 'service_type') {
+      body.product_ids = Array.from(
+        document.querySelectorAll('.quick-st-product-cb:checked')
       ).map((cb) => parseInt(cb.value, 10));
     }
 
@@ -188,9 +281,12 @@
       catalog.priorities.push(item);
     } else if (kind === 'product') {
       catalog.products.push(item);
-      appendProductCheckbox(item);
     } else if (kind === 'service_type') {
-      catalog.service_types.push(item);
+      mergeServiceTypeIntoCatalog(item);
+    }
+
+    if (kind === 'service_type' && body.product_ids?.length) {
+      linkServiceTypeToProducts(item.id, body.product_ids);
     }
 
     const script = document.getElementById('optionsCatalogData');
@@ -201,6 +297,9 @@
     } else if (kind === 'priority') {
       refreshSelectOptions(prioritySelect, catalog.priorities, item.id);
     } else if (kind === 'product' || kind === 'service_type') {
+      if (kind === 'service_type' && !id) {
+        selectedServiceTypeIds.add(item.id);
+      }
       renderServiceTypes();
     }
 
@@ -232,17 +331,6 @@
       if (textSpan) label.insertBefore(dot, textSpan);
       else label.appendChild(dot);
     });
-  }
-
-  function appendProductCheckbox(product) {
-    const label = document.createElement('label');
-    label.className =
-      'flex items-center gap-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer group';
-    label.innerHTML = `
-      <input type="checkbox" name="products" value="${product.id}" class="rounded border-slate-300 text-brand-600">
-      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${product.color}"></span>
-      <span class="text-sm text-slate-600 group-hover:text-brand-600">${product.name}</span>`;
-    productContainer.appendChild(label);
   }
 
   productContainer?.addEventListener('change', (e) => {

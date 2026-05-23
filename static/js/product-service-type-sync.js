@@ -8,13 +8,19 @@
     }
     const union = new Set();
     let anyMapping = false;
-    productIds.forEach((pid) => {
+    for (const pid of productIds) {
       const product = catalog.products.find((p) => p.id === pid);
-      if (product?.service_type_ids?.length) {
-        anyMapping = true;
-        product.service_type_ids.forEach((id) => union.add(id));
+      if (!product?.service_type_ids?.length) {
+        return {
+          ids: null,
+          mode: 'all_fallback',
+          message:
+            'Seçili ürünlerden en az birinde arıza tipi tanımlı değil; tüm tipler gösteriliyor.',
+        };
       }
-    });
+      anyMapping = true;
+      product.service_type_ids.forEach((id) => union.add(id));
+    }
     if (!anyMapping) {
       return {
         ids: null,

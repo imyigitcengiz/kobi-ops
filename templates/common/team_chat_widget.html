@@ -43,8 +43,11 @@
         </div>
     </div>
 
-    <button type="button" id="teamChatToggle" class="relative w-14 h-14 bg-violet-600 text-white rounded-full shadow-xl shadow-violet-300/50 flex items-center justify-center hover:scale-105 transition-transform" aria-label="Sohbeti aç">
-        <i data-lucide="message-circle" class="w-7 h-7"></i>
+    <button type="button" id="teamChatToggle" class="relative w-14 h-14 bg-violet-600 text-white rounded-full shadow-xl shadow-violet-300/50 flex items-center justify-center hover:scale-105 transition-transform" aria-label="Sohbeti aç" title="Ekip sohbeti">
+        <svg class="w-7 h-7 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 10a2 2 0 0 1-2 2H6l-4 4V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/>
+            <path d="M22 6a2 2 0 0 0-2-2h-6a2 2 0 0 0-2 2v7l-4 4h8a2 2 0 0 0 2-2z"/>
+        </svg>
         <span id="teamChatBadge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
     </button>
 </div>

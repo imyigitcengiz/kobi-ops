@@ -81,6 +81,26 @@
                 <i data-lucide="handshake" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Çözüm ortağı türleri</span>
             </a>
+
+            {% if user_perms.tools_ai or user_perms.tools_backup %}
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</p>
+            {% if user_perms.tools_ai %}
+            <a href="{% url 'settings_ai_settings' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_ai_settings' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">AI Ayarları</span>
+            </a>
+            <a href="{% url 'settings_ai_reporting' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_ai_reporting' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="bot" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">AI Raporlama ve Sohbet</span>
+            </a>
+            {% endif %}
+            {% if user_perms.tools_backup %}
+            <a href="{% url 'settings_system_backup' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_system_backup' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="database-backup" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Sistem Yedekleri</span>
+            </a>
+            {% endif %}
+            {% endif %}
             {% endwith %}
 
             <div class="pt-4 mt-2 border-t border-slate-800">
@@ -90,12 +110,6 @@
                 <a href="{% url 'tools_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
                     <i data-lucide="hammer" class="w-5 h-5"></i>
                     <span class="font-medium text-sm">Tools</span>
-                </a>
-                {% endif %}
-                {% if user_perms.tools_ai %}
-                <a href="{% url 'ai_panel' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">Yapay zeka</span>
                 </a>
                 {% endif %}
             </div>
@@ -126,8 +140,8 @@
     </script>
     {% load static %}
     <script src="{% static 'js/live-sync.js' %}" defer></script>
-    <script>lucide.createIcons();</script>
     {% block extra_js %}{% endblock %}
     {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

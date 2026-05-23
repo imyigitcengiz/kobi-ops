@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ from django.conf import settings
 
 _LAST_SPAWN_MONO = 0.0
 _DEBOUNCE_SEC = 8.0
+_DEPS_INSTALL_LOCK = threading.Lock()
 
 
 def _bridge_base_url() -> str:
@@ -62,7 +64,7 @@ def bridge_spawn_allowed() -> bool:
 
 def _offline_detail_local() -> str:
     if bridge_spawn_allowed():
-        return 'Köprü kapalı. "Köprüyü başlat" ile açın veya birkaç saniye bekleyin.'
+        return 'Köprü kapalı. Birkaç saniye bekleyin veya "Köprüyü başlat"a basın — Django otomatik açar.'
     return (
         'Köprü bu sunucuda otomatik başlatılmıyor. '
         'whatsapp-bridge servisini çalıştırın ve WHATSAPP_BRIDGE_URL ayarlayın '
@@ -161,8 +163,168 @@ def _resolve_node_executable() -> str | None:
         return None
     low = found.lower()
     if 'cursor' in low and 'helpers' in low:
-        _append_spawn_log(f'Uyarı: IDE içi node kullanılıyor ({found}); gerçek Node.js kurulumu önerilir.')
+        return None
     return found
+
+
+def _resolve_npm_executable(node_exe: str | None = None) -> str | None:
+    if node_exe:
+        npm_name = 'npm.cmd' if sys.platform == 'win32' else 'npm'
+        sibling = Path(node_exe).parent / npm_name
+        if sibling.is_file():
+            return str(sibling)
+    return shutil.which('npm.cmd') or shutil.which('npm')
+
+
+def _bridge_deps_ready(bridge_dir: Path) -> bool:
+    node_modules = bridge_dir / 'node_modules'
+    if not node_modules.is_dir():
+        return False
+    return (node_modules / 'express').exists()
+
+
+def _try_install_node_linux() -> bool:
+    if sys.platform == 'win32':
+        return False
+    if not getattr(settings, 'WHATSAPP_BRIDGE_AUTO_INSTALL_NODE', True):
+        return False
+    try:
+        if hasattr(os, 'geteuid') and os.geteuid() != 0:
+            _append_spawn_log('Node yok; sistem paketi kurulumu için root gerekir (apt/dnf).')
+            return False
+    except AttributeError:
+        return False
+
+    if shutil.which('apt-get'):
+        _append_spawn_log('Node.js kuruluyor (apt-get)…')
+        try:
+            r1 = subprocess.run(
+                ['apt-get', 'update', '-qq'],
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            r2 = subprocess.run(
+                ['apt-get', 'install', '-y', '--no-install-recommends', 'nodejs', 'npm'],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if r1.returncode == 0 and r2.returncode == 0 and _resolve_node_executable():
+                return True
+            tail = ((r2.stderr or '') + (r2.stdout or ''))[-400:]
+            _append_spawn_log(f'apt node kurulumu başarısız: {tail}')
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            _append_spawn_log(f'apt node kurulumu hatası: {exc}')
+
+    if shutil.which('dnf'):
+        _append_spawn_log('Node.js kuruluyor (dnf)…')
+        try:
+            r = subprocess.run(
+                ['dnf', 'install', '-y', 'nodejs', 'npm'],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            if r.returncode == 0 and _resolve_node_executable():
+                return True
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            _append_spawn_log(f'dnf node kurulumu hatası: {exc}')
+
+    return False
+
+
+def _run_npm_install(bridge_dir: Path, node_exe: str) -> tuple[bool, str]:
+    npm = _resolve_npm_executable(node_exe)
+    if not npm:
+        return False, 'npm bulunamadı (Node.js kurulumunu kontrol edin).'
+
+    lock = bridge_dir / 'package-lock.json'
+    if lock.is_file():
+        cmd = [npm, 'ci', '--omit=dev', '--no-audit', '--no-fund', '--loglevel=error']
+    else:
+        cmd = [npm, 'install', '--omit=dev', '--no-audit', '--no-fund', '--loglevel=error']
+
+    env = os.environ.copy()
+    node_dir = str(Path(node_exe).parent)
+    env['PATH'] = node_dir + os.pathsep + env.get('PATH', '')
+
+    _append_spawn_log(f'Köprü bağımlılıkları kuruluyor: {" ".join(cmd)}')
+    flags = {}
+    if sys.platform == 'win32':
+        flags['creationflags'] = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+    try:
+        r = subprocess.run(
+            cmd,
+            cwd=str(bridge_dir),
+            capture_output=True,
+            text=True,
+            timeout=int(getattr(settings, 'WHATSAPP_BRIDGE_NPM_TIMEOUT', 600)),
+            env=env,
+            **flags,
+        )
+    except subprocess.TimeoutExpired:
+        return False, 'npm install zaman aşımına uğradı (ilk kurulum uzun sürebilir).'
+    except OSError as exc:
+        return False, str(exc)
+
+    if r.returncode != 0:
+        tail = ((r.stderr or '') + '\n' + (r.stdout or '')).strip()[-500:]
+        return False, f'npm install başarısız: {tail or "bilinmeyen hata"}'
+
+    if not _bridge_deps_ready(bridge_dir):
+        return False, 'npm install bitti ama node_modules eksik görünüyor.'
+
+    _append_spawn_log('Köprü bağımlılıkları hazır (node_modules).')
+    return True, ''
+
+
+def ensure_bridge_environment(*, install_node: bool = True) -> dict:
+    """
+    Yerel köprü için Node + npm bağımlılıklarını hazırlar.
+    Sunucuda spawn kapalıysa no-op.
+    """
+    if not bridge_spawn_allowed():
+        return {'ok': True, 'skipped': True}
+
+    bridge_dir = _bridge_dir()
+    if not (bridge_dir / 'server.js').is_file():
+        return {'ok': False, 'reason': 'missing_dir', 'message': 'tools/whatsapp_bridge/server.js bulunamadı.'}
+
+    node_exe = _resolve_node_executable()
+    if not node_exe and install_node:
+        _try_install_node_linux()
+        node_exe = _resolve_node_executable()
+
+    if not node_exe:
+        return {
+            'ok': False,
+            'reason': 'no_node',
+            'message': (
+                'Node.js bulunamadı. Windows: https://nodejs.org kurun veya '
+                'WHATSAPP_BRIDGE_NODE ayarlayın. Linux sunucu (root): Django apt ile kurmayı dener.'
+            ),
+        }
+
+    if _bridge_deps_ready(bridge_dir):
+        return {'ok': True, 'node': node_exe, 'deps_installed': False}
+
+    if not getattr(settings, 'WHATSAPP_BRIDGE_AUTO_NPM_INSTALL', True):
+        return {
+            'ok': False,
+            'reason': 'no_node_modules',
+            'message': 'Köprü bağımlılıkları eksik; DJANGO_WHATSAPP_BRIDGE_AUTO_NPM_INSTALL=1 yapın.',
+            'node': node_exe,
+        }
+
+    with _DEPS_INSTALL_LOCK:
+        if _bridge_deps_ready(bridge_dir):
+            return {'ok': True, 'node': node_exe, 'deps_installed': False}
+        ok, msg = _run_npm_install(bridge_dir, node_exe)
+        if not ok:
+            return {'ok': False, 'reason': 'npm_failed', 'message': msg, 'node': node_exe}
+        return {'ok': True, 'node': node_exe, 'deps_installed': True}
 
 
 def _port_is_listening(port: int) -> bool:
@@ -328,18 +490,17 @@ def try_spawn_bridge_process(*, force: bool = False, as_admin: bool | None = Non
             'probe': probe,
         }
 
-    if not (bridge_dir / 'node_modules').is_dir():
+    env_result = ensure_bridge_environment()
+    if not env_result.get('ok'):
         return {
             'spawned': False,
-            'reason': 'no_node_modules',
-            'message': (
-                'Köprü bağımlılıkları yok. Terminalde: '
-                f'cd "{bridge_dir}" && npm install'
-            ),
+            'reason': env_result.get('reason') or 'env_failed',
+            'message': env_result.get('message'),
             'probe': probe,
+            'deps_installed': env_result.get('deps_installed'),
         }
 
-    node_exe = _resolve_node_executable()
+    node_exe = env_result.get('node') or _resolve_node_executable()
     if not node_exe:
         return {
             'spawned': False,
@@ -402,4 +563,5 @@ def try_spawn_bridge_process(*, force: bool = False, as_admin: bool | None = Non
         'killed_pid': killed_pid,
         'as_admin': as_admin,
         'node': node_exe,
+        'deps_installed': env_result.get('deps_installed'),
     }

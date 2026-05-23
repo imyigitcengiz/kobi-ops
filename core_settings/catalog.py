@@ -32,7 +32,12 @@ def build_options_catalog():
             for p in products
         ],
         'service_types': [
-            {'id': s.id, 'name': s.name, 'color': service_type_color(s)}
+            {
+                'id': s.id,
+                'name': s.name,
+                'color': service_type_color(s),
+                'product_ids': list(s.products.values_list('id', flat=True)),
+            }
             for s in service_types
         ],
         'statuses': [
@@ -64,9 +69,10 @@ def resolve_allowed_service_type_ids(product_ids: list[int]) -> tuple[set[int] |
     any_mapping = False
     for product in products:
         ids = list(product.service_types.values_list('id', flat=True))
-        if ids:
-            any_mapping = True
-            allowed.update(ids)
+        if not ids:
+            return None, 'all_fallback'
+        any_mapping = True
+        allowed.update(ids)
 
     if not any_mapping:
         return None, 'all_fallback'

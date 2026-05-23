@@ -45,6 +45,12 @@ class SiteSettings(models.Model):
         default=False,
         verbose_name='WhatsApp: daha önce mesaj atılanları varsayılan atla',
     )
+    whatsapp_location_request_template = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Yazdırma: WhatsApp konum isteme mesajı',
+        help_text='Toplu yazdırmada konum yoksa QR bu metinle oluşturulur. Değişkenler: {site_name}, {ariza}',
+    )
 
     class Meta:
         verbose_name = "Site Ayarları"

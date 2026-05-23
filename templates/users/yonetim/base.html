@@ -54,7 +54,7 @@
             {% block content %}{% endblock %}
         </div>
     </main>
-    <script>lucide.createIcons();</script>
     {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

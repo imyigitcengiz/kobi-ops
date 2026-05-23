@@ -150,6 +150,30 @@
         .stack { display: flex; flex-direction: column; gap: 2px; }
         .muted { color: #64748b; font-size: 0.92em; }
 
+        .qr-cell { text-align: center; }
+        .qr-cell img {
+            display: block;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 4px;
+            object-fit: contain;
+        }
+        .qr-cell .qr-caption {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #475569;
+            line-height: 1.2;
+        }
+        .qr-cell .qr-hint {
+            font-size: 0.58rem;
+            color: #64748b;
+            margin-top: 4px;
+            line-height: 1.25;
+            text-align: left;
+            max-height: 3.2em;
+            overflow: hidden;
+        }
+
         .report-footer {
             margin-top: 14px;
             padding-top: 10px;
@@ -241,10 +265,11 @@
                 <label><input type="checkbox" checked data-col="2"> Ürünler</label>
                 <label><input type="checkbox" checked data-col="3"> Arıza</label>
                 <label><input type="checkbox" checked data-col="4"> Notlar</label>
-                <label><input type="checkbox" checked data-col="5"> Durum</label>
-                <label><input type="checkbox" checked data-col="6"> Öncelik</label>
-                <label><input type="checkbox" checked data-col="7"> Personel</label>
-                <label><input type="checkbox" checked data-col="8"> Tarih</label>
+                <label><input type="checkbox" data-col="5"> Durum</label>
+                <label><input type="checkbox" data-col="6"> Öncelik</label>
+                <label><input type="checkbox" data-col="7"> Personel</label>
+                <label><input type="checkbox" data-col="8"> Tarih</label>
+                <label><input type="checkbox" checked data-col="9"> QR / Konum</label>
             </span>
         </div>
     </div>
@@ -280,6 +305,7 @@
                     <th style="width:9%;">Öncelik</th>
                     <th style="width:11%;">Personel</th>
                     <th style="width:6%;">Tarih</th>
+                    <th style="width:12%;">QR</th>
                 </tr>
             </thead>
             <tbody>
@@ -319,9 +345,24 @@
                         {% else %}-{% endif %}
                     </td>
                     <td>{{ s.created_at|date:"d.m.Y" }}</td>
+                    <td class="qr-cell">
+                        {% if s.bulk_qr.kind == 'none' %}
+                        <span class="muted">{{ s.bulk_qr.hint }}</span>
+                        {% else %}
+                        <a href="{{ s.bulk_qr.target_url }}" target="_blank" rel="noopener noreferrer" title="{% if s.bulk_qr.kind == 'location' %}Konumu aç{% else %}WhatsApp ile konum iste{% endif %}">
+                            <img src="{{ s.bulk_qr.qr_image_url }}" alt="{% if s.bulk_qr.kind == 'location' %}Konum QR{% else %}WhatsApp QR{% endif %}" width="72" height="72" loading="lazy">
+                        </a>
+                        <div class="qr-caption">{{ s.bulk_qr.caption }}</div>
+                        {% if s.bulk_qr.kind == 'whatsapp' and s.bulk_qr.hint %}
+                        <div class="qr-hint" title="{{ s.bulk_qr.hint }}">{{ s.bulk_qr.hint }}</div>
+                        {% elif s.bulk_qr.kind == 'location' and s.customer.location_link %}
+                        <div class="qr-hint muted" style="word-break:break-all;">{{ s.customer.location_link }}</div>
+                        {% endif %}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">Kayıt bulunamadı.</td></tr>
+                <tr><td colspan="10" style="text-align:center;padding:2rem;color:#94a3b8;">Kayıt bulunamadı.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -363,6 +404,7 @@
         function syncColumnPickers() {
             document.querySelectorAll('.col-picker input[data-col]').forEach(function (inp) {
                 var idx = parseInt(inp.getAttribute('data-col'), 10);
+                toggleColumn(idx, inp.checked);
                 inp.addEventListener('change', function () {
                     toggleColumn(idx, inp.checked);
                 });

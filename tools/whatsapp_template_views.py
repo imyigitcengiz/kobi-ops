@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 
+from common.decorators import json_auth_required, permission_required
 from core_settings.models import StatusOption, WhatsAppTemplate
 from core_settings.status_defaults import ensure_default_statuses
 from sales_leads.models import SalesLead
@@ -156,6 +157,8 @@ def _serialize_template(t: WhatsAppTemplate) -> dict:
 
 
 @require_http_methods(['GET'])
+@json_auth_required
+@permission_required('tools.whatsapp_scenarios', 'tools.whatsapp', any_perm=True)
 def whatsapp_scenario_meta_api(request):
     ensure_default_statuses()
     service_statuses = [
@@ -191,6 +194,8 @@ def whatsapp_scenario_meta_api(request):
 
 
 @require_http_methods(['GET', 'POST'])
+@json_auth_required
+@permission_required('tools.whatsapp_scenarios', 'tools.whatsapp', any_perm=True)
 def whatsapp_scenario_templates_api(request):
     if request.method == 'GET':
         items = [_serialize_template(t) for t in WhatsAppTemplate.objects.all()]
@@ -227,6 +232,8 @@ def whatsapp_scenario_templates_api(request):
 
 
 @require_http_methods(['PATCH', 'DELETE'])
+@json_auth_required
+@permission_required('tools.whatsapp_scenarios', 'tools.whatsapp', any_perm=True)
 def whatsapp_scenario_template_detail_api(request, pk):
     template = get_object_or_404(WhatsAppTemplate, pk=pk)
     if request.method == 'DELETE':

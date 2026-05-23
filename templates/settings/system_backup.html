@@ -1,15 +1,15 @@
-{% extends 'tools/base.html' %}
+{% extends 'settings/base.html' %}
 
 {% block title %}Sistem Yedekleri{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <a href="{% url 'tools_hub' %}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-violet-600 mb-4">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        Tools
-    </a>
     <h1 class="text-2xl font-bold text-slate-900">Sistem Yedekleri</h1>
-    <p class="text-slate-600 mt-1">Hızlı taşıma için <strong>db.sqlite3</strong> indirip yükleyin; JSON yedek isteğe bağlıdır.</p>
+    <p class="text-slate-600 mt-1">
+        <strong>Tam sistem yedeği</strong> <code class="text-sm bg-slate-100 px-1 rounded">db.sqlite3</code> dosyasıdır —
+        tüm tablolar, kayıtlar ve uygulanmış migration geçmişi bu dosyada birebir saklanır.
+        Yüklenen dosyalar için ayrıca <code class="text-sm bg-slate-100 px-1 rounded">media/</code> klasörünü yedekleyin.
+    </p>
 </div>
 
 <div class="mb-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm">
@@ -30,26 +30,16 @@
     </p>
 </div>
 
-{% if messages %}
-<div class="mb-6 space-y-2">
-    {% for message in messages %}
-    <div class="px-4 py-3 rounded-xl text-sm font-medium {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-100{% else %}bg-blue-50 text-blue-700 border border-blue-100{% endif %}">
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 <section class="bg-white p-6 rounded-3xl border-2 border-violet-200 shadow-sm space-y-6 mb-6">
     <div class="flex items-start gap-3">
-        <span class="px-2 py-0.5 rounded-lg bg-violet-100 text-violet-800 text-xs font-bold">Önerilen</span>
+        <span class="px-2 py-0.5 rounded-lg bg-violet-100 text-violet-800 text-xs font-bold">Tam yedek</span>
         <div class="flex-1">
-            <h2 class="text-lg font-bold text-slate-900">SQLite (db.sqlite3)</h2>
+            <h2 class="text-lg font-bold text-slate-900">SQLite — tam sistem yedeği (db.sqlite3)</h2>
             <p class="text-xs text-slate-500 mt-1">
-                Lokalden sunucuya taşımak için en pratik yol. İndir → sunucuda yükle.
+                Veritabanının eksiksiz kopyasıdır; geri yüklemede sistem aynı veriyle devam eder. İndir → güvenli yerde sakla → gerektiğinde yükle.
             </p>
             <ul class="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-2 list-disc pl-5 space-y-1">
-                <li><strong>2 parça taşınır:</strong> db.sqlite3 + proje içindeki <code>media/</code> klasörü</li>
+                <li><strong>Tam yedek paketi iki parçadır:</strong> <code>db.sqlite3</code> (tüm veri) + <code>media/</code> (yüklenen dosyalar)</li>
                 <li>Coolify’da <strong>Storages → /data</strong> mount şart; redeploy volume yoksa DB sıfırlanır</li>
                 <li>İçe aktardıktan sonra redeploy, import’u silmez (volume varsa)</li>
                 <li>Sunucuda medya: <code>/data/media</code> — örn. <code>docker cp ./media/. CONTAINER:/data/media/</code></li>
@@ -58,37 +48,39 @@
     </div>
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-slate-100 pt-4">
-        <p class="text-sm text-slate-600">Mevcut veritabanını indir</p>
+        <p class="text-sm text-slate-600">Tam yedeği indir (db.sqlite3)</p>
         <form method="post" class="inline">
             {% csrf_token %}
             <input type="hidden" name="export_sqlite" value="1">
             <button type="submit" class="px-4 py-2.5 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700" {% if not backup_status.database_exists %}disabled{% endif %}>
-                db.sqlite3 İndir
+                Tam yedeği indir
             </button>
         </form>
     </div>
 
     <div class="border-t border-slate-100 pt-4">
-        <p class="text-sm text-slate-600 mb-3">Sunucuya / başka ortama db.sqlite3 yükle (mevcut DB yedeklenir, sonra migrate çalışır)</p>
+        <p class="text-sm text-slate-600 mb-3">Tam yedeği geri yükle — mevcut veritabanı önce otomatik yedeklenir, ardından dosya yerine yazılır</p>
         <form method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-3 sm:items-center">
             {% csrf_token %}
             <input type="hidden" name="import_sqlite" value="1">
             <input type="file" name="sqlite_file" accept=".sqlite3,.db,application/x-sqlite3" class="flex-1 p-2 border border-slate-200 rounded-xl bg-slate-50 text-sm">
             <button type="submit" class="px-4 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 whitespace-nowrap"
                     onclick="return confirm('Mevcut veritabanı yedeklenip bu dosya ile değiştirilecek. Devam?');">
-                SQLite İçe Aktar
+                Tam yedeği geri yükle
             </button>
         </form>
     </div>
 </section>
 
 <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-    <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Alternatif — JSON yedek</p>
+    <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">İsteğe bağlı — veri dışa aktarma</p>
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h2 class="text-lg font-bold text-slate-900">JSON yedek</h2>
-            <p class="text-xs text-slate-400 mt-1">.json.gz — migration listesi + tüm kayıtlar (izin çakışması otomatik giderilir).</p>
+            <h2 class="text-lg font-bold text-slate-900">JSON dışa aktarma</h2>
+            <p class="text-xs text-slate-400 mt-1">
+                Tam yedek değildir — kayıtların fixture kopyasıdır (.json.gz). Taşıma ve felaket kurtarma için <strong>db.sqlite3</strong> kullanın.
+            </p>
         </div>
         <form method="post" class="inline">
             {% csrf_token %}

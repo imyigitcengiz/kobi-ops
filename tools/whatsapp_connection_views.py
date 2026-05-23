@@ -5,6 +5,13 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from pathlib import Path
 
+from common.decorators import json_auth_required, permission_required
+from core_settings.models import SiteSettings
+from core_settings.whatsapp_print import (
+    DEFAULT_WHATSAPP_LOCATION_REQUEST_TEMPLATE,
+    get_whatsapp_location_request_template,
+    render_whatsapp_location_request_message,
+)
 from tools.models import WhatsappConnection
 from tools.views import _json_body
 from tools.whatsapp_bridge_runner import bridge_reachable, probe_bridge, try_spawn_bridge_process
@@ -70,8 +77,19 @@ def _bridge_status_for(conn: WhatsappConnection) -> dict | None:
 
 
 @require_http_methods(['POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_bridge_auto_start_api(request):
     """Köprü kapalıysa yerel olarak başlatır (eski süreç varsa kapatıp yeniden açar)."""
+    from tools.whatsapp_bridge_runner import bridge_spawn_allowed
+
+    if not bridge_spawn_allowed():
+        return JsonResponse({
+            'ok': False,
+            'reason': 'spawn_disabled',
+            'error': 'Bu ortamda köprü panelden başlatılamaz; whatsapp-bridge servisini kullanın.',
+        }, status=403)
+
     body = _json_body(request) or {}
     force = bool(body.get('force'))
     as_admin = body.get('as_admin')
@@ -85,6 +103,13 @@ def whatsapp_bridge_auto_start_api(request):
     out = try_spawn_bridge_process(force=force, as_admin=as_admin)
 
     if out.get('spawned'):
+        msg = 'Köprü başlatıldı.'
+        if out.get('deps_installed'):
+            msg = 'Bağımlılıklar kuruldu, köprü başlatıldı.'
+        if out.get('as_admin'):
+            msg += ' UAC penceresinde Evet deyin.'
+        if out.get('killed_pid'):
+            msg += f' Eski süreç kapatıldı (PID {out["killed_pid"]}).'
         return JsonResponse({
             'ok': True,
             'started': True,
@@ -92,11 +117,8 @@ def whatsapp_bridge_auto_start_api(request):
             'killed_pid': out.get('killed_pid'),
             'as_admin': out.get('as_admin'),
             'node': out.get('node'),
-            'message': (
-                'Köprü başlatıldı.'
-                + (' UAC penceresinde Evet deyin.' if out.get('as_admin') else '')
-                + (f' Eski süreç kapatıldı (PID {out["killed_pid"]}).' if out.get('killed_pid') else '')
-            ),
+            'deps_installed': bool(out.get('deps_installed')),
+            'message': msg,
         })
 
     reason = out.get('reason')
@@ -117,6 +139,8 @@ def whatsapp_bridge_auto_start_api(request):
 
 
 @require_http_methods(['GET'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_bridge_ui_log_api(request):
     """Köprünün yazdığı mirror log (sayfadaki konsol kutusu için)."""
     p = Path(settings.BASE_DIR) / 'tools' / 'whatsapp_bridge' / 'bridge_ui.log'
@@ -148,6 +172,8 @@ def _maybe_auto_reconnect(conn: WhatsappConnection, bridge_data: dict | None) ->
 
 
 @require_http_methods(['GET', 'POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_connections_api(request):
     if request.method == 'GET':
         probe = probe_bridge()
@@ -176,6 +202,8 @@ def whatsapp_connections_api(request):
 
 
 @require_http_methods(['PATCH', 'DELETE'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_connection_detail_api(request, pk):
     conn = get_object_or_404(WhatsappConnection, pk=pk)
     if request.method == 'PATCH':
@@ -197,6 +225,8 @@ def whatsapp_connection_detail_api(request, pk):
 
 
 @require_http_methods(['GET'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_connection_status_api(request, pk):
     conn = get_object_or_404(WhatsappConnection, pk=pk)
     try:
@@ -210,6 +240,8 @@ def whatsapp_connection_status_api(request, pk):
 
 
 @require_http_methods(['POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_connection_connect_api(request, pk):
     conn = get_object_or_404(WhatsappConnection, pk=pk)
     try:
@@ -223,6 +255,8 @@ def whatsapp_connection_connect_api(request, pk):
 
 
 @require_http_methods(['POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_connection_disconnect_api(request, pk):
     conn = get_object_or_404(WhatsappConnection, pk=pk)
     try:
@@ -235,3 +269,54 @@ def whatsapp_connection_disconnect_api(request, pk):
     conn.pushname = ''
     conn.save(update_fields=['phone', 'pushname', 'updated_at'])
     return JsonResponse({'ok': True, 'connection': serialize_connection(conn, bridge)})
+
+
+def _site_settings_row() -> SiteSettings:
+    row = SiteSettings.objects.first()
+    if row:
+        return row
+    return SiteSettings.objects.create()
+
+
+@require_http_methods(['GET', 'POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
+def whatsapp_location_request_template_api(request):
+    if request.method == 'GET':
+        template = get_whatsapp_location_request_template()
+        site_name = _site_settings_row().site_name or 'Gölgede Yaşam'
+        return JsonResponse({
+            'ok': True,
+            'template': template,
+            'default_template': DEFAULT_WHATSAPP_LOCATION_REQUEST_TEMPLATE,
+            'preview': render_whatsapp_location_request_message(
+                site_name=site_name,
+                ariza='klima arızası',
+            ),
+        })
+
+    body = _json_body(request)
+    if body is None:
+        return JsonResponse({'ok': False, 'error': 'Geçersiz istek.'}, status=400)
+    template = (body.get('template') or '').strip()
+    if not template:
+        return JsonResponse({'ok': False, 'error': 'Mesaj metni boş olamaz.'}, status=400)
+    if '{site_name}' not in template or '{ariza}' not in template:
+        return JsonResponse(
+            {'ok': False, 'error': 'Mesajda {site_name} ve {ariza} değişkenleri bulunmalı.'},
+            status=400,
+        )
+
+    row = _site_settings_row()
+    row.whatsapp_location_request_template = template
+    row.save(update_fields=['whatsapp_location_request_template'])
+
+    site_name = row.site_name or 'Gölgede Yaşam'
+    return JsonResponse({
+        'ok': True,
+        'template': template,
+        'preview': render_whatsapp_location_request_message(
+            site_name=site_name,
+            ariza='klima arızası',
+        ),
+    })

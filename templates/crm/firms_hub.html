@@ -25,7 +25,7 @@
         <p class="text-2xl font-bold text-slate-900" id="memoryTotal">{{ memory_count }}</p>
     </div>
     <div class="bg-white rounded-2xl border border-slate-200 p-4">
-        <p class="text-xs font-bold text-slate-500 uppercase">Mesaj gönderilmiş</p>
+        <p class="text-xs font-bold text-slate-500 uppercase">Firma mesajı gönderilmiş</p>
         <p class="text-2xl font-bold text-emerald-700" id="messagedTotal">{{ messaged_count }}</p>
     </div>
     <a href="{% url 'tools_whatsapp_baglan' %}" class="bg-violet-50 rounded-2xl border border-violet-200 p-4 hover:bg-violet-100 transition-colors">
@@ -155,7 +155,7 @@
         <button type="button" id="addFirmBtn" class="px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-bold">Manuel kayıt ekle</button>
         <button type="button" id="clearMemoryBtn" class="px-3 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold">Rehberi temizle</button>
         <a href="{% url 'contact_tag_manager' %}" class="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-xl text-xs font-bold hover:bg-indigo-200">Etiket yönetimi</a>
-        <button type="button" id="showMessagesTabBtn" class="px-3 py-1.5 bg-slate-800 text-white rounded-xl text-xs font-bold ml-auto">Mesaj geçmişi</button>
+        <button type="button" id="showMessagesTabBtn" class="px-3 py-1.5 bg-slate-800 text-white rounded-xl text-xs font-bold ml-auto">Firma / kampanya mesajları</button>
     </div>
 
     <div class="overflow-x-auto max-h-[480px] overflow-y-auto">
@@ -730,7 +730,11 @@
     }
 
     async function loadMessages(extraParams) {
-        const params = new URLSearchParams({ page_size: '100', status: document.getElementById('msgStatusFilter').value });
+        const params = new URLSearchParams({
+            page_size: '100',
+            status: document.getElementById('msgStatusFilter').value,
+            scope: 'firm',
+        });
         const sendType = document.getElementById('msgSendTypeFilter')?.value;
         if (sendType && sendType !== 'all') params.set('send_type', sendType);
         const q = document.getElementById('msgSearchInput').value.trim();

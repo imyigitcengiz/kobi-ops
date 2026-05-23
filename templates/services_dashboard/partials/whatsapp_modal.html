@@ -32,7 +32,7 @@
                 <textarea id="waMessageInput" rows="7" placeholder="Mesajınızı yazın…" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm resize-y focus:ring-2 focus:ring-green-500 focus:border-green-300 outline-none"></textarea>
                 <p class="text-[11px] text-slate-400 mt-1.5">
                     Otomatik mesaj kuralları için
-                    <a href="{% url 'tools_whatsapp_baglan' %}#senaryolar" class="text-green-700 font-semibold hover:underline">WhatsApp Bağlan → Senaryolar</a>
+                    <a href="{% url 'tools_whatsapp_baglan' %}#senaryolar" class="text-green-700 font-semibold hover:underline">WhatsApp → Senaryolar</a>
                 </p>
             </div>
 
@@ -91,8 +91,8 @@
 
             if (!meta.hasConnections || meta.readyCount === 0) {
                 setWaStatus(meta.bridgeOffline
-                    ? 'WhatsApp köprüsü kapalı. Tools → WhatsApp Bağlan sayfasından bağlanın.'
-                    : 'Bağlı hat yok. WhatsApp Bağlan sayfasından QR okutun.', 'warn');
+                    ? 'WhatsApp köprüsü kapalı. Tools → WhatsApp sayfasından bağlanın.'
+                    : 'Bağlı hat yok. Tools → WhatsApp sayfasından QR okutun.', 'warn');
             } else {
                 setWaStatus('', '');
             }

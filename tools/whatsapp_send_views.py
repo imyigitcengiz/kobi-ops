@@ -2,9 +2,11 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from common.decorators import json_auth_required, permission_required
+
 from customers.models import Customer
 from tools.models import MapsScrapedFirm, WhatsappConnection, WhatsappOutboundMessage
-from tools.outreach_memory import ensure_firm_record, sync_firm_message_stats
+from tools.outreach_memory import sync_firm_message_stats
 from tools.phone_utils import is_whatsapp_eligible, normalize_phone
 from tools.views import _json_body
 from tools.whatsapp_client import (
@@ -93,19 +95,15 @@ def _log_and_send(
     send_type: str = '',
 ):
     firm = None
+    customer = None
     if firm_id:
         firm = MapsScrapedFirm.objects.filter(pk=firm_id).first()
     elif customer_id:
         customer = Customer.objects.filter(pk=customer_id).first()
-        if customer and phone_norm:
-            firm = ensure_firm_record(
-                name=customer.name,
-                phone_raw=phone_raw or phone_norm,
-                phone_normalized=phone_norm,
-                notes='Müşteri mesajı',
-            )
     elif phone_norm:
-        firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_norm).first()
+        firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_norm).exclude(
+            notes='Müşteri mesajı',
+        ).first()
 
     resolved_send_type = _resolve_send_type(
         customer_id=customer_id,
@@ -114,9 +112,20 @@ def _log_and_send(
         source=source,
         explicit=send_type,
     )
+    if resolved_send_type == WhatsappOutboundMessage.SEND_CUSTOMER:
+        firm = None
+    recipient_label = recipient_name
+    if not recipient_label and customer:
+        recipient_label = customer.name
+    elif not recipient_label and firm:
+        recipient_label = firm.name
+    elif not recipient_label:
+        recipient_label = 'Alıcı'
+
     outbound = WhatsappOutboundMessage.objects.create(
         firm=firm,
-        recipient_name=recipient_name or (firm.name if firm else 'Alıcı'),
+        customer=customer,
+        recipient_name=recipient_label,
         phone_normalized=phone_norm,
         phone_display=phone_raw or phone_norm,
         message=message,
@@ -160,6 +169,8 @@ def _log_and_send(
 
 
 @require_http_methods(['GET'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_ready_connections_api(request):
     try:
         items = []
@@ -195,6 +206,8 @@ def whatsapp_ready_connections_api(request):
 
 
 @require_http_methods(['POST'])
+@json_auth_required
+@permission_required('tools.whatsapp')
 def whatsapp_send_api(request):
     body = _json_body(request) or {}
     phone_raw = (body.get('phone') or '').strip()

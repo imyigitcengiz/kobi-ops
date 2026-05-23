@@ -12,7 +12,7 @@ import logging
 import openai
 from django.views.decorators.http import require_POST
 
-from common.decorators import permission_required
+from common.decorators import json_auth_required, permission_required
 from .service_report import build_service_dashboard_report
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,7 @@ class AIPanelView(TemplateView):
         return context
 
 @require_POST
+@json_auth_required
 @permission_required('tools.ai')
 def ai_chat_view(request):
     try:
@@ -126,5 +127,6 @@ def ai_chat_view(request):
             
         return JsonResponse({'message': response_text})
         
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except Exception:
+        logger.exception('AI chat request failed')
+        return JsonResponse({'error': 'AI isteği işlenemedi.'}, status=500)

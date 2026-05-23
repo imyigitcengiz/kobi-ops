@@ -344,6 +344,14 @@ class WhatsappOutboundMessage(models.Model):
         related_name='outbound_messages',
 
     )
+    customer = models.ForeignKey(
+        'customers.Customer',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='whatsapp_outbound_messages',
+        verbose_name='Müşteri',
+    )
 
     recipient_name = models.CharField(max_length=255, blank=True, default='')
 

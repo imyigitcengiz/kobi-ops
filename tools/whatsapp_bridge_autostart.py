@@ -90,6 +90,9 @@ def _autostart_worker() -> None:
         elif result.get('reason') == 'no_node':
             logger.error('WhatsApp köprüsü: %s', result.get('message'))
             return
+        elif result.get('reason') == 'npm_failed':
+            logger.error('WhatsApp köprüsü npm kurulumu: %s', result.get('message'))
+            return
         elif result.get('reason') not in ('already_running', 'recent'):
             logger.warning(
                 'WhatsApp köprüsü başlatılamadı (%s): %s',
@@ -115,7 +118,7 @@ def _autostart_worker() -> None:
     logger.error(
         'WhatsApp köprüsü %s saniye içinde hazır olmadı. URL=%s — '
         'Coolify/Docker ise whatsapp-bridge servisini kontrol edin; '
-        'yerelde Node kurulu mu ve tools/whatsapp_bridge içinde npm install yapıldı mı?',
+        'yerelde Node kurulu mu? Django npm install dener; log: tools/whatsapp_bridge/bridge_ui.log',
         int(retries * delay),
         url,
     )

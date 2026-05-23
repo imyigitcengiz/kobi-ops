@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 import socket
+import sys
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -70,6 +73,17 @@ if DEBUG:
 _env_secret = os.environ.get('DJANGO_SECRET_KEY', '').strip()
 if _env_secret:
     SECRET_KEY = _env_secret
+elif 'test' not in sys.argv and (not DEBUG or os.environ.get('DATA_DIR', '').strip()):
+    raise ImproperlyConfigured(
+        'Üretim ortamında DJANGO_SECRET_KEY ortam değişkeni zorunludur.'
+    )
+elif 'runserver' in sys.argv:
+    import warnings
+
+    warnings.warn(
+        'Geliştirme SECRET_KEY kullanılıyor. Üretimde DJANGO_SECRET_KEY ayarlayın.',
+        stacklevel=1,
+    )
 
 _env_csrf = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').strip()
 if _env_csrf:
@@ -95,8 +109,15 @@ WHATSAPP_BRIDGE_AUTO_START_DELAY = float(os.environ.get('DJANGO_WHATSAPP_BRIDGE_
 WHATSAPP_BRIDGE_RUN_AS_ADMIN = os.environ.get(
     'DJANGO_WHATSAPP_BRIDGE_RUN_AS_ADMIN', '0',
 ).lower() in ('1', 'true', 'yes')
+# Yerel köprü: eksik npm bağımlılıklarını ve (Linux root ise) Node.js'i Django kurar
+WHATSAPP_BRIDGE_AUTO_NPM_INSTALL = os.environ.get(
+    'DJANGO_WHATSAPP_BRIDGE_AUTO_NPM_INSTALL', '1',
+).lower() in ('1', 'true', 'yes')
+WHATSAPP_BRIDGE_AUTO_INSTALL_NODE = os.environ.get(
+    'DJANGO_WHATSAPP_BRIDGE_AUTO_INSTALL_NODE', '1',
+).lower() in ('1', 'true', 'yes')
 # İsteğe bağlı: node.exe tam yolu (boşsa Program Files\nodejs aranır; Cursor IDE node'u atlanır)
-WHATSAPP_BRIDGE_NODE = r''
+WHATSAPP_BRIDGE_NODE = os.environ.get('WHATSAPP_BRIDGE_NODE', '').strip()
 
 
 # Application definition

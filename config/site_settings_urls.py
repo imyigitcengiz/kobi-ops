@@ -3,6 +3,11 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
+from core_settings.system_views import (
+    SettingsAIReportingView,
+    SettingsAISettingsView,
+    SettingsSystemBackupView,
+)
 from core_settings.views import (
     SiteSettingsView,
     settings_api,
@@ -32,6 +37,11 @@ urlpatterns = [
     path('durumlar', RedirectView.as_view(pattern_name='settings_statuses', permanent=True)),
     path('oncelikler', RedirectView.as_view(pattern_name='settings_priorities', permanent=True)),
     path('cozum-turleri', RedirectView.as_view(pattern_name='settings_partner_types', permanent=True)),
+
+    path('ai/ayarlar/', SettingsAISettingsView.as_view(), name='settings_ai_settings'),
+    path('ai/raporlama/', SettingsAIReportingView.as_view(), name='settings_ai_reporting'),
+    path('ai/panel/', RedirectView.as_view(pattern_name='settings_ai_reporting', permanent=False), name='ai_panel'),
+    path('yedekler/', SettingsSystemBackupView.as_view(), name='settings_system_backup'),
 
     path('api/settings/', settings_api, name='settings_api'),
     path('api/options/catalog/', options_catalog_api, name='options_catalog_api'),

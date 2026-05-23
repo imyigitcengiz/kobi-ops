@@ -22,6 +22,7 @@ from services.whatsapp_status_prompt import (
 
 from .models import Customer
 from .forms import CustomerForm
+from .return_url import get_safe_return_url
 
 
 class CustomerListView(PermissionRequiredMixin, ListView):
@@ -82,7 +83,14 @@ class CustomerUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_upload_media'] = True
+        context['return_url'] = get_safe_return_url(self.request)
+        context['focus_products'] = (
+            self.request.GET.get('focus') == 'products' or self.request.GET.get('focus') == 'urunler'
+        )
         return context
+
+    def get_success_url(self):
+        return get_safe_return_url(self.request) or str(reverse_lazy('customers'))
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -180,7 +188,8 @@ def quick_customer_create(request):
 @permission_required(CUSTOMERS_VIEW_PERM, CUSTOMERS_EDIT_PERM, any_perm=True)
 def customer_detail_api(request, pk):
     try:
-        c = Customer.objects.get(pk=pk)
+        c = Customer.objects.prefetch_related('products').get(pk=pk)
+        customer_products = list(c.products.order_by('name'))
         return JsonResponse({
             'name': c.name,
             'phone': c.phone or '-',
@@ -190,8 +199,12 @@ def customer_detail_api(request, pk):
             'location_link': c.location_link or '',
             'contract_date': c.contract_date.strftime('%d.%m.%Y') if c.contract_date else '-',
             'contract_age': f"({c.contract_age} önce)" if c.contract_age else '',
-            'product_ids': list(c.products.values_list('id', flat=True)),
-            'product_names': list(c.products.values_list('name', flat=True)),
+            'product_ids': [p.id for p in customer_products],
+            'product_names': [p.name for p in customer_products],
+            'products': [
+                {'id': p.id, 'name': p.name, 'color': p.color_hex}
+                for p in customer_products
+            ],
         })
     except Customer.DoesNotExist:
         return JsonResponse({'error': 'Müşteri bulunamadı'}, status=404)
@@ -252,6 +265,65 @@ def customer_quick_edit_api(request, pk):
     customer.products.set(product_ids)
 
     return JsonResponse({'ok': True})
+
+
+@require_http_methods(['GET'])
+@permission_required(CUSTOMERS_VIEW_PERM, CUSTOMERS_EDIT_PERM, any_perm=True)
+def customer_whatsapp_messages_api(request, pk):
+    from tools.models import WhatsappOutboundMessage
+
+    customer = get_object_or_404(Customer, pk=pk)
+    status = (request.GET.get('status') or 'all').strip()
+    page = max(int(request.GET.get('page') or 1), 1)
+    page_size = min(max(int(request.GET.get('page_size') or 50), 1), 200)
+
+    phone_keys = _customer_phone_keys(customer)
+    qs_filter = Q(customer_id=customer.pk)
+    if phone_keys:
+        qs_filter |= Q(send_type=WhatsappOutboundMessage.SEND_CUSTOMER, phone_normalized__in=phone_keys)
+    else:
+        qs_filter |= Q(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+    qs = WhatsappOutboundMessage.objects.filter(qs_filter).order_by('-sent_at', '-created_at')
+    if status and status != 'all':
+        qs = qs.filter(status=status)
+
+    total = qs.count()
+    start = (page - 1) * page_size
+    items = []
+    for m in qs[start : start + page_size]:
+        items.append({
+            'id': m.id,
+            'recipient_name': m.recipient_name or customer.name,
+            'phone': m.phone_display or m.phone_normalized,
+            'message': m.message,
+            'status': m.status,
+            'status_label': m.get_status_display(),
+            'send_type_label': m.get_send_type_display() if m.send_type else 'Müşteri',
+            'error_message': m.error_message,
+            'sent_at': m.sent_at.isoformat() if m.sent_at else None,
+            'created_at': m.created_at.isoformat(),
+        })
+    return JsonResponse({
+        'ok': True,
+        'customer': {'id': customer.id, 'name': customer.name},
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'results': items,
+    })
+
+
+def _customer_phone_keys(customer: Customer) -> list[str]:
+    from tools.phone_utils import normalize_phone
+
+    keys = []
+    norm = normalize_phone(customer.phone or '')
+    if norm and norm != '-':
+        keys.append(norm)
+        digits = ''.join(ch for ch in norm if ch.isdigit())
+        if len(digits) >= 10:
+            keys.append(digits[-10:])
+    return keys
 
 
 @require_http_methods(['GET'])

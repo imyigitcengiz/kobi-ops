@@ -7,13 +7,13 @@ from .models import (
     PersonnelPayment,
 )
 from .forms import (
-    GeneralSiteSettingsForm, ServiceTypeOptionForm, ProductOptionForm, StatusOptionForm,
+    GeneralSiteSettingsForm, SiteSettingsForm, ServiceTypeOptionForm, ProductOptionForm, StatusOptionForm,
     PriorityOptionForm, WhatsAppTemplateForm, SolutionPartnerForm, SolutionPartnerTypeForm,
     ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm,
 )
 from common.permissions import can_manage_payroll, can_manage_teams, can_manage_personnel
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from common.decorators import json_auth_required, permission_required
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.deletion import ProtectedError
@@ -458,13 +458,10 @@ class PersonnelNetworkView(TemplateView):
         return redirect('personnel_network')
 
 
-@csrf_exempt
+@json_auth_required
+@permission_required('access.settings')
 def settings_api(request):
-    """Simple JSON API for reading/updating SiteSettings.
-
-    GET: returns current settings (public read)
-    POST: updates settings (staff only) with JSON body
-    """
+    """SiteSettings JSON API — kimlik doğrulama, CSRF ve access.settings zorunlu."""
     try:
         settings = SiteSettings.objects.first()
         if request.method == 'GET':
@@ -477,27 +474,26 @@ def settings_api(request):
             })
 
         if request.method == 'POST':
-            # Only allow staff users to change settings
-            if not request.user.is_authenticated or not request.user.is_staff:
-                return JsonResponse({'error': 'Permission denied'}, status=403)
-
             data = json.loads(request.body.decode('utf-8')) if request.body else {}
             form = SiteSettingsForm(data, files=None, instance=settings)
             if form.is_valid():
                 form.save()
                 return JsonResponse({'success': True})
-            else:
-                return JsonResponse({'error': 'validation_error', 'details': form.errors}, status=400)
+            return JsonResponse({'error': 'validation_error', 'details': form.errors}, status=400)
 
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Geçersiz JSON'}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'İşlem başarısız.'}, status=500)
 
 
 def _serialize_option(obj):
     return {'id': obj.id, 'name': obj.name, 'color': obj.color_hex}
 
 
+@json_auth_required
+@permission_required('access.services', 'access.settings', any_perm=True)
 def options_catalog_api(request):
     """Servis formu için tüm seçenekler ve ürün–servis tipi eşlemesi."""
     from core_settings.catalog import build_options_catalog
@@ -505,6 +501,8 @@ def options_catalog_api(request):
     return JsonResponse(build_options_catalog())
 
 
+@json_auth_required
+@permission_required('access.services', 'access.settings', any_perm=True)
 def service_types_for_products_api(request):
     """Seçili ürünlere göre servis tiplerini döndürür."""
     raw = request.GET.get('product_ids', '')
@@ -518,23 +516,18 @@ def service_types_for_products_api(request):
             'message': 'Ürün seçilmedi; tüm servis tipleri listeleniyor.',
         })
 
-    products = ProductOption.objects.filter(id__in=product_ids).prefetch_related('service_types')
-    allowed_ids = set()
-    any_mapping = False
-    for product in products:
-        ids = list(product.service_types.values_list('id', flat=True))
-        if ids:
-            any_mapping = True
-            allowed_ids.update(ids)
+    from core_settings.catalog import resolve_allowed_service_type_ids
 
-    if not any_mapping:
+    allowed_ids, mode = resolve_allowed_service_type_ids(product_ids)
+    if mode == 'all_fallback':
         filtered = all_types
-        message = 'Seçili ürünlerde tanımlı arıza tipi yok; tüm tipler gösteriliyor.'
-        mode = 'all_fallback'
+        message = (
+            'Seçili ürünlerde tanımlı arıza tipi yok veya en az bir üründe eşleme yok; '
+            'tüm tipler gösteriliyor.'
+        )
     else:
         filtered = [s for s in all_types if s.id in allowed_ids]
         message = f'{len(filtered)} servis tipi bu ürün(ler) için tanımlı.'
-        mode = 'filtered'
 
     return JsonResponse({
         'service_types': [_serialize_option(s) for s in filtered],
@@ -543,6 +536,8 @@ def service_types_for_products_api(request):
     })
 
 
+@json_auth_required
+@permission_required('services.manage', 'access.settings', any_perm=True)
 def quick_option_create_api(request):
     """Servis formundan hızlı seçenek ekleme."""
     if request.method != 'POST':
@@ -577,6 +572,11 @@ def quick_option_create_api(request):
         if st_ids:
             obj.service_types.set(st_ids)
         payload['service_type_ids'] = list(obj.service_types.values_list('id', flat=True))
+    if kind == 'service_type':
+        product_ids = [int(x) for x in data.get('product_ids') or [] if str(x).isdigit()]
+        for product in ProductOption.objects.filter(id__in=product_ids):
+            product.service_types.add(obj)
+        payload['product_ids'] = list(obj.products.values_list('id', flat=True))
 
     from config.live_sync import publish_live_event
 
@@ -589,6 +589,8 @@ def quick_option_create_api(request):
     return JsonResponse({'ok': True, 'item': payload, 'type': kind})
 
 
+@json_auth_required
+@permission_required('services.manage', 'access.settings', any_perm=True)
 def quick_option_update_api(request):
     """Servis formundan hızlı seçenek güncelleme."""
     if request.method != 'POST':
@@ -624,9 +626,16 @@ def quick_option_update_api(request):
     if kind == 'product' and 'service_type_ids' in data:
         obj.service_types.set(data['service_type_ids'] or [])
 
+    if kind == 'service_type' and 'product_ids' in data:
+        product_ids = [int(x) for x in data.get('product_ids') or [] if str(x).isdigit()]
+        for product in ProductOption.objects.filter(id__in=product_ids):
+            product.service_types.add(obj)
+
     payload = _serialize_option(obj)
     if kind == 'product':
         payload['service_type_ids'] = list(obj.service_types.values_list('id', flat=True))
+    if kind == 'service_type':
+        payload['product_ids'] = list(obj.products.values_list('id', flat=True))
 
     from config.live_sync import publish_live_event
 

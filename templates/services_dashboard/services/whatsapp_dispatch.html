@@ -21,7 +21,7 @@
             <button type="button" id="sendAllWaBtn" class="px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50">
                 Tümünü Gönder
             </button>
-            <a href="{% url 'tools_whatsapp_baglan' %}" class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 text-sm font-semibold hover:bg-violet-100">WhatsApp Bağlan</a>
+            <a href="{% url 'tools_whatsapp_baglan' %}" class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 text-sm font-semibold hover:bg-violet-100">WhatsApp</a>
             <a href="{% url 'services' %}" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200">Servislere Dön</a>
         </div>
     </div>
@@ -92,7 +92,7 @@
                     ? window.populateWhatsAppConnectionSelect(dispatchConnectionSelect, data)
                     : { readyCount: 0 };
                 if (meta.readyCount === 0) {
-                    setDispatchStatus('Bağlı hat seçin veya WhatsApp Bağlan sayfasından QR okutun.', 'warn');
+                    setDispatchStatus('Bağlı hat seçin veya Tools → WhatsApp sayfasından QR okutun.', 'warn');
                 }
             } catch (err) {
                 setDispatchStatus(err.message || 'Hat listesi yüklenemedi.', 'error');

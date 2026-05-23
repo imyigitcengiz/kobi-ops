@@ -13,6 +13,16 @@
     const input = document.getElementById('teamChatInput');
     const subtitle = document.getElementById('teamChatSubtitle');
     const sendBtn = form?.querySelector('button[type="submit"]');
+    const chatRoot = document.getElementById('teamChatRoot');
+
+    function refreshChatIcons() {
+        if (!window.lucide || !chatRoot) return;
+        try {
+            lucide.createIcons({ root: chatRoot });
+        } catch (e) {
+            lucide.createIcons();
+        }
+    }
 
     let open = false;
     let activeThreadId = null;
@@ -333,7 +343,7 @@
             }
             updateSendState();
         }
-        if (window.lucide) lucide.createIcons();
+        refreshChatIcons();
     }
 
     toggle?.addEventListener('click', () => setOpen(!open));
@@ -346,4 +356,5 @@
     }, 45000);
 
     updateSendState();
+    refreshChatIcons();
 })();

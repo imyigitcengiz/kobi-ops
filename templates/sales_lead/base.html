@@ -122,7 +122,6 @@
         window.CUSTOMER_API_BASE = '/contact';
         window.CRM_BASE = '/contact';
     </script>
-    <script>lucide.createIcons();</script>
     <script>{% if user.is_authenticated %}window.GY_USER_ID = {{ user.id }};{% endif %}</script>
     {% load static %}
     <script src="{% static 'js/live-sync.js' %}" defer></script>
@@ -130,5 +129,6 @@
     {% if user_perms.tools_whatsapp %}{% include 'services_dashboard/partials/whatsapp_modal.html' %}{% endif %}
     {% include 'common/whatsapp_scenario_prompt_assets.html' %}
     {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

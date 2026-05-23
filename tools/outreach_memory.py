@@ -1,50 +1,60 @@
 """Firma hafızası ve mesaj geçmişi için ortak mantık."""
 
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from tools.models import MapsScrapedFirm, OutreachCollectionMember, WhatsappOutboundMessage
 
+CUSTOMER_SHADOW_NOTE = 'Müşteri mesajı'
+
+
+def is_firm_outreach_message(msg: WhatsappOutboundMessage) -> bool:
+    """Kazıma / kampanya / firma rehberi gönderimleri (müşteri hariç)."""
+    return msg.send_type != WhatsappOutboundMessage.SEND_CUSTOMER
+
+
+def firm_outreach_messages_qs(*, phone_normalized: str = '', firm=None):
+    qs = WhatsappOutboundMessage.objects.filter(
+        status=WhatsappOutboundMessage.STATUS_SENT,
+    ).exclude(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+    if firm is not None:
+        if firm.phone_normalized:
+            return qs.filter(Q(firm_id=firm.pk) | Q(phone_normalized=firm.phone_normalized))
+        return qs.filter(firm_id=firm.pk)
+    if phone_normalized:
+        return qs.filter(phone_normalized=phone_normalized)
+    return qs
+
 
 def get_sent_count(phone_normalized: str) -> int:
-    """Hafızadaki firmanın mesaj sayısı — hafıza silinince sıfırlanır."""
+    """Hafızadaki firma için firma/kampanya gönderim sayısı (müşteri hariç)."""
     if not phone_normalized:
         return 0
     firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_normalized).only('messages_sent_count').first()
-    return firm.messages_sent_count if firm else 0
+    if not firm:
+        return 0
+    return firm_outreach_messages_qs(phone_normalized=phone_normalized).count()
 
 
 def has_been_messaged_globally(phone_normalized: str) -> bool:
-    """Hafızada kayıtlı ve daha önce mesaj atılmış mı."""
     return get_sent_count(phone_normalized) > 0
 
 
 def get_last_message_at(phone_normalized: str):
     if not phone_normalized:
         return None
-    firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_normalized).only('last_message_at').first()
-    return firm.last_message_at if firm else None
+    return firm_outreach_messages_qs(phone_normalized=phone_normalized).aggregate(last=Max('sent_at')).get('last')
 
 
 def sync_firm_message_stats(firm: MapsScrapedFirm) -> MapsScrapedFirm:
     if not firm.phone_normalized:
         return firm
-    sent_count = WhatsappOutboundMessage.objects.filter(
-        phone_normalized=firm.phone_normalized,
-        status=WhatsappOutboundMessage.STATUS_SENT,
-    ).count()
-    last_sent = (
-        WhatsappOutboundMessage.objects.filter(
-            phone_normalized=firm.phone_normalized,
-            status=WhatsappOutboundMessage.STATUS_SENT,
-        )
-        .aggregate(last=Max('sent_at'))
-        .get('last')
-    )
-    firm.messages_sent_count = max(firm.messages_sent_count or 0, sent_count)
-    if last_sent and (not firm.last_message_at or last_sent > firm.last_message_at):
-        firm.last_message_at = last_sent
+    qs = firm_outreach_messages_qs(firm=firm)
+    sent_count = qs.count()
+    last_sent = qs.aggregate(last=Max('sent_at')).get('last')
+    firm.messages_sent_count = sent_count
+    firm.last_message_at = last_sent
     firm.save(update_fields=['messages_sent_count', 'last_message_at'])
     return firm
 
@@ -92,13 +102,17 @@ def merge_firm_records(primary: MapsScrapedFirm, secondary: MapsScrapedFirm) -> 
     primary.save()
 
     OutreachCollectionMember.objects.filter(firm=secondary).update(firm=primary)
-    WhatsappOutboundMessage.objects.filter(firm=secondary).update(firm=primary)
+    WhatsappOutboundMessage.objects.filter(firm=secondary).exclude(
+        send_type=WhatsappOutboundMessage.SEND_CUSTOMER,
+    ).update(firm=primary)
 
     secondary.delete()
     return sync_firm_message_stats(primary)
 
 
 def resolve_firm_for_send(message: WhatsappOutboundMessage) -> MapsScrapedFirm | None:
+    if message.send_type == WhatsappOutboundMessage.SEND_CUSTOMER:
+        return None
     if message.firm_id:
         return sync_firm_message_stats(message.firm)
 
@@ -106,7 +120,9 @@ def resolve_firm_for_send(message: WhatsappOutboundMessage) -> MapsScrapedFirm |
     if not phone_norm:
         return None
 
-    firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_norm).first()
+    firm = MapsScrapedFirm.objects.filter(phone_normalized=phone_norm).exclude(
+        notes=CUSTOMER_SHADOW_NOTE,
+    ).first()
     if not firm:
         firm = MapsScrapedFirm.objects.create(
             name=message.recipient_name or 'Manuel',
@@ -120,12 +136,20 @@ def resolve_firm_for_send(message: WhatsappOutboundMessage) -> MapsScrapedFirm |
 
 
 def messaged_firm_count() -> int:
-    """Hafızada olup en az bir kez mesaj gönderilmiş firma sayısı."""
-    return MapsScrapedFirm.objects.filter(messages_sent_count__gt=0).count()
+    return (
+        WhatsappOutboundMessage.objects.filter(
+            status=WhatsappOutboundMessage.STATUS_SENT,
+        )
+        .exclude(send_type=WhatsappOutboundMessage.SEND_CUSTOMER)
+        .exclude(firm_id__isnull=True)
+        .values('firm_id')
+        .distinct()
+        .count()
+    )
 
 
 def memory_stats() -> dict:
     return {
-        'memory_total': MapsScrapedFirm.objects.count(),
+        'memory_total': MapsScrapedFirm.objects.exclude(notes=CUSTOMER_SHADOW_NOTE).count(),
         'messaged_count': messaged_firm_count(),
     }

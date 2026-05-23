@@ -7,11 +7,11 @@
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Tools
     </a>
     <h1 class="text-2xl font-bold text-slate-900">WhatsApp Mesaj Gönderici</h1>
-    <p class="text-slate-600 mt-1">Telefon bağlantısı ve gönderim varsayılanlarını buradan yönetin. Bağlantılar için <a href="{% url 'tools_whatsapp_baglan' %}" class="text-brand-600 font-semibold underline">Tools → WhatsApp Bağlan</a>.</p>
+    <p class="text-slate-600 mt-1">Telefon bağlantısı ve gönderim varsayılanlarını buradan yönetin. Bağlantılar için <a href="{% url 'tools_whatsapp_baglan' %}" class="text-brand-600 font-semibold underline">Tools → WhatsApp</a>.</p>
 </div>
 
 <div id="bridgeOfflineBanner" class="hidden mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-center justify-between gap-3">
-    <span><strong>Köprü kapalı.</strong> Terminalde: <code class="bg-white px-1.5 py-0.5 rounded text-xs">cd tools\whatsapp_bridge && npm start</code></span>
+    <span><strong>Köprü kapalı.</strong> Django otomatik başlatır; birkaç saniye bekleyin veya WhatsApp Bağlan sayfasından <strong>Köprüyü başlat</strong>.</span>
     <button type="button" id="retryBridgeBtn" class="shrink-0 px-3 py-1.5 bg-red-700 text-white rounded-lg text-xs font-bold">Tekrar dene</button>
 </div>
 
@@ -88,12 +88,12 @@
                 </div>
             </dl>
             <div class="p-3 rounded-xl bg-amber-50 border border-amber-100 text-xs text-amber-900 leading-relaxed">
-                <strong>Köprüyü başlatmak için:</strong> proje klasöründe terminal açın, <code class="bg-white px-1 rounded">cd tools\whatsapp_bridge</code>, ardından <code class="bg-white px-1 rounded">npm install</code> (ilk sefer) ve <code class="bg-white px-1 rounded">npm start</code>.
+                <strong>Köprüyü başlatmak için:</strong> <a href="{% url 'tools_whatsapp_baglan' %}" class="text-green-700 font-semibold underline">WhatsApp Bağlan</a> sayfasına gidin — Node ve npm bağımlılıkları Django tarafından otomatik kurulur.
             </div>
         </section>
 
         <a href="{% url 'tools_whatsapp_baglan' %}" class="block bg-violet-50 border border-violet-200 rounded-2xl p-5 hover:bg-violet-100 transition-colors">
-            <p class="text-sm font-bold text-violet-900">WhatsApp Bağlan →</p>
+            <p class="text-sm font-bold text-violet-900">WhatsApp →</p>
             <p class="text-xs text-violet-700 mt-1">Müşteri ve firmalara mesaj göndermek için WhatsApp numaralarını bağlayın.</p>
         </a>
     </div>

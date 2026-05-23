@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 from tools.firm_memory import enrich_search_results, register_scrape, serialize_firm
 from tools.google_maps_search import GoogleMapsSearchError, search_businesses
 from tools.models import FirmTag, MapsScrapedFirm
-from tools.outreach_memory import memory_stats, messaged_firm_count
+from tools.outreach_memory import CUSTOMER_SHADOW_NOTE, memory_stats, messaged_firm_count
 from tools.phone_utils import is_whatsapp_eligible, is_turkish_landline, whatsapp_url
 
 
@@ -87,6 +87,9 @@ class WhatsappBaglanView(TemplateView):
         context['whatsapp_bridge_url_is_local'] = host in ('127.0.0.1', 'localhost', '::1')
         if not context['whatsapp_bridge_can_spawn']:
             context['whatsapp_bridge_url_docker'] = 'http://whatsapp-bridge:3939'
+        from core_settings.whatsapp_print import get_whatsapp_location_request_template
+
+        context['whatsapp_location_request_template'] = get_whatsapp_location_request_template()
         return context
 
 
@@ -162,7 +165,11 @@ def firms_memory_list(request):
     page_size = min(max(int(request.GET.get('page_size') or 50), 1), 200)
 
     kind = (request.GET.get('kind') or '').strip()
-    qs = MapsScrapedFirm.objects.prefetch_related('tags', 'solution_partner__partner_type').all().order_by('-last_scraped_at')
+    qs = (
+        MapsScrapedFirm.objects.prefetch_related('tags', 'solution_partner__partner_type')
+        .exclude(notes=CUSTOMER_SHADOW_NOTE)
+        .order_by('-last_scraped_at')
+    )
     if kind and kind != 'all':
         qs = qs.filter(firm_kind=kind)
     if q:

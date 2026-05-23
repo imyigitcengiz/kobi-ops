@@ -1,7 +1,10 @@
 from django import forms
+
 from core_settings.catalog import filter_service_type_ids
+from customers.models import Customer
 from .models import ServiceRecord, ServiceImage
 from core_settings.models import ServiceTypeOption, ProductOption, SolutionPartner, ServicePersonnel
+
 
 class ServiceRecordForm(forms.ModelForm):
     class Meta:
@@ -36,6 +39,17 @@ class ServiceRecordForm(forms.ModelForm):
             }),
         }
 
+    def _resolve_customer(self):
+        if self.instance and self.instance.pk and self.instance.customer_id:
+            return self.instance.customer
+        raw = self.data.get('customer') if self.is_bound else None
+        if raw and str(raw).isdigit():
+            return Customer.objects.filter(pk=int(raw)).first()
+        initial = self.initial.get('customer')
+        if initial and str(initial).isdigit():
+            return Customer.objects.filter(pk=int(initial)).first()
+        return None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['solution_partner'].queryset = SolutionPartner.objects.filter(is_active=True).order_by('name')
@@ -45,10 +59,31 @@ class ServiceRecordForm(forms.ModelForm):
         self.fields['list_price'].label = 'Normal fiyat (₺)'
         self.fields['discounted_price'].label = 'İndirimli fiyat (₺)'
 
+        customer = self._resolve_customer()
+        if customer:
+            self.fields['products'].queryset = customer.products.order_by('name')
+        else:
+            self.fields['products'].queryset = ProductOption.objects.none()
+
     def clean(self):
         cleaned = super().clean()
+        customer = cleaned.get('customer') or self._resolve_customer()
         products = cleaned.get('products')
         service_types = cleaned.get('service_types')
+
+        if customer and products is not None:
+            allowed_ids = set(customer.products.values_list('id', flat=True))
+            picked = list(products)
+            invalid = [p for p in picked if p.pk not in allowed_ids]
+            if invalid:
+                names = ', '.join(p.name for p in invalid)
+                self.add_error(
+                    'products',
+                    f'Seçilen ürünler müşteriye tanımlı değil: {names}. '
+                    f'Ürün tanımı yalnızca müşteri düzenleme sayfasından yapılır.',
+                )
+            cleaned['products'] = picked
+
         if products is not None and service_types is not None:
             product_ids = [p.pk for p in products]
             st_ids = [st.pk for st in service_types]

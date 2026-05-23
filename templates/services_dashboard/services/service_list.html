@@ -91,6 +91,12 @@
                 <option value="{{ p.id }}" {% if request.GET.personnel == p.id|stringformat:"i" %}selected{% endif %}>{{ p.name }}{% if p.team %} ({{ p.team.name }}){% endif %}</option>
                 {% endfor %}
             </select>
+            <select name="region" onchange="this.form.submit()" class="p-2 bg-slate-50 border-none rounded-xl text-sm">
+                <option value="">Tüm Bölgeler</option>
+                {% for r in customer_regions %}
+                <option value="{{ r }}" {% if request.GET.region == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
             <div class="relative col-span-1 md:col-span-6">
                 <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Müşteri veya notlarda ara..." class="w-full p-2 bg-slate-50 border-none rounded-xl text-sm">
                 <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
@@ -152,6 +158,7 @@
                         </th>
                         {% endif %}
                         <th class="px-6 py-4 text-sm font-semibold text-slate-900">Müşteri</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-slate-900">Bölge</th>
                         <th class="px-6 py-4 text-sm font-semibold text-slate-900">Ürünler</th>
                         <th class="px-6 py-4 text-sm font-semibold text-slate-900">Arıza Tipi</th>
                         <th class="px-6 py-4 text-sm font-semibold text-slate-900">Notlar</th>
@@ -239,7 +246,14 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-4 {% if user_perms.services_manage %}quick-sheet-cell cursor-pointer{% endif %}" {% if user_perms.services_manage %}data-service-id="{{ s.id }}" title="Hızlı düzenle"{% endif %}>
+                        <td class="px-6 py-4 text-sm text-slate-700">
+                            {% if s.customer.region %}
+                            <span class="inline-block px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">{{ s.customer.region }}</span>
+                            {% else %}
+                            <span class="text-slate-300 text-xs">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
                             <div class="flex flex-wrap gap-1">
                                 {% for p in s.products.all %}
                                 <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
@@ -249,7 +263,7 @@
                                 {% endfor %}
                             </div>
                         </td>
-                        <td class="px-6 py-4 {% if user_perms.services_manage %}quick-sheet-cell cursor-pointer{% endif %}" {% if user_perms.services_manage %}data-service-id="{{ s.id }}" title="Hızlı düzenle"{% endif %}>
+                        <td class="px-6 py-4">
                             <div class="flex flex-wrap gap-1">
                                 {% for t in s.service_types.all %}
                                 <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
@@ -259,7 +273,7 @@
                                 {% endfor %}
                             </div>
                         </td>
-                        <td class="px-6 py-4 {% if user_perms.services_manage %}quick-sheet-cell cursor-pointer{% endif %}" {% if user_perms.services_manage %}data-service-id="{{ s.id }}" title="Hızlı düzenle"{% endif %}>
+                        <td class="px-6 py-4">
                             <p class="text-xs text-slate-500 line-clamp-2 max-w-[200px]" title="{{ s.notes|default:'' }}">
                                 {{ s.notes|default:"-" }}
                             </p>
@@ -330,15 +344,9 @@
                                 </a>
                                 {% endif %}
                                 {% if user_perms.services_manage %}
-                                <a href="{% url 'service_update' s.id %}" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                                <a href="{% url 'service_update' s.id %}" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Düzenle">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </a>
-                                <button type="button"
-                                        class="quick-sheet-edit-btn p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                        data-service-id="{{ s.id }}"
-                                        title="Hızlı düzenle">
-                                    <i data-lucide="square-pen" class="w-4 h-4"></i>
-                                </button>
                                 {% endif %}
                                 {% if user_perms.services_delete %}
                                 <form method="post" action="{% url 'service_delete' s.id %}" class="inline">
@@ -352,63 +360,13 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">Aradığınız kriterlere uygun servis kaydı bulunmuyor.</td></tr>
+                    <tr><td colspan="9" class="px-6 py-12 text-center text-slate-400">Aradığınız kriterlere uygun servis kaydı bulunmuyor.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </form>
     </div>
 </div>
-
-{% if user_perms.services_manage %}
-<div id="quickSheetModal" class="hidden fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-[140] flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden">
-        <div class="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-            <h3 class="font-bold text-slate-900">Hızlı Sheet Düzenleme</h3>
-            <button type="button" id="closeQuickSheetModal" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-        <div class="p-5 space-y-4 max-h-[78vh] overflow-y-auto">
-            <input type="hidden" id="qsServiceId">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Durum</label><select id="qsStatus" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm">{% for s in statuses %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Öncelik</label><select id="qsPriority" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm">{% for p in priorities %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Müşteri Telefon</label><input id="qsCustomerPhone" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Bölge (Text)</label><input id="qsCustomerRegion" type="text" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Sözleşme Tarihi</label><input id="qsContractDate" type="date" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Konum (URL)</label><input id="qsLocationLink" type="url" placeholder="https://..." class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm"></div>
-            </div>
-
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase">Ürünler (çoklu)</label>
-                <div id="qsProductsWrap" class="mt-1 p-2 bg-slate-50 rounded-xl border border-slate-100 grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                    {% for p in products %}
-                    <label class="text-xs text-slate-700 flex items-center gap-2"><input type="checkbox" class="qs-product" value="{{ p.id }}"> {{ p.name }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase">Arıza Tipleri (çoklu)</label>
-                <p id="qsServiceTypeHint" class="text-[10px] text-slate-500 mt-0.5"></p>
-                <div id="qsServiceTypesWrap" class="mt-1 p-2 bg-slate-50 rounded-xl border border-slate-100 grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto"></div>
-            </div>
-            <div>
-                <label class="text-xs font-bold text-slate-500 uppercase">Servis Notu</label>
-                <textarea id="qsNotes" rows="4" class="w-full mt-1 p-2 bg-slate-50 border-none rounded-xl text-sm"></textarea>
-            </div>
-        </div>
-        <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
-            <span class="mr-auto text-[11px] text-slate-500 font-medium self-center">Kısayollar: Enter Kaydet • Esc Kapat • Ctrl/Cmd+S Kaydet • Ctrl/Cmd+Enter Kaydet • Shift+N Yeni</span>
-            <button type="button" id="cancelQuickSheetBtn" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-300">İptal</button>
-            <button type="button" id="saveQuickSheetBtn" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">Hızlı Kaydet</button>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <div id="customerInfoModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
     <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
@@ -485,8 +443,6 @@
         </div>
     </div>
 </div>
-
-{% if options_catalog %}{{ options_catalog|json_script:"optionsCatalogData" }}{% endif %}
 
 <script>
     document.querySelectorAll('[data-set-view]').forEach((btn) => {
@@ -695,222 +651,7 @@
         if (e.key === 'Escape') {
             closeCustomerInfoModal();
             closeLocationQrModal();
-            closeQuickSheetModal();
         }
-
-        const quickSheetOpen = quickSheetModal && !quickSheetModal.classList.contains('hidden');
-        if (!quickSheetOpen) return;
-
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-            e.preventDefault();
-            triggerQuickSheetSave();
-            return;
-        }
-
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            triggerQuickSheetSave();
-            return;
-        }
-
-        if (e.key === 'Enter') {
-            const tag = (document.activeElement?.tagName || '').toUpperCase();
-            if (tag !== 'TEXTAREA') {
-                e.preventDefault();
-                triggerQuickSheetSave();
-            }
-        }
-    });
-
-    const quickSheetModal = document.getElementById('quickSheetModal');
-    const closeQuickSheetModalBtn = document.getElementById('closeQuickSheetModal');
-    const cancelQuickSheetBtn = document.getElementById('cancelQuickSheetBtn');
-    const saveQuickSheetBtn = document.getElementById('saveQuickSheetBtn');
-
-    function setCheckedByValues(selector, values) {
-        const set = new Set((values || []).map((x) => parseInt(x, 10)));
-        document.querySelectorAll(selector).forEach((cb) => {
-            cb.checked = set.has(parseInt(cb.value, 10));
-        });
-    }
-
-    function getCheckedValues(selector) {
-        return Array.from(document.querySelectorAll(selector))
-            .filter((cb) => cb.checked)
-            .map((cb) => cb.value);
-    }
-
-    const qsCatalogEl = document.getElementById('optionsCatalogData');
-    let qsCatalog = null;
-    try {
-        qsCatalog = qsCatalogEl ? JSON.parse(qsCatalogEl.textContent) : null;
-    } catch (e) { qsCatalog = null; }
-    const qsSelectedSt = new Set();
-    let qsSyncing = false;
-
-    function qsRenderServiceTypes() {
-        if (!qsCatalog || !window.GyProductServiceTypeSync) return;
-        window.GyProductServiceTypeSync.renderFilteredServiceTypes({
-            catalog: qsCatalog,
-            productRoot: document,
-            productSelector: 'input.qs-product:checked',
-            serviceTypeContainer: document.getElementById('qsServiceTypesWrap'),
-            serviceTypeCheckboxClass: 'qs-service-type',
-            hintEl: document.getElementById('qsServiceTypeHint'),
-            selectedServiceTypeIds: qsSelectedSt,
-            labelClass: 'text-xs text-slate-700 flex items-center gap-2 p-1 rounded hover:bg-white',
-            emptyClass: 'col-span-full text-xs text-amber-600 py-2',
-        });
-    }
-
-    document.getElementById('qsProductsWrap')?.addEventListener('change', (e) => {
-        if (qsSyncing) return;
-        if (e.target.classList.contains('qs-product')) qsRenderServiceTypes();
-    });
-
-    window.GyQuickSheetSync = {
-        refresh() {
-            if (!qsCatalogEl) return;
-            try {
-                qsCatalog = JSON.parse(qsCatalogEl.textContent);
-                qsRenderServiceTypes();
-            } catch (e) {}
-        },
-    };
-
-    function openQuickSheetModal() {
-        quickSheetModal?.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
-    }
-
-    function closeQuickSheetModal() {
-        quickSheetModal?.classList.add('hidden');
-    }
-
-    let qsOriginalStatusId = null;
-
-    async function loadQuickSheetData(serviceId) {
-        const res = await fetch(`${window.SD_BASE}/services/${serviceId}/quick-edit/`);
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Veri alınamadı');
-
-        document.getElementById('qsServiceId').value = data.service.id;
-        document.getElementById('qsStatus').value = data.service.status_id;
-        qsOriginalStatusId = String(data.service.status_id);
-        document.getElementById('qsPriority').value = data.service.priority_id;
-        document.getElementById('qsNotes').value = data.service.notes || '';
-        document.getElementById('qsCustomerPhone').value = data.customer.phone || '';
-        document.getElementById('qsCustomerRegion').value = data.customer.region || '';
-        document.getElementById('qsContractDate').value = data.customer.contract_date || '';
-        document.getElementById('qsLocationLink').value = data.customer.location_link || '';
-        qsSyncing = true;
-        try {
-            setCheckedByValues('.qs-product', data.service.product_ids || []);
-            qsSelectedSt.clear();
-            (data.service.service_type_ids || []).forEach((id) => qsSelectedSt.add(Number(id)));
-            qsRenderServiceTypes();
-        } finally {
-            qsSyncing = false;
-        }
-    }
-
-    async function saveQuickSheetData() {
-        const serviceId = document.getElementById('qsServiceId').value;
-        if (!serviceId) return;
-        const formData = new FormData();
-        formData.append('status_id', document.getElementById('qsStatus').value);
-        formData.append('priority_id', document.getElementById('qsPriority').value);
-        formData.append('notes', document.getElementById('qsNotes').value || '');
-        formData.append('customer_phone', document.getElementById('qsCustomerPhone').value || '');
-        formData.append('customer_region', document.getElementById('qsCustomerRegion').value || '');
-        formData.append('customer_contract_date', document.getElementById('qsContractDate').value || '');
-        formData.append('customer_location_link', document.getElementById('qsLocationLink').value || '');
-        getCheckedValues('.qs-product').forEach((v) => formData.append('product_ids', v));
-        getCheckedValues('.qs-service-type').forEach((v) => formData.append('service_type_ids', v));
-
-        const res = await fetch(`${window.SD_BASE}/services/${serviceId}/quick-edit/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCsrfToken() },
-            body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Kaydedilemedi');
-        return data;
-    }
-
-    async function triggerQuickSheetSave() {
-        try {
-            if (window.GY_MARK_LOCAL_SAVE) window.GY_MARK_LOCAL_SAVE();
-            const serviceId = document.getElementById('qsServiceId').value;
-            const newStatusId = document.getElementById('qsStatus').value;
-            const statusChanged = qsOriginalStatusId !== null && String(newStatusId) !== String(qsOriginalStatusId);
-
-            if (statusChanged && window.showDeferredServiceStatusChange) {
-                const previewRes = await fetch(`${window.SD_BASE}/services/whatsapp/durum-onizle/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken(),
-                    },
-                    body: JSON.stringify({
-                        service_id: serviceId,
-                        new_status_id: newStatusId,
-                    }),
-                });
-                const previewData = await previewRes.json();
-                if (previewData.deferred && previewData.whatsapp_prompt) {
-                    window.showDeferredServiceStatusChange(previewData.whatsapp_prompt, {
-                        onApplied: async () => {
-                            await saveQuickSheetData();
-                            closeQuickSheetModal();
-                            location.reload();
-                        },
-                        onCancel: () => {},
-                    });
-                    return;
-                }
-            }
-
-            const data = await saveQuickSheetData();
-            closeQuickSheetModal();
-            if (window.handleServiceWhatsappStatusResponse && window.handleServiceWhatsappStatusResponse(data, () => location.reload())) {
-                return;
-            }
-            location.reload();
-        } catch (err) {
-            alert(err.message || 'Hızlı kaydet sırasında hata oluştu.');
-        }
-    }
-
-    document.querySelectorAll('.quick-sheet-edit-btn').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            try {
-                await loadQuickSheetData(btn.dataset.serviceId);
-                openQuickSheetModal();
-            } catch (err) {
-                alert(err.message || 'Hızlı edit açılırken hata oluştu.');
-            }
-        });
-    });
-
-    document.querySelectorAll('.quick-sheet-cell').forEach((cell) => {
-        cell.addEventListener('click', async (e) => {
-            if (e.target.closest('a, button, input, select, textarea, .quick-update-wrap')) return;
-            try {
-                await loadQuickSheetData(cell.dataset.serviceId);
-                openQuickSheetModal();
-            } catch (err) {
-                alert(err.message || 'Hızlı edit açılırken hata oluştu.');
-            }
-        });
-    });
-
-    saveQuickSheetBtn?.addEventListener('click', triggerQuickSheetSave);
-
-    closeQuickSheetModalBtn?.addEventListener('click', closeQuickSheetModal);
-    cancelQuickSheetBtn?.addEventListener('click', closeQuickSheetModal);
-    quickSheetModal?.addEventListener('click', (e) => {
-        if (e.target === quickSheetModal) closeQuickSheetModal();
     });
 
     function getCsrfToken() {

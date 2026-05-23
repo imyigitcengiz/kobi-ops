@@ -115,9 +115,9 @@
     <script>{% if user.is_authenticated %}window.GY_USER_ID = {{ user.id }};{% endif %}</script>
     {% load static %}
     <script src="{% static 'js/live-sync.js' %}" defer></script>
-    <script>lucide.createIcons();</script>
     {% block extra_js %}{% endblock %}
     {% include 'services_dashboard/partials/whatsapp_modal.html' %}
     {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

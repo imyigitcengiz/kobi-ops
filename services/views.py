@@ -19,7 +19,6 @@ from users.mixins import PermissionRequiredMixin
 from .models import ServiceRecord, ServiceImage, ServiceHistory
 from .forms import ServiceRecordForm
 from config.live_sync import publish_live_event, suppress_live_sync
-from core_settings.catalog import build_options_catalog, filter_service_type_ids
 from .form_context import build_service_form_context
 from .whatsapp_status_prompt import (
     build_whatsapp_service_created_prompt,
@@ -268,6 +267,7 @@ class ServiceListView(PermissionRequiredMixin, ListView):
         warranty = self.request.GET.get('warranty')
         team = self.request.GET.get('team')
         personnel = self.request.GET.get('personnel')
+        region = (self.request.GET.get('region') or '').strip()
 
         if q:
             queryset = queryset.filter(
@@ -287,6 +287,8 @@ class ServiceListView(PermissionRequiredMixin, ListView):
             queryset = queryset.filter(service_personnel__team_id=int(team))
         if personnel and personnel.isdigit():
             queryset = queryset.filter(service_personnel_id=int(personnel))
+        if region:
+            queryset = queryset.filter(customer__region__iexact=region)
         
         if warranty == 'expired':
             queryset = queryset.filter(
@@ -324,17 +326,23 @@ class ServiceListView(PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from core_settings.models import ProductOption, StatusOption, PriorityOption, ServiceTypeOption
+        from customers.models import Customer
         context['products'] = ProductOption.objects.all()
         context['statuses'] = StatusOption.objects.order_by('sort_order', 'name')
         context['priorities'] = PriorityOption.objects.all()
         context['service_types'] = ServiceTypeOption.objects.order_by('name')
         context['teams'] = ServiceTeam.objects.filter(is_active=True).order_by('name')
         context['personnel_list'] = ServicePersonnel.objects.filter(is_active=True).select_related('team').order_by('name')
+        context['customer_regions'] = list(
+            Customer.objects.exclude(Q(region__isnull=True) | Q(region=''))
+            .values_list('region', flat=True)
+            .distinct()
+            .order_by('region')
+        )
         context['show_hidden'] = self.request.GET.get('show_hidden') == '1'
         context['show_pending'] = self.request.GET.get('show_pending') == '1'
         context['visibility_active'] = not self.request.GET.get('status')
         context['whatsapp_prompt_queue'] = pop_whatsapp_status_prompt_queue(self.request)
-        context['options_catalog'] = build_options_catalog()
         view_mode = (self.request.GET.get('view') or 'customer').strip().lower()
         if view_mode not in ('customer', 'record'):
             view_mode = 'customer'
@@ -421,9 +429,6 @@ class ServiceCreateView(PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         with suppress_live_sync():
             response = super().form_valid(form)
-            customer = self.object.customer
-            for product in self.object.products.all():
-                customer.products.add(product)
         publish_live_event(
             kind='service',
             action='created',
@@ -460,9 +465,6 @@ class ServiceUpdateView(PermissionRequiredMixin, UpdateView):
         with suppress_live_sync():
             response = super().form_valid(form)
             self.object.refresh_from_db()
-            customer = self.object.customer
-            for product in self.object.products.all():
-                customer.products.add(product)
         after_state = _capture_service_state(self.object)
         changes = _diff_service_state(before_state, after_state)
 
@@ -571,11 +573,18 @@ class ServiceBulkPrintView(ServiceListView):
         return parts
 
     def get_context_data(self, **kwargs):
+        from services.bulk_print_helpers import build_bulk_print_qr
+
         context = super().get_context_data(**kwargs)
         context['sort_options'] = SiteSettings.BULK_PRINT_SORT_CHOICES
         context['current_sort'] = self._resolve_sort_key()
         context['filter_summary'] = self._build_filter_summary()
         context['record_count'] = self.get_queryset().count()
+        site_name = 'Gölgede Yaşam'
+        if context.get('site_settings') and context['site_settings'].site_name:
+            site_name = context['site_settings'].site_name
+        for service in context['services']:
+            service.bulk_qr = build_bulk_print_qr(service, site_name=site_name)
         return context
 
     def get(self, request, *args, **kwargs):
@@ -848,120 +857,6 @@ def quick_update_service_field(request):
         'label': option.name,
         'color': option.color_hex,
     })
-
-
-@require_http_methods(["GET", "POST"])
-@permission_required(SERVICES_MANAGE_PERM)
-def service_quick_edit_api(request, pk):
-    service = get_object_or_404(
-        ServiceRecord.objects.select_related('customer', 'status', 'priority').prefetch_related('products', 'service_types'),
-        pk=pk,
-    )
-
-    if request.method == 'GET':
-        return JsonResponse({
-            'ok': True,
-            'service': {
-                'id': service.id,
-                'status_id': service.status_id,
-                'priority_id': service.priority_id,
-                'product_ids': list(service.products.values_list('id', flat=True)),
-                'service_type_ids': list(service.service_types.values_list('id', flat=True)),
-                'notes': service.notes or '',
-            },
-            'customer': {
-                'id': service.customer_id,
-                'name': service.customer.name,
-                'phone': service.customer.phone or '',
-                'region': service.customer.region or '',
-                'location_link': service.customer.location_link or '',
-                'contract_date': service.customer.contract_date.isoformat() if service.customer.contract_date else '',
-            },
-        })
-
-    before_state = _capture_service_state(service)
-    prev_status_id = service.status_id
-    prev_status_name = service.status.name if service.status_id else None
-
-    status_id = request.POST.get('status_id')
-    priority_id = request.POST.get('priority_id')
-    notes = request.POST.get('notes', '').strip()
-    product_ids = [int(x) for x in request.POST.getlist('product_ids') if str(x).isdigit()]
-    service_type_ids = [int(x) for x in request.POST.getlist('service_type_ids') if str(x).isdigit()]
-
-    customer_phone = request.POST.get('customer_phone', '').strip()
-    customer_region = request.POST.get('customer_region', '').strip()
-    customer_location_link = request.POST.get('customer_location_link', '').strip()
-    customer_contract_date = request.POST.get('customer_contract_date', '').strip()
-
-    if not status_id or not str(status_id).isdigit():
-        return JsonResponse({'ok': False, 'error': 'Durum seçimi zorunlu.'}, status=400)
-    if not priority_id or not str(priority_id).isdigit():
-        return JsonResponse({'ok': False, 'error': 'Öncelik seçimi zorunlu.'}, status=400)
-
-    status = get_object_or_404(StatusOption, pk=int(status_id))
-    priority = get_object_or_404(PriorityOption, pk=int(priority_id))
-
-    if prev_status_id != status.id:
-        preview = build_whatsapp_status_change_preview(
-            service,
-            prev_status_id=prev_status_id,
-            prev_status_name=prev_status_name,
-            new_status_id=status.id,
-            new_status_name=status.name,
-        )
-        if preview:
-            preview['deferred'] = True
-            return JsonResponse({
-                'ok': True,
-                'deferred': True,
-                'whatsapp_prompt': preview,
-            })
-
-    service_type_ids = filter_service_type_ids(product_ids, service_type_ids)
-
-    with suppress_live_sync():
-        service.status = status
-        service.priority = priority
-        service.notes = notes
-        service.save(update_fields=['status', 'priority', 'notes', 'updated_at'])
-        service.products.set(product_ids)
-        service.service_types.set(service_type_ids)
-
-        customer = service.customer
-        customer.phone = customer_phone or None
-        customer.region = customer_region or None
-        customer.location_link = customer_location_link or None
-        customer.contract_date = customer_contract_date or None
-        customer.save(update_fields=['phone', 'region', 'location_link', 'contract_date', 'updated_at'])
-
-    service.refresh_from_db()
-    after_state = _capture_service_state(service)
-    changes = _diff_service_state(before_state, after_state)
-
-    _create_service_history(
-        service,
-        ' | '.join(changes) if changes else 'Hızlı düzenleme uygulandı (değişiklik yok).',
-        request.user,
-    )
-    publish_live_event(
-        kind='service',
-        action='updated',
-        object_id=service.id,
-        message=f'Servis #{service.id} güncellendi.',
-        user_id=request.user.id,
-    )
-
-    payload = {'ok': True, 'service_type_ids': service_type_ids}
-    if prev_status_id != service.status_id:
-        service = ServiceRecord.objects.select_related(
-            'customer', 'status', 'priority',
-        ).prefetch_related('service_types').get(pk=service.pk)
-        prompt = build_whatsapp_status_change_prompt(service, prev_status_id, prev_status_name)
-        if prompt:
-            payload['whatsapp_prompt'] = prompt
-    return JsonResponse(payload)
-
 
 def _restore_service_from_snapshot(service, snapshot):
     service_data = snapshot.get('service', {})

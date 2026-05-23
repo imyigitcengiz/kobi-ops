@@ -2,7 +2,13 @@
 
 from django.core.management.base import BaseCommand
 
-from tools.whatsapp_bridge_runner import bridge_reachable, bridge_spawn_allowed, probe_bridge, try_spawn_bridge_process
+from tools.whatsapp_bridge_runner import (
+    bridge_reachable,
+    bridge_spawn_allowed,
+    ensure_bridge_environment,
+    probe_bridge,
+    try_spawn_bridge_process,
+)
 
 
 class Command(BaseCommand):
@@ -27,6 +33,9 @@ class Command(BaseCommand):
         self.stdout.write(f'Köprü bekleniyor: {url} (en fazla {timeout}s)')
 
         if options['spawn'] and bridge_spawn_allowed() and not bridge_reachable(timeout=0.8):
+            env = ensure_bridge_environment()
+            if not env.get('ok'):
+                self.stdout.write(self.style.WARNING(env.get('message') or 'Köprü ortamı hazırlanamadı.'))
             r = try_spawn_bridge_process()
             if r.get('spawned'):
                 self.stdout.write(self.style.SUCCESS('Yerel Node köprüsü başlatıldı.'))
@@ -46,7 +55,7 @@ class Command(BaseCommand):
             self.style.ERROR(
                 f'Köprü {timeout}s içinde yanıt vermedi. '
                 'Docker: docker compose ps / logs whatsapp-bridge. '
-                'Yerel: cd tools/whatsapp_bridge && npm install && npm start'
+                'Yerel: Django otomatik başlatır; log: tools/whatsapp_bridge/bridge_ui.log'
             )
         )
         raise SystemExit(1)

@@ -61,8 +61,8 @@
     <main class="max-w-6xl mx-auto px-6 py-8">
         {% block content %}{% endblock %}
     </main>
-    <script>lucide.createIcons();</script>
     {% block extra_js %}{% endblock %}
     {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

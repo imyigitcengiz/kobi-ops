@@ -3,7 +3,6 @@ from django.views.generic import RedirectView
 
 from analytics.views import ai_chat_view
 from tools.media_views import ToolsMediaDeleteView, ToolsMediaLibraryView
-from tools.system_views import ToolsAISettingsView, ToolsAIPanelView, ToolsSystemBackupView
 from tools.views import ToolsHubView, WhatsappBaglanView
 from tools.whatsapp_connection_views import (
     whatsapp_bridge_auto_start_api,
@@ -13,6 +12,7 @@ from tools.whatsapp_connection_views import (
     whatsapp_connection_status_api,
     whatsapp_connection_connect_api,
     whatsapp_connection_disconnect_api,
+    whatsapp_location_request_template_api,
 )
 from tools.whatsapp_send_views import whatsapp_ready_connections_api, whatsapp_send_api
 from tools.whatsapp_template_views import (
@@ -36,12 +36,17 @@ urlpatterns = [
     path('whatsapp/baglantilar/<int:pk>/disconnect/', whatsapp_connection_disconnect_api, name='tools_whatsapp_connection_disconnect'),
     path('whatsapp/baglantilar/hazir/', whatsapp_ready_connections_api, name='tools_whatsapp_ready_connections'),
     path('whatsapp/gonder/', whatsapp_send_api, name='tools_whatsapp_send'),
+    path(
+        'whatsapp/yazdirma-konum-mesaji/',
+        whatsapp_location_request_template_api,
+        name='tools_whatsapp_location_request_template',
+    ),
     path('whatsapp/senaryolar/meta/', whatsapp_scenario_meta_api, name='tools_whatsapp_scenario_meta'),
     path('whatsapp/senaryolar/', whatsapp_scenario_templates_api, name='tools_whatsapp_scenario_templates'),
     path('whatsapp/senaryolar/<int:pk>/', whatsapp_scenario_template_detail_api, name='tools_whatsapp_scenario_template_detail'),
-    path('ai/ayarlar/', ToolsAISettingsView.as_view(), name='tools_ai_settings'),
-    path('ai/panel/', ToolsAIPanelView.as_view(), name='tools_ai_panel'),
-    path('yedekler/', ToolsSystemBackupView.as_view(), name='tools_system_backup'),
+    path('ai/ayarlar/', RedirectView.as_view(pattern_name='settings_ai_settings', permanent=False)),
+    path('ai/panel/', RedirectView.as_view(pattern_name='settings_ai_reporting', permanent=False)),
+    path('yedekler/', RedirectView.as_view(pattern_name='settings_system_backup', permanent=False)),
     path('medya/', ToolsMediaLibraryView.as_view(), name='tools_media_library'),
     path('medya/sil/', ToolsMediaDeleteView.as_view(), name='tools_media_delete'),
     path('api/ai-chat/chat/', ai_chat_view, name='ai_chat'),

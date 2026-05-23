@@ -78,16 +78,18 @@ Detay: [deploy/coolify/README.md](deploy/coolify/README.md)
 
 ## 1Panel / Portainer
 
-`compose.yaml` dosyasını “Stack” olarak içe aktarın; `.env` ve reverse proxy (443 → 8000) ayarlayın.
+`compose.yaml` dosyasını **Compose Stack** olarak içe aktarın (repo kökü); `.env` doldurun; reverse proxy ile **443 → 8000** yönlendirin.
+
+Adım adım (1Panel): **[deploy/1panel/README.md](deploy/1panel/README.md)**
 
 ## Yerel geliştirme (Windows)
 
-1. [Node.js LTS](https://nodejs.org) kurun (sistem `node`, Cursor IDE içi node değil).
+1. Yerel geliştirmede Node.js yoksa Django `npm install` dener; Windows’ta [Node.js LTS](https://nodejs.org) kurmanız yeterli. Linux sunucuda (root) apt ile nodejs kurmayı da dener.
 2. Bir kez köprü bağımlılıkları:
 
 ```bash
 cd tools/whatsapp_bridge
-npm install
+# npm install — Django otomatik çalıştırır; elle gerekmez
 ```
 
 3. Panel:
@@ -100,7 +102,7 @@ python manage.py runserver
 
 `DATA_DIR` yokken Django **otomatik** Node köprüsünü başlatır (`DJANGO_WHATSAPP_BRIDGE_AUTO_START` varsayılan açık). Kapatmak için: `set DJANGO_WHATSAPP_BRIDGE_AUTO_START=0`.
 
-Köprüyü elle: `cd tools/whatsapp_bridge && npm start` → http://127.0.0.1:3939
+Köprüyü elle (gerekirse): `cd tools/whatsapp_bridge && npm start` → http://127.0.0.1:3939 — normalde Django açar.
 
 `WHATSAPP_BRIDGE_URL=http://127.0.0.1:3939` — isteğe bağlı `WHATSAPP_BRIDGE_NODE=C:\Program Files\nodejs\node.exe`
 
@@ -116,7 +118,7 @@ Köprüyü elle: `cd tools/whatsapp_bridge && npm start` → http://127.0.0.1:39
 
 **Yerel Windows**
 
-1. `node -v` çalışıyor mu? (`tools/whatsapp_bridge` içinde `npm install` yapıldı mı?)
+1. `node -v` çalışıyor mu? Log: `tools/whatsapp_bridge/bridge_ui.log` (Django npm install dener)
 2. `http://127.0.0.1:3939/health` tarayıcıda `{"ok":true}` dönmeli.
 3. Araçlar → WhatsApp bağlan → “Köprüyü başlat” veya sunucuyu yeniden başlatın (otomatik spawn).
 4. Port 3939 meşgulse Görev Yöneticisi’nden eski `node.exe` sürecini kapatın.

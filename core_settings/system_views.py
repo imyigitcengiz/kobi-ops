@@ -15,8 +15,8 @@ from customers.models import Customer
 from services.models import ServiceRecord
 
 
-class ToolsAISettingsView(TemplateView):
-    template_name = 'tools/ai_settings.html'
+class SettingsAISettingsView(TemplateView):
+    template_name = 'settings/ai_settings.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,11 +35,11 @@ class ToolsAISettingsView(TemplateView):
             messages.success(request, 'AI ayarları kaydedildi.')
         else:
             messages.error(request, f'Ayarlar kaydedilemedi: {form.errors.as_text()}')
-        return redirect('tools_ai_settings')
+        return redirect('settings_ai_settings')
 
 
-class ToolsAIPanelView(TemplateView):
-    template_name = 'tools/ai_panel.html'
+class SettingsAIReportingView(TemplateView):
+    template_name = 'settings/ai_reporting.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -53,8 +53,8 @@ class ToolsAIPanelView(TemplateView):
         return context
 
 
-class ToolsSystemBackupView(TemplateView):
-    template_name = 'tools/system_backup.html'
+class SettingsSystemBackupView(TemplateView):
+    template_name = 'settings/system_backup.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -67,7 +67,7 @@ class ToolsSystemBackupView(TemplateView):
                 return export_backup_response()
             except Exception as exc:
                 messages.error(request, f'Yedekleme sırasında hata oluştu: {exc}')
-                return redirect('tools_system_backup')
+                return redirect('settings_system_backup')
 
         if 'import_backup' in request.POST:
             ok, msg = import_backup_file(request.FILES.get('backup_file'))
@@ -75,14 +75,14 @@ class ToolsSystemBackupView(TemplateView):
                 messages.success(request, msg)
             else:
                 messages.error(request, msg)
-            return redirect('tools_system_backup')
+            return redirect('settings_system_backup')
 
         if 'export_sqlite' in request.POST:
             try:
                 return export_sqlite_response()
             except Exception as exc:
                 messages.error(request, f'SQLite indirme hatası: {exc}')
-                return redirect('tools_system_backup')
+                return redirect('settings_system_backup')
 
         if 'import_sqlite' in request.POST:
             ok, msg = import_sqlite_file(request.FILES.get('sqlite_file'))
@@ -90,6 +90,6 @@ class ToolsSystemBackupView(TemplateView):
                 messages.success(request, msg)
             else:
                 messages.error(request, msg)
-            return redirect('tools_system_backup')
+            return redirect('settings_system_backup')
 
-        return redirect('tools_system_backup')
+        return redirect('settings_system_backup')

@@ -20,7 +20,7 @@ def _request(method, path, *, json=None, timeout=8):
         response = requests.request(method, url, json=json, timeout=timeout)
     except requests.RequestException as exc:
         raise WhatsappBridgeOffline(
-            'WhatsApp köprüsü çalışmıyor. tools/whatsapp_bridge klasöründe npm install && npm start çalıştırın.'
+            'WhatsApp köprüsü çalışmıyor. Birkaç saniye bekleyin veya Tools → WhatsApp’ta köprüyü başlatın.'
         ) from exc
     try:
         data = response.json()

@@ -15,6 +15,8 @@ from django.db import connections, transaction
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 
+from common.security_limits import MAX_BACKUP_UPLOAD_BYTES
+
 SQLITE_MAGIC = b'SQLite format 3\x00'
 
 BACKUP_FORMAT_V2 = 'gy-dashboard-backup-v2'
@@ -148,9 +150,19 @@ def _sync_permissions_after_restore():
         pass
 
 
+def _upload_too_large(uploaded) -> bool:
+    size = getattr(uploaded, 'size', None)
+    if size is not None and size > MAX_BACKUP_UPLOAD_BYTES:
+        return True
+    return False
+
+
 def import_backup_file(uploaded) -> tuple[bool, str]:
     if not uploaded:
         return False, 'Lütfen bir dosya seçin.'
+    if _upload_too_large(uploaded):
+        limit_mb = MAX_BACKUP_UPLOAD_BYTES // (1024 * 1024)
+        return False, f'Dosya çok büyük (en fazla {limit_mb} MB).'
 
     filename = (uploaded.name or '').lower()
     if not (filename.endswith('.json') or filename.endswith('.json.gz')):
@@ -280,6 +292,9 @@ def export_sqlite_response() -> HttpResponse:
 def import_sqlite_file(uploaded) -> tuple[bool, str]:
     if not uploaded:
         return False, 'Lütfen bir db.sqlite3 dosyası seçin.'
+    if _upload_too_large(uploaded):
+        limit_mb = MAX_BACKUP_UPLOAD_BYTES // (1024 * 1024)
+        return False, f'Dosya çok büyük (en fazla {limit_mb} MB).'
 
     name = (uploaded.name or '').lower()
     if not (name.endswith('.sqlite3') or name.endswith('.db')):

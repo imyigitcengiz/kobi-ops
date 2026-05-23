@@ -55,10 +55,11 @@ Logda beklenen:
 [gy-dashboard] daphne 0.0.0.0:8000
 ```
 
-## Veri taşıma (önerilen: SQLite)
+## Veri taşıma (tam yedek: SQLite)
 
-1. Lokal: `/tools/yedekler/` → **db.sqlite3 İndir**
-2. Sunucu: aynı sayfa → **SQLite İçe Aktar** → dosya `/data/db.sqlite3` olur
+1. Lokal: `/ayarlar/yedekler/` → **Tam yedeği indir** (`db.sqlite3` = tüm veritabanı)
+2. Sunucu: aynı sayfa → **Tam yedeği geri yükle** → dosya `/data/db.sqlite3` olur
+3. `media/` klasörünü ayrıca kopyalayın (yüklenen dosyalar DB dışındadır)
 3. Lokal `media/` → `docker cp ./media/. <container>:/data/media/`
 
 Alternatif: JSON.gz (aynı sayfada).

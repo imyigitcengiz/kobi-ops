@@ -27,13 +27,11 @@
     if (/\/services-dashboard\/services\/(new|\d+\/edit)\/?$/.test(p)) return true;
     if (p.includes('/services-dashboard/settings') || p.startsWith('/ayarlar/')) return true;
     if (document.getElementById('serviceRecordForm')) return true;
-    const qs = document.getElementById('quickSheetModal');
-    return !!(qs && !qs.classList.contains('hidden'));
+    return false;
   }
 
   function isBlockingOverlayOpen() {
     const ids = [
-      'quickSheetModal',
       'quickOptionModal',
       'customerModal',
       'customerInfoModal',
@@ -88,9 +86,6 @@
       }
       if (typeof window.refreshServiceTypesForProducts === 'function') {
         window.refreshServiceTypesForProducts();
-      }
-      if (window.GyQuickSheetSync?.refresh) {
-        window.GyQuickSheetSync.refresh();
       }
       showToast('Seçenek listesi güncellendi.');
     } catch (e) {

@@ -15,44 +15,12 @@
         <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
             <i data-lucide="smartphone" class="w-6 h-6"></i>
         </div>
-        <h2 class="text-lg font-bold text-slate-900">WhatsApp Bağlan</h2>
+        <h2 class="text-lg font-bold text-slate-900">WhatsApp</h2>
         <p class="text-sm text-slate-500 mt-2 leading-relaxed">
             Birden fazla telefon numarasını isim vererek bağlayın.
         </p>
         <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-green-600 group-hover:text-green-700">
             Aracı aç
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </span>
-    </a>
-    {% endif %}
-
-    {% if user_perms.tools_ai %}
-    <a href="{% url 'tools_ai_settings' %}"
-       class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-violet-200 transition-all p-6">
-        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
-            <i data-lucide="sparkles" class="w-6 h-6"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">AI Ayarları</h2>
-        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
-            OpenAI / Gemini API anahtarları ve sohbet widget ayarları.
-        </p>
-        <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-violet-600 group-hover:text-violet-700">
-            Ayarları aç
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </span>
-    </a>
-
-    <a href="{% url 'tools_ai_panel' %}"
-       class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-violet-200 transition-all p-6">
-        <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-            <i data-lucide="bot" class="w-6 h-6"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">AI Panel</h2>
-        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
-            Sistem özeti ve hızlı AI testi.
-        </p>
-        <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-purple-600 group-hover:text-purple-700">
-            Paneli aç
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </span>
     </a>
@@ -75,24 +43,8 @@
     </a>
     {% endif %}
 
-    {% if user_perms.tools_backup %}
-    <a href="{% url 'tools_system_backup' %}"
-       class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all p-6">
-        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4 group-hover:bg-slate-800 group-hover:text-white transition-colors">
-            <i data-lucide="database-backup" class="w-6 h-6"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">Sistem Yedekleri</h2>
-        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
-            Tam sistem yedeği indir veya geri yükle.
-        </p>
-        <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-slate-600 group-hover:text-slate-800">
-            Yedeklemeyi aç
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </span>
-    </a>
-    {% endif %}
 </div>
-{% if not user_perms.tools_whatsapp and not user_perms.tools_ai and not user_perms.tools_media and not user_perms.tools_backup %}
+{% if not user_perms.tools_whatsapp and not user_perms.tools_media %}
 <p class="mt-8 text-sm text-slate-500">Bu modülde görüntüleyebileceğiniz araç bulunmuyor.</p>
 {% endif %}
 {% endblock %}

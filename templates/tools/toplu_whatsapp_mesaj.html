@@ -13,7 +13,7 @@
     <a href="{% url 'tools_google_maps_firma_bulma' %}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200">Firma kazıma</a>
 </div>
 <div id="bridgeOfflineBanner" class="hidden mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-center justify-between gap-3">
-    <span><strong>Köprü kapalı.</strong> Terminal: <code class="bg-white px-1 rounded text-xs">cd tools\whatsapp_bridge && npm start</code></span>
+    <span><strong>Köprü kapalı.</strong> <a href="{% url 'tools_whatsapp_baglan' %}" class="font-semibold underline">WhatsApp Bağlan</a> — köprü otomatik açılır.</span>
     <button type="button" id="retryBridgeBtn" class="shrink-0 px-3 py-1 bg-red-700 text-white rounded-lg text-xs font-bold">Tekrar dene</button>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">

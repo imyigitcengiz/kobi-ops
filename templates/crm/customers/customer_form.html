@@ -8,13 +8,21 @@
 {% endblock %}
 
 {% block content %}
+{% if return_url %}
+<div class="max-w-2xl mb-4 p-4 rounded-2xl border border-brand-200 bg-brand-50 text-sm text-brand-900">
+    <p class="font-semibold">Servis kaydından geldiniz</p>
+    <p class="mt-1 text-brand-800/90">Müşteriye ürün tanımlayın ve <strong>Kaydet</strong> ile servis düzenleme ekranına dönün.</p>
+    <a href="{{ return_url }}" class="inline-block mt-2 text-xs font-bold text-brand-700 hover:underline">Kaydetmeden servise dön</a>
+</div>
+{% endif %}
 <form method="post" enctype="multipart/form-data" class="max-w-2xl bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
     {% csrf_token %}
+    {% if return_url %}<input type="hidden" name="next" value="{{ return_url }}">{% endif %}
     {% for field in form %}
-    <div class="space-y-2">
+    <div class="space-y-2"{% if field.name == 'products' %} id="customer-products-field"{% endif %}>
         <label class="text-sm font-semibold text-slate-700">{{ field.label }}</label>
         {% if field.name == 'products' %}
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 ring-2 ring-transparent{% if focus_products %} ring-brand-300{% endif %}">
             {% for checkbox in field %}
             <label class="flex items-center gap-2 p-2 hover:bg-white rounded-lg cursor-pointer">
                 {{ checkbox.tag }}
@@ -29,8 +37,12 @@
     </div>
     {% endfor %}
     <div class="flex gap-4 pt-4">
-        <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-2xl font-bold">Kaydet</button>
+        <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-2xl font-bold">{% if return_url %}Kaydet ve servise dön{% else %}Kaydet{% endif %}</button>
+        {% if return_url %}
+        <a href="{{ return_url }}" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-center">Servise dön</a>
+        {% else %}
         <a href="{% url 'customers' %}" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-center">İptal</a>
+        {% endif %}
     </div>
 </form>
 
@@ -48,6 +60,9 @@
 {% if object %}<script src="{% static 'js/customer-media.js' %}"></script>{% endif %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    {% if focus_products %}
+    document.getElementById('customer-products-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    {% endif %}
     const phoneInput = document.querySelector('input[name="phone"]');
     if (phoneInput && window.intlTelInput) {
         const iti = window.intlTelInput(phoneInput, {

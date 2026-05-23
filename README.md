@@ -41,8 +41,8 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-WhatsApp (yerel): `tools/whatsapp_bridge` → `npm install && npm start`  
-veya `DJANGO_WHATSAPP_BRIDGE_AUTO_START=1` ile runserver otomatik dener.
+WhatsApp (yerel): `runserver` / `daphne` açılınca Django köprüyü otomatik başlatır (`npm install` dahil).  
+Kapatmak: `DJANGO_WHATSAPP_BRIDGE_AUTO_START=0`. Docker’da ayrı `whatsapp-bridge` servisi kullanın.
 
 ## Lisans
 

@@ -12,7 +12,7 @@ from core_settings.views import (
 from services.views import (
     ServiceListView, ServiceCreateView, ServiceUpdateView, ServiceDeleteView,
     ServicePrintView, ServiceBulkPrintView, bulk_delete_services, send_services_whatsapp, send_services_whatsapp_auto,
-    quick_update_service_field, service_quick_edit_api, bulk_manage_services, restore_service_history_entry,
+    quick_update_service_field, bulk_manage_services, restore_service_history_entry,
     service_status_change_preview_api,
     service_status_change_apply_api,
     service_whatsapp_status_confirm_api,
@@ -31,7 +31,6 @@ urlpatterns = [
     path('services/<int:pk>/edit/', ServiceUpdateView.as_view(), name='service_update'),
     path('services/<int:pk>/delete/', ServiceDeleteView.as_view(), name='service_delete'),
     path('services/<int:pk>/print/', ServicePrintView.as_view(), name='service_print'),
-    path('services/<int:pk>/quick-edit/', service_quick_edit_api, name='service_quick_edit_api'),
     path('services/<int:pk>/history/<int:history_id>/restore/', restore_service_history_entry, name='service_restore_history'),
     path('services/bulk-print/', ServiceBulkPrintView.as_view(), name='service_bulk_print'),
     path('services/bulk-delete/', bulk_delete_services, name='service_bulk_delete'),
@@ -57,5 +56,5 @@ urlpatterns = [
 
     # AI (Tools'a taşındı — eski URL'ler yönlendirilir)
     path('api/ai-chat/chat/', RedirectView.as_view(url='/tools/api/ai-chat/chat/', permanent=False)),
-    path('ai/panel/', RedirectView.as_view(url='/tools/ai/panel/', permanent=False), name='ai_panel'),
+    path('ai/panel/', RedirectView.as_view(pattern_name='settings_ai_reporting', permanent=False)),
 ]
