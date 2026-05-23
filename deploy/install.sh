@@ -89,8 +89,14 @@ if [[ -n "$DOMAIN" ]]; then
   DOMAIN="${DOMAIN%%:*}"
   if ! is_ipv4 "$DOMAIN"; then
     HOSTS="${HOSTS},${DOMAIN}"
-    CSRF="${CSRF},https://${DOMAIN}"
-    SECURE_SSL=1
+    # sslip.io / traefik.me: sadece HTTP (Dokploy uyarısı)
+    if [[ "$DOMAIN" == *.sslip.io ]] || [[ "$DOMAIN" == *.traefik.me ]]; then
+      CSRF="${CSRF},http://${DOMAIN}"
+      SECURE_SSL=0
+    else
+      CSRF="${CSRF},https://${DOMAIN}"
+      SECURE_SSL=1
+    fi
   else
     HOSTS="${HOSTS},${DOMAIN}"
     CSRF="${CSRF},http://${DOMAIN}:8000"
@@ -126,7 +132,11 @@ docker compose up -d --build
 echo ""
 echo "=== Hazır ==="
 if [[ -n "$DOMAIN" ]] && ! is_ipv4 "$DOMAIN"; then
-  echo "  Panel: https://${DOMAIN}/giris/"
+  if [[ "$DOMAIN" == *.sslip.io ]] || [[ "$DOMAIN" == *.traefik.me ]]; then
+    echo "  Panel: http://${DOMAIN}/giris/"
+  else
+    echo "  Panel: https://${DOMAIN}/giris/"
+  fi
 else
   echo "  Panel: http://${IP}:8000/giris/"
 fi
