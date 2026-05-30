@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from analytics.views import HomeView, PublicLandingView
+from analytics.views import HomeView, PublicLandingView, ModuleHubView, AgencyHubView
 from common.media_views import serve_media_file
 from common.views import healthz
 
@@ -13,6 +13,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', PublicLandingView.as_view(), name='landing'),
     path('panel/', HomeView.as_view(), name='home'),
+    path('panel/moduller/', ModuleHubView.as_view(), name='module_hub'),
+    path('panel/ajans/', AgencyHubView.as_view(), name='agency_hub'),
     path('', include('users.urls')),
     path('services-dashboard/', include('config.services_dashboard_urls')),
     path('tools/', include('config.tools_urls')),

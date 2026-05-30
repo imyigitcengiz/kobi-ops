@@ -63,14 +63,20 @@
             {% endif %}
             <div class="mb-10">
                 <h2 class="text-2xl font-bold text-slate-900">Hoş geldiniz, {{ user_profile_card.display_name }}</h2>
-                <p class="text-slate-600 mt-2">Rehber, muhasebe ve yardım masası modüllerine hızlı erişim.</p>
+                <p class="text-slate-600 mt-2">Modüllerinize sektör profiline göre hızlı erişin.</p>
             </div>
 
-            {% if user_access.contact %}
+            {% include 'common/panel_vertical_bar.html' %}
+
+            {% if modules_nav.agency_suite and panel_show_agency %}
+            {% include 'common/panel_agency_section.html' %}
+            {% endif %}
+
+            {% if modules_nav.contact and panel_show_contact %}
             {% include 'common/panel_rehber_section.html' %}
             {% endif %}
 
-            {% if user_access.accounting %}
+            {% if modules_nav.accounting and panel_show_accounting %}
             <section class="mb-10">
                 {% include 'common/accounting_panel_section.html' with section_title=gy.muhasebe show_hub_link=True show_hub_card=False card_layout='wide' highlight_payroll=True %}
                 {% if not accounting_show_payroll and not accounting_show_finance and not accounting_show_reports %}
@@ -95,13 +101,13 @@
             </section>
             {% endif %}
 
-            {% if user_access.services %}
+            {% if modules_nav.services and panel_show_services %}
             <section class="mb-10">
                 {% include 'common/panel_services_section.html' %}
             </section>
             {% endif %}
 
-            {% if user_access.outreach %}
+            {% if modules_nav.outreach and panel_show_outreach %}
             {% include 'common/panel_outreach_section.html' %}
             {% endif %}
 

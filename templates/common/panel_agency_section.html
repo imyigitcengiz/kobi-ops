@@ -1,0 +1,31 @@
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-violet-600 mb-4 flex items-center gap-2">
+        <i data-lucide="palette" class="w-4 h-4"></i> Ajans Çalışma Alanı
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="{% url 'agency_hub' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6 sm:col-span-2">
+            <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                <i data-lucide="palette" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Retainer & proje panosu</h4>
+            <p class="text-sm text-slate-500 mt-2">
+                {{ agency_active_count }} aktif retainer · {{ agency_project_count }} proje
+                {% if agency_retainer_monthly %} · ~{{ agency_retainer_monthly|floatformat:0 }} ₺/ay{% endif %}
+            </p>
+        </a>
+        {% if modules_nav.outreach %}
+        <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
+            <p class="text-sm text-slate-500 mt-2">Toplu WhatsApp ve iletişim.</p>
+        </a>
+        {% endif %}
+    </div>
+    {% if agency_recent_projects %}
+    <ul class="mt-4 text-sm text-slate-600 space-y-1">
+        {% for p in agency_recent_projects %}
+        <li><span class="font-semibold text-slate-800">{{ p.name }}</span>{% if p.customer %} — {{ p.customer.name }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>

@@ -66,6 +66,19 @@ class SiteSettings(models.Model):
         verbose_name='WhatsApp Business telefon numarası ID',
     )
 
+    primary_vertical_slug = models.CharField(
+        max_length=32,
+        default='kobi',
+        verbose_name='Birincil sektör profili',
+        help_text='Modül vitrininde öne çıkan sektör kategorisi (KOBİ, ajans, …).',
+    )
+    enabled_module_slugs = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Açık modüller',
+        help_text='Boş bırakılırsa varsayılan aktif modüller kullanılır.',
+    )
+
     class Meta:
         verbose_name = "Site Ayarları"
         verbose_name_plural = "Site Ayarları"

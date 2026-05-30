@@ -185,6 +185,8 @@ ROUTE_PERMISSIONS = [
     ('/tools/', 'access.tools'),
     ('/admin/', None),
     ('/media/', None),
+    ('/panel/moduller/', 'access.home'),
+    ('/panel/ajans/', ('access.contact', 'access.outreach', 'access.accounting')),
     ('/panel/', 'access.home'),
 ]
 

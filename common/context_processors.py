@@ -1,4 +1,7 @@
+"""Ortak şablon bağlamı."""
+
 from common import module_labels as ml
+from common.module_runtime import build_modules_nav_flags, get_enabled_module_slugs, get_primary_vertical_slug
 
 
 def gy_branding(request):
@@ -31,3 +34,24 @@ def gy_branding(request):
             'ortak_urunler': ml.ORTAK_URUNLER,
         },
     }
+
+
+def module_install_context(request):
+    user = getattr(request, 'user', None)
+    if not user or not user.is_authenticated:
+        return {
+            'modules_installed': {},
+            'modules_nav': {},
+            'primary_vertical_slug': 'kobi',
+        }
+    installed = {slug: slug in get_enabled_module_slugs() for slug in _all_module_slugs()}
+    return {
+        'modules_installed': installed,
+        'modules_nav': build_modules_nav_flags(user),
+        'primary_vertical_slug': get_primary_vertical_slug(),
+    }
+
+
+def _all_module_slugs():
+    from common.module_catalog import MODULES
+    return [m['slug'] for m in MODULES]

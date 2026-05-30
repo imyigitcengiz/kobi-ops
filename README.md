@@ -21,6 +21,8 @@ Django tabanlı, self-host edilebilir hafif ERP/CRM: müşteri rehberi, yardım 
 | **Yardım Masası** | Servis kayıtları, durum/öncelik, toplu işlem, yazdırma, WhatsApp dağıtım |
 | **İletişim Merkezi** | Kampanyalar, toplu WhatsApp, mesaj geçmişi |
 | **Tools** | WhatsApp köprüsü, medya kütüphanesi, AI ayarları, yedekleme |
+| **Modül Merkezi** (`/panel/moduller/`) | Sektör profili (KOBİ, ajans, …), modül kur/kapat, URL kilidi |
+| **Ajans Çalışma Alanı** (`/panel/ajans/`) | Retainer/proje panosu — ajans paketi ile (beta) |
 
 ### Öne çıkan özellikler
 

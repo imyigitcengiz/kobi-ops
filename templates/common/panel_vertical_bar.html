@@ -1,0 +1,31 @@
+{# Sektör profili + modül merkezi — panel üst bandı #}
+<section class="mb-8">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Sektör profili</p>
+            {% if panel_vertical %}
+            <h3 class="text-lg font-bold text-slate-900 mt-0.5">{{ panel_vertical.name }}</h3>
+            <p class="text-sm text-slate-500">{{ panel_vertical.tagline }}</p>
+            {% endif %}
+        </div>
+        <a href="{% url 'module_hub' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 shadow-sm">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i> Modül Merkezi
+        </a>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        {% for v in module_verticals %}
+        {% if v.slug != 'all' %}
+        <a href="?vertical={{ v.slug }}" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all
+            {% if panel_vertical.slug == v.slug %}bg-slate-900 text-white border-slate-900{% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %}">
+            {{ v.name }}
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% if panel_vertical_recommended %}
+    <p class="text-[11px] text-slate-500 mt-3">
+        Bu profile önerilen modüller:
+        {% for m in panel_vertical_recommended %}{{ m.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+</section>

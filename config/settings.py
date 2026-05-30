@@ -181,6 +181,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'common.middleware.LoginRequiredMiddleware',
     'common.middleware.PermissionMiddleware',
+    'common.middleware_module_gate.ModuleInstallMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -201,6 +202,7 @@ TEMPLATES = [
                 'users.context_processors.user_profile_card',
                 'users.context_access.user_access',
                 'common.context_processors.gy_branding',
+                'common.context_processors.module_install_context',
             ],
         },
     },
