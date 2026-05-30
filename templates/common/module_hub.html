@@ -48,9 +48,7 @@
                     <label class="text-xs font-bold text-slate-500 uppercase">Kurulum profili değiştir</label>
                     <select name="vertical_slug" class="p-2.5 bg-violet-50 border border-violet-200 rounded-xl text-sm min-w-[220px]">
                         {% for v in module_verticals %}
-                        {% if v.slug != 'all' %}
                         <option value="{{ v.slug }}" {% if module_primary_vertical == v.slug %}selected{% endif %}>{{ v.name }}</option>
-                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
@@ -62,6 +60,7 @@
             <p class="text-xs text-slate-500">
                 <strong>KOBİ:</strong> saha ekipleri, personel, maaş.
                 <strong>Ajans:</strong> retainer, freelancer — personel/yardım masası yok.
+                Yalnızca bu iki kurulum profili desteklenir.
             </p>
         </section>
         {% endif %}

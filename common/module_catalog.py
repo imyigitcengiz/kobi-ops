@@ -16,11 +16,11 @@ MODULE_STATUS_ROADMAP = 'roadmap'
 VERTICALS: tuple[tuple[str, str, str, str, str], ...] = (
     ('kobi', 'KOBİ & Saha Servis', 'Montaj, teknik servis, B2B satış, saha ekibi', 'wrench', 'emerald'),
     ('agency', 'Ajans & Proje', 'Dijital ajans, yazılım evi, danışmanlık, retainer', 'palette', 'violet'),
-    ('retail', 'Perakende & Bayi', 'Mağaza, bayi ağı, sipariş ve stok', 'store', 'amber'),
-    ('healthcare', 'Sağlık & Randevu', 'Klinik, muayenehane, randevu', 'heart-pulse', 'rose'),
-    ('nonprofit', 'STK & Dernek', 'Üye, bağış, gönüllü', 'hand-heart', 'sky'),
     ('universal', 'Evrensel', 'Ortak araçlar', 'layers', 'slate'),
 )
+
+# Kurulumda seçilebilir profiller — yalnızca KOBİ ve Ajans
+INSTALLATION_VERTICAL_SLUGS: tuple[str, ...] = ('kobi', 'agency')
 
 MODULES: tuple[dict, ...] = (
     {
@@ -253,6 +253,19 @@ def vertical_by_slug(slug: str) -> dict | None:
 
 def all_verticals() -> list[dict]:
     return [vertical_by_slug(row[0]) for row in VERTICALS]
+
+
+def installation_verticals() -> list[dict]:
+    """Kurulum profili seçimi — KOBİ ve Ajans."""
+    return [v for v in all_verticals() if v and v['slug'] in INSTALLATION_VERTICAL_SLUGS]
+
+
+def is_installation_vertical(slug: str) -> bool:
+    return slug in INSTALLATION_VERTICAL_SLUGS
+
+
+def normalize_installation_vertical(slug: str) -> str:
+    return slug if is_installation_vertical(slug) else DEFAULT_PRIMARY_VERTICAL
 
 
 def module_by_slug(slug: str) -> dict | None:

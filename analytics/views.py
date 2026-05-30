@@ -34,11 +34,11 @@ class PublicLandingView(TemplateView):
 
     def get_context_data(self, **kwargs):
         from common.landing_content import DEFAULT_LANDING_VERTICAL, LANDING_VERTICAL_COPY
-        from common.module_catalog import all_verticals
+        from common.module_catalog import installation_verticals
         from common.profile_apps import profile_apps_for_vertical, profile_integrations_for_vertical
 
         context = super().get_context_data(**kwargs)
-        verticals = [v for v in all_verticals() if v['slug'] != 'universal']
+        verticals = installation_verticals()
         selected = self.request.GET.get('v', DEFAULT_LANDING_VERTICAL)
         if not any(v['slug'] == selected for v in verticals):
             selected = DEFAULT_LANDING_VERTICAL
@@ -143,7 +143,7 @@ class ModuleHubView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        from common.module_catalog import vertical_by_slug
+        from common.module_catalog import is_installation_vertical, vertical_by_slug
         from common.profile_apps import profile_app_by_slug
         from common.module_runtime import apply_vertical_preset, get_enabled_profile_slugs
 
@@ -161,24 +161,24 @@ class ModuleHubView(TemplateView):
 
         if 'apply_vertical_preset' in request.POST:
             slug = request.POST.get('vertical_slug', '').strip()
-            if vertical_by_slug(slug):
+            if is_installation_vertical(slug) and vertical_by_slug(slug):
                 applied = apply_vertical_preset(slug)
                 messages.success(
                     request,
                     f'{vertical_by_slug(slug)["name"]} uygulama paketi kuruldu ({len(applied)} uygulama).',
                 )
             else:
-                messages.error(request, 'Geçersiz profil.')
+                messages.error(request, 'Geçersiz profil. Yalnızca KOBİ veya Ajans seçilebilir.')
         elif 'set_primary_vertical' in request.POST:
             slug = request.POST.get('vertical_slug', '').strip()
-            if vertical_by_slug(slug):
+            if is_installation_vertical(slug) and vertical_by_slug(slug):
                 apply_vertical_preset(slug)
                 messages.success(
                     request,
                     f'Kurulum profili "{vertical_by_slug(slug)["name"]}" olarak ayarlandı.',
                 )
             else:
-                messages.error(request, 'Geçersiz profil.')
+                messages.error(request, 'Geçersiz profil. Yalnızca KOBİ veya Ajans seçilebilir.')
         elif 'toggle_profile_app' in request.POST:
             slug = request.POST.get('app_slug', '').strip()
             app = profile_app_by_slug(slug)
@@ -337,15 +337,13 @@ class ProfileSetupView(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        from common.module_catalog import all_verticals
+        from common.module_catalog import installation_verticals
         from common.profile_apps import profile_apps_for_vertical, profile_integrations_for_vertical
 
         context = super().get_context_data(**kwargs)
         verticals = []
         preview = {}
-        for v in all_verticals():
-            if v['slug'] == 'universal':
-                continue
+        for v in installation_verticals():
             slug = v['slug']
             apps = profile_apps_for_vertical(slug) + profile_integrations_for_vertical(slug)
             apps.sort(key=lambda a: (a.get('sort', 99), a['name']))
@@ -359,15 +357,14 @@ class ProfileSetupView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        from common.module_catalog import vertical_by_slug
+        from common.module_catalog import is_installation_vertical, vertical_by_slug
         from common.module_runtime import apply_vertical_preset, mark_profile_setup_complete
 
         slug = (request.POST.get('vertical_slug') or 'kobi').strip()
-        v = vertical_by_slug(slug)
-        if not v or slug == 'universal':
+        if not is_installation_vertical(slug):
             messages.error(request, 'Geçersiz kurulum profili.')
             return redirect('profile_setup')
-
+        v = vertical_by_slug(slug)
         apply_vertical_preset(slug)
         mark_profile_setup_complete()
         messages.success(request, f'{v["name"]} profili uygulandı. Uygulamalarınız hazır.')

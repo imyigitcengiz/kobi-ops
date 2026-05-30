@@ -11,8 +11,9 @@ from common.module_catalog import (
     MODULE_STATUS_BETA,
     MODULE_STATUS_ROADMAP,
     MODULES,
-    all_verticals,
+    installation_verticals,
     module_by_slug,
+    normalize_installation_vertical,
     route_prefix_to_module_slug,
     vertical_by_slug,
 )
@@ -48,7 +49,7 @@ def get_primary_vertical_slug() -> str:
     if settings and settings.primary_vertical_slug:
         slug = settings.primary_vertical_slug.strip()
         if vertical_by_slug(slug):
-            return slug
+            return normalize_installation_vertical(slug)
     return DEFAULT_PRIMARY_VERTICAL
 
 
@@ -383,7 +384,7 @@ def build_profile_hub_context(user, *, query: str = '') -> dict:
     return {
         'module_primary_vertical': vertical,
         'panel_vertical': vinfo,
-        'module_verticals': all_verticals(),
+        'module_verticals': installation_verticals(),
         'profile_app_groups': profile_app_groups,
         'profile_integrations': integrations,
         'profile_apps_flat': apps + integrations,
@@ -416,25 +417,17 @@ def panel_section_visible(section_key: str) -> bool:
         'contact': {
             'kobi': 'app.kobi.customers',
             'agency': 'app.agency.clients',
-            'retail': 'app.retail.customers',
-            'healthcare': 'app.healthcare.customers',
-            'nonprofit': 'app.nonprofit.members',
         },
         'services': {
             'kobi': 'app.kobi.service_desk',
-            'retail': 'app.retail.service_desk',
-            'healthcare': 'app.healthcare.appointments',
         },
         'accounting': {
             'kobi': 'app.kobi.finance',
             'agency': 'app.agency.finance',
-            'retail': 'app.retail.finance',
         },
         'outreach': {
             'kobi': 'app.kobi.campaigns',
             'agency': 'app.agency.campaigns',
-            'healthcare': 'app.healthcare.campaigns',
-            'nonprofit': 'app.nonprofit.campaigns',
         },
         'agency': {
             'agency': 'app.agency.retainer_studio',
@@ -447,6 +440,7 @@ def panel_section_visible(section_key: str) -> bool:
 
 
 def apply_vertical_preset(vertical_slug: str) -> list[str]:
+    vertical_slug = normalize_installation_vertical(vertical_slug)
     slugs = list(vertical_profile_preset(vertical_slug))
     settings = _site_settings()
     if not settings:

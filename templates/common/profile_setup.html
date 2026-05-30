@@ -30,7 +30,7 @@
 
         <form method="post" class="space-y-8">
             {% csrf_token %}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                 {% for v in setup_verticals %}
                 <label class="cursor-pointer block">
                     <input type="radio" name="vertical_slug" value="{{ v.slug }}" class="peer sr-only" {% if setup_selected == v.slug %}checked{% endif %}>

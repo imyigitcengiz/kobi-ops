@@ -114,13 +114,13 @@ def build_profile_app_hub_metrics(user, app: dict) -> list[dict]:
     metrics: list[dict] = []
 
     try:
-        if slug in ('app.kobi.service_desk', 'app.retail.service_desk'):
+        if slug in ('app.kobi.service_desk',):
             from services.models import ServiceRecord
             open_count = ServiceRecord.objects.exclude(
                 status__name__icontains='tamam'
             ).count()
             metrics.append({'label': 'Açık iş emri', 'value': open_count, 'icon': 'clipboard-list'})
-        elif slug in ('app.kobi.customers', 'app.agency.clients', 'app.retail.customers', 'app.healthcare.customers'):
+        elif slug in ('app.kobi.customers', 'app.agency.clients'):
             from customers.models import Customer
             metrics.append({'label': 'Kayıtlı müşteri', 'value': Customer.objects.count(), 'icon': 'users'})
         elif slug == 'app.agency.retainer_studio':
@@ -131,13 +131,13 @@ def build_profile_app_hub_metrics(user, app: dict) -> list[dict]:
             monthly = ctx.get('agency_retainer_monthly')
             if monthly is not None:
                 metrics.append({'label': 'Aylık MRR', 'value': f'₺{monthly:,.0f}', 'icon': 'wallet'})
-        elif slug in ('app.kobi.personnel', 'app.retail.personnel'):
+        elif slug in ('app.kobi.personnel',):
             from core_settings.models import ServicePersonnel
             metrics.append({'label': 'Personel', 'value': ServicePersonnel.objects.count(), 'icon': 'id-card'})
-        elif slug in ('app.kobi.finance', 'app.agency.finance', 'app.retail.finance'):
+        elif slug in ('app.kobi.finance', 'app.agency.finance'):
             from core_settings.models import FinanceRecord
             metrics.append({'label': 'Finans kaydı', 'value': FinanceRecord.objects.count(), 'icon': 'receipt'})
-        elif slug in ('app.kobi.sales', 'app.agency.project_sales', 'app.retail.sales'):
+        elif slug in ('app.kobi.sales', 'app.agency.project_sales'):
             from sales_leads.models import SalesLead
             metrics.append({'label': 'Satış kaydı', 'value': SalesLead.objects.count(), 'icon': 'badge-dollar-sign'})
     except Exception:

@@ -1,4 +1,4 @@
-"""Landing sayfası — sektör profiline göre vitrin metinleri."""
+"""Landing sayfası — sektör profiline göre vitrin metinleri (KOBİ & Ajans)."""
 
 from __future__ import annotations
 
@@ -29,39 +29,6 @@ LANDING_VERTICAL_COPY: dict[str, dict] = {
             ('sparkles', 'Müşteri & Marka', 'Ajans müşteri kartları'),
             ('user-plus', 'Freelancer Ağı', 'Taşeron ve tasarımcı kadrosu'),
             ('trending-up', 'Proje Pipeline', 'Teklif ve satış takibi'),
-        ),
-    },
-    'retail': {
-        'badge': 'Perakende & bayi',
-        'headline': 'Mağaza, bayi ve tedarikçi ağınızı yönetin.',
-        'lead': 'Perakende ve bayi ağları için müşteri, mağaza destek ve satış uygulamaları.',
-        'highlights': (
-            ('store', 'Mağaza Destek', 'Şube talepleri'),
-            ('users', 'Müşteri & Bayi', 'Bayi kartları'),
-            ('building-2', 'Tedarikçi', 'Firma rehberi'),
-            ('badge-dollar-sign', 'Satış', 'Kayıt ve tahsilat'),
-        ),
-    },
-    'healthcare': {
-        'badge': 'Sağlık & randevu',
-        'headline': 'Hasta kaydı ve randevu iletişimi tek yerde.',
-        'lead': 'Klinik ve sağlık hizmetleri için hasta rehberi, randevu ve kampanya uygulamaları.',
-        'highlights': (
-            ('calendar', 'Randevular', 'Takvim ve hatırlatma'),
-            ('users', 'Hasta Rehberi', 'Müşteri kartları'),
-            ('megaphone', 'Kampanyalar', 'WhatsApp bilgilendirme'),
-            ('message-circle', 'WhatsApp', 'Hatırlatma mesajları'),
-        ),
-    },
-    'nonprofit': {
-        'badge': 'STK & topluluk',
-        'headline': 'Üye, bağışçı ve kampanya yönetimi.',
-        'lead': 'Dernek ve topluluklar için üye rehberi, firma ilişkileri ve iletişim kampanyaları.',
-        'highlights': (
-            ('heart-handshake', 'Üye Rehberi', 'Üye ve gönüllü kartları'),
-            ('building-2', 'Kurumlar', 'Firma ve sponsor'),
-            ('megaphone', 'Kampanyalar', 'Toplu iletişim'),
-            ('cloud', 'WhatsApp API', 'Resmi hat gönderimi'),
         ),
     },
 }
