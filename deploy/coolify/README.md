@@ -1,75 +1,47 @@
 # Coolify kurulumu (Ghost tarzı — kutudan çıkar çıkmaz)
 
-## ÖNEMLİ: Docker Compose build pack
+## ÖNEMLİ: `:8000` tarayıcıda Coolify panelidir
 
-Coolify'da **Dockerfile** build pack ile kurarsanız volume bağlanmaz ve uygulama durur.
+| Adres | Ne açılır |
+|-------|-----------|
+| `http://SUNUCU-IP:8000` | **Coolify yönetim paneli** |
+| `http://xxx.sslip.io` | **KobiOps uygulaması** (Traefik üzerinden) |
 
-| Ayar | Doğru değer |
-|------|-------------|
+Tarayıcıda **asla `:8000` veya `:8080` yazmayın** — sunucunun 8000 portu Coolify'a aittir.
+
+## Build Pack
+
+| Ayar | Değer |
+|------|--------|
 | Build Pack | **Docker Compose** |
-| Compose path | `docker-compose.yaml` veya `docker-compose.yml` |
-| Domain servisi | **`app`** (whatsapp_bridge değil) |
-| Persistent Storage UI | **Gerekmez** — `gy_data` named volume compose'ta |
+| Compose path | `docker-compose.yaml` |
+| Domain servisi | **`app`** |
 
-## Port: 8000 ≠ uygulama portu
+## Domain kurulumu (404 çözümü)
 
-| Ne | Port | Açıklama |
-|----|------|----------|
-| Coolify paneli | **8000** (sunucu) | `http://sunucu-ip:8000` — yönetim arayüzü |
-| KobiOps `app` | **8080** (konteyner içi) | Traefik domain ile buraya yönlendirir |
+1. Coolify → servis **`app`** → **Generate Domain** (sslip.io URL üretir)
+2. Domain satırında port **80** olmalı, örnek:
+   ```text
+   http://app-xxxxx.sslip.io:80
+   ```
+3. **Save** → **Force Rebuild** → **Deploy**
+4. Tarayıcıda açın (**port yok**):
+   ```text
+   http://app-xxxxx.sslip.io/
+   ```
 
-Bunlar **çakışmaz** — biri sunucuda, diğeri Docker ağında. Node.js'teki 3000→3001 gibi otomatik port yok; Coolify'da domain alanına port **elle** yazılır.
+`whatsapp_bridge` servisine domain **bağlamayın**.
 
-## Domain — 404'ün #1 sebebi
+## Log kontrolü
 
-Compose çok servisli stack'te Traefik hangi porta gideceğini domain satırından alır.
-
-**Doğru** (port dahil):
-
+Deploy sonrası Logs'ta:
 ```text
-https://panel.firma.com:8080
+daphne 0.0.0.0:80
 ```
+görmelisiniz. `8000` görürseniz eski image — Force Rebuild yapın.
 
-**Yanlış** (404 page not found):
+## Exited / volume
 
-```text
-https://panel.firma.com
-```
-
-Coolify → **Domains** → servis **`app`** → yukarıdaki formatta kaydedin → **Redeploy**.
-
-## 3 adımda deploy
-
-1. **New Resource** → GitHub → `imyigitcengiz/kobi-ops`
-2. Build Pack: **Docker Compose** → path: `docker-compose.yaml`
-3. **Domains** → servis **`app`** → `https://SIZIN-DOMAIN.com:8080` → HTTPS → **Deploy**
-
-`.env` yazmanız gerekmez. İlk admin şifresi: container log veya `/data/.initial_admin_password`.
-
-## Exited / unhealthy
-
-Logs'ta şunları arayın:
-
-| Log | Anlam |
-|-----|--------|
-| `Kalıcı veri kontrolü OK` | Volume tamam |
-| `daphne 0.0.0.0:8080` | Uygulama dinliyor |
-| `DJANGO_SECRET_KEY otomatik üretildi` | Secret tamam |
-| `KRİTİK: /data kalıcı volume` | Build Pack Dockerfile — Compose'a geçin |
-
-Container durumu: Coolify → Logs veya sunucuda `docker ps` (healthy olmalı).
-
-## Volume (otomatik)
-
-```yaml
-volumes:
-  - gy_data:/data
-```
-
-Coolify named volume `kobiops_gy_data` oluşturur. Rebuild'de **volume silmeyin**.
-
-## WhatsApp
-
-`whatsapp_bridge` servisine **domain bağlamayın**. Sadece `app` servisi dışarı açılır; köprü iç ağda `3939`.
+Build Pack Dockerfile ise volume bağlanmaz → Compose'a geçin.
 
 Genel: [DEPLOY.md](../../DEPLOY.md)

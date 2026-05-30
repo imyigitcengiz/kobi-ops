@@ -1,8 +1,8 @@
 # KobiOps — production Docker Compose (Coolify / Dokploy / 1Panel)
-# Coolify domain: https://panel.ornek.com:8080  (port ZORUNLU — compose çok servisli)
+# Coolify: Domains → servis "app" → Generate Domain → tarayıcıda http://xxx.sslip.io (port YAZMAYIN)
 name: kobi-ops
 
-x-app-port: &app_port "8080"
+x-app-port: &app_port "80"
 
 services:
   app:
@@ -10,6 +10,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - *app_port
     expose:
       - *app_port
     environment:
@@ -21,7 +23,7 @@ services:
       DJANGO_SERVE_MEDIA: "1"
       DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
       DJANGO_ENSURE_SUPERADMIN: ${DJANGO_ENSURE_SUPERADMIN:-0}
-      DJANGO_ALLOW_SSLIP_HOSTS: ${DJANGO_ALLOW_SSLIP_HOSTS:-0}
+      DJANGO_ALLOW_SSLIP_HOSTS: ${DJANGO_ALLOW_SSLIP_HOSTS:-1}
       GY_REQUIRE_PERSISTENT_VOLUME: ${GY_REQUIRE_PERSISTENT_VOLUME:-1}
       GY_ALLOW_EPHEMERAL_DATA: ${GY_ALLOW_EPHEMERAL_DATA:-0}
       WHATSAPP_BRIDGE_URL: http://whatsapp_bridge:3939
@@ -44,9 +46,7 @@ services:
       - gy_data:/data
       - kobiops_secrets:/run/kobiops-secrets
     labels:
-      # Coolify compose: Traefik/Caddy hangi konteyner portuna gideceğini domain'den veya etiketten alır
-      - traefik.http.services.app.loadbalancer.server.port=8080
-      - caddy_0.handle_path.0_reverse_proxy={{upstreams 8080}}
+      - traefik.enable=true
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -55,7 +55,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz/' % os.environ.get('PORT','8080'), timeout=5)",
+          "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz/' % os.environ.get('PORT','80'), timeout=5)",
         ]
       interval: 30s
       timeout: 8s

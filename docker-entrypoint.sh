@@ -17,8 +17,13 @@ export DJANGO_DB_PATH="${DJANGO_DB_PATH:-$DATA_DIR/db.sqlite3}"
 export DJANGO_MEDIA_ROOT="${DJANGO_MEDIA_ROOT:-$DATA_DIR/media}"
 export DJANGO_SERVE_MEDIA="${DJANGO_SERVE_MEDIA:-1}"
 
+# Coolify PORT=8000 enjekte eder (panel portu) — uygulama konteyneri her zaman 80 dinler
+if [[ "${KOBIOPS_COMPOSE_STACK:-0}" == "1" ]]; then
+  export PORT=80
+fi
+
 HOST="${DAPHNE_HOST:-0.0.0.0}"
-PORT="${PORT:-8080}"
+PORT="${PORT:-80}"
 
 if [ -z "${DJANGO_SECRET_KEY:-}" ]; then
   echo "[gy-dashboard] HATA: DJANGO_SECRET_KEY üretilemedi."
