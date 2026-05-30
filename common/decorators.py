@@ -50,6 +50,8 @@ def permission_required(*codenames, any_perm=False):
 
             user = request.user
             if not user.is_authenticated:
+                if _is_api_request(request):
+                    return JsonResponse({'ok': False, 'error': 'Giriş gerekli.'}, status=401)
                 return redirect('login')
             if user.is_superuser:
                 return view_func(*args, **kwargs)

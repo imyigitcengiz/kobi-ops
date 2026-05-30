@@ -186,6 +186,14 @@
     <script src="{% static 'js/product-service-type-sync.js' %}" defer></script>
     <script src="{% static 'js/live-sync.js' %}" defer></script>
     <script src="{% static 'js/quick-field-update.js' %}" defer></script>
+    {% if user_perms.services_manage %}
+    <script>
+        window.SERVICE_QUICK_UPDATE_URL = '{% url "service_quick_update" %}';
+        document.addEventListener('DOMContentLoaded', function () {
+            window.GyQuickFieldUpdate?.init();
+        });
+    </script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
     {% if user_perms.services_whatsapp %}{% include 'services_dashboard/partials/whatsapp_modal.html' %}{% endif %}
     {% include 'common/whatsapp_scenario_prompt_assets.html' %}

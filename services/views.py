@@ -242,6 +242,15 @@ def _apply_service_status_change(
             template_ids=template_ids,
         )
 
+    if user:
+        publish_live_event(
+            kind='service',
+            action='updated',
+            object_id=service.id,
+            message=f'Servis #{service.id} durumu güncellendi.',
+            user_id=user.id,
+        )
+
     return {
         'status_changed': True,
         'status_label': new_status.name,
@@ -785,13 +794,18 @@ def quick_update_service_field(request):
     value = request.POST.get('value')
 
     if not service_id or not str(service_id).isdigit():
-        return JsonResponse({'error': 'Geçersiz servis kaydı.'}, status=400)
+        return JsonResponse({'ok': False, 'error': 'Geçersiz servis kaydı.'}, status=400)
     if field not in {'status', 'priority'}:
-        return JsonResponse({'error': 'Geçersiz alan.'}, status=400)
+        return JsonResponse({'ok': False, 'error': 'Geçersiz alan.'}, status=400)
     if not value or not str(value).isdigit():
-        return JsonResponse({'error': 'Geçersiz değer.'}, status=400)
+        return JsonResponse({'ok': False, 'error': 'Geçersiz değer.'}, status=400)
 
-    service = get_object_or_404(ServiceRecord, pk=int(service_id))
+    service = get_object_or_404(
+        ServiceRecord.objects.select_related(
+            'customer', 'status', 'priority', 'solution_partner', 'service_personnel', 'assigned_to',
+        ).prefetch_related('products', 'service_types'),
+        pk=int(service_id),
+    )
     option_model = StatusOption if field == 'status' else PriorityOption
     option = get_object_or_404(option_model, pk=int(value))
 
@@ -1138,7 +1152,7 @@ def send_services_whatsapp_auto(request):
 
 
 @require_POST
-@permission_required(SERVICES_WHATSAPP_PERM)
+@permission_required(SERVICES_MANAGE_PERM)
 def service_status_change_preview_api(request):
     import json
     try:
@@ -1179,7 +1193,7 @@ def service_status_change_preview_api(request):
 
 
 @require_POST
-@permission_required(SERVICES_WHATSAPP_PERM)
+@permission_required(SERVICES_MANAGE_PERM)
 def service_status_change_apply_api(request):
     import json
     try:
@@ -1198,11 +1212,14 @@ def service_status_change_apply_api(request):
     if not prev_status_id or not str(prev_status_id).isdigit():
         return JsonResponse({'ok': False, 'error': 'Önceki durum bilgisi eksik.'}, status=400)
 
+    send_whatsapp = bool(body.get('send_whatsapp'))
+    if send_whatsapp and not request.user.is_superuser and not request.user.has_perm_codename(SERVICES_WHATSAPP_PERM):
+        return JsonResponse({'ok': False, 'error': 'WhatsApp gönderimi için yetkiniz yok.'}, status=403)
+
     service = get_object_or_404(
         ServiceRecord.objects.select_related('customer', 'status', 'priority').prefetch_related('service_types'),
         pk=int(service_id),
     )
-    send_whatsapp = bool(body.get('send_whatsapp'))
     template_ids = body.get('template_ids')
     if template_ids is not None and not isinstance(template_ids, list):
         template_ids = [template_ids]
@@ -1220,10 +1237,15 @@ def service_status_change_apply_api(request):
     except ValueError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
 
+    if not result.get('status_changed'):
+        return JsonResponse({'ok': True, 'sent': 0, 'unchanged': True})
+
     sent = sum(1 for r in result.get('whatsapp_results') or [] if r.get('ok'))
     return JsonResponse({
         'ok': True,
         'sent': sent,
+        'field': 'status',
+        'value': int(new_status_id),
         'status_label': result.get('status_label'),
         'status_color': result.get('status_color'),
         'results': result.get('whatsapp_results') or [],
