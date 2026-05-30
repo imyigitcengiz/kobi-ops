@@ -140,13 +140,13 @@ def _persistence_error_message(root: Path) -> str:
     if in_coolify:
         return base + (
             '  Coolify çözümü: Build Pack = Docker Compose (Dockerfile değil).\n'
-            '  Compose path: docker-compose.yml (repo kökü).\n'
+            '  Compose path: docker-compose.yaml (repo kökü).\n'
             '  Named volume compose içinde tanımlıdır; Persistent Storage UI gerekmez.\n'
             '  Redeploy sonrası hâlâ hata: Logs → compose volume gy_data:/data uygulandı mı?'
         )
     if in_dokploy:
         return base + (
-            '  Dokploy çözümü: Docker Compose modu, compose path docker-compose.yml.\n'
+            '  Dokploy çözümü: Docker Compose modu, compose path docker-compose.yaml.\n'
             '  Named volume gy_data otomatik oluşur; deploy sırasında volume silmeyin.'
         )
     return base + (

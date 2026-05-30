@@ -35,7 +35,7 @@
         <p class="font-bold">Sunucu / Docker kurulumu (Coolify)</p>
         <p class="mt-2">WhatsApp köprüsü panel konteynerinden <strong>ayrı</strong> bir servistir (Node + Chromium). Sadece panel Dockerfile kurduysanız köprü <strong>çalışmaz</strong>; panel içinden de başlatılamaz.</p>
         <ul class="mt-2 list-disc list-inside space-y-1 text-amber-900">
-            <li><strong>Önerilen:</strong> Coolify kaynağını <strong>Docker Compose</strong> yapın — repo kökündeki <code class="text-xs bg-amber-100 px-1 rounded">compose.yaml</code> hem <code class="text-xs bg-amber-100 px-1 rounded">app</code> hem <code class="text-xs bg-amber-100 px-1 rounded">whatsapp_bridge</code> servislerini otomatik başlatır.</li>
+            <li><strong>Önerilen:</strong> Coolify kaynağını <strong>Docker Compose</strong> yapın — repo kökündeki <code class="text-xs bg-amber-100 px-1 rounded">docker-compose.yaml</code> hem <code class="text-xs bg-amber-100 px-1 rounded">app</code> hem <code class="text-xs bg-amber-100 px-1 rounded">whatsapp_bridge</code> servislerini otomatik başlatır.</li>
             <li>Panel ortam değişkeni (Compose içinde otomatik; tek panel uygulamasında elle yazın):
                 <code class="text-xs bg-amber-100 px-1 rounded block mt-1">WHATSAPP_BRIDGE_URL={{ whatsapp_bridge_url_docker|default:"http://whatsapp_bridge:3939" }}</code>
                 <code class="text-xs bg-amber-100 px-1 rounded block mt-1">DJANGO_WHATSAPP_BRIDGE_CAN_SPAWN=0</code>

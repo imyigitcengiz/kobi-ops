@@ -20,7 +20,7 @@ Domain yoksa: `./deploy/install.sh` → `http://SUNUCU_IP:8000/giris/`
 
 1. **Konteyner** → **Compose** → **Oluştur**
 2. **Kaynak:** `/opt/kobi-ops`
-3. **Compose dosyası:** `docker-compose.yml`
+3. **Compose dosyası:** `docker-compose.yaml`
 4. **Başlat** — `.env` zorunlu değil (bootstrap otomatik)
 
 İsteğe bağlı `.env`: `cp .env.example .env`

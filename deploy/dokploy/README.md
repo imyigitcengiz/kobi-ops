@@ -6,7 +6,7 @@
 
 1. **Project** → **Docker Compose** → **Create**
 2. **Source:** GitHub → `imyigitcengiz/kobi-ops`, branch `main`  
-   **Compose file path:** `docker-compose.yml`
+   **Compose file path:** `docker-compose.yaml`
 3. **Domains** → servis **`app`**, port **`8000`**, Let's Encrypt → **Deploy**
 
 Environment sekmesine `.env` yazmanız **gerekmez** — `bootstrap-env.sh` secret, host ve CSRF'yi otomatik tamamlar.
@@ -26,7 +26,7 @@ Named volume `kobiops_gy_data` → `/data` (SQLite + medya). Deploy sırasında 
 
 ## Environment (isteğe bağlı)
 
-Manuel override: `deploy/dokploy/.env.example`
+Manuel override: repo kökündeki [`.env.example`](../../.env.example)
 
 Dokploy UI'daki değişkenler `.env` dosyasına yazılır; compose'ta `env_file` opsiyonel tanımlı.
 

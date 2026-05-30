@@ -50,7 +50,7 @@ cd /opt/kobi-ops && ./deploy/install.sh panel.firma.com
 
 | Kaynak | Ne sağlar |
 |--------|-----------|
-| `docker-compose.yml` | Üretim varsayılanları (port, /data, WhatsApp URL, volume) |
+| `docker-compose.yaml` | Üretim varsayılanları (port, /data, WhatsApp URL, volume) |
 | `bootstrap-env.sh` | Secret, ALLOWED_HOSTS, CSRF (domain'den otomatik) |
 | Coolify `SERVICE_FQDN_APP` / `SERVICE_URL_APP` | Domain tanımlayınca otomatik enjekte |
 

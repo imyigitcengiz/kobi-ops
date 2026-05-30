@@ -3,7 +3,7 @@
 # Coolify / Dokploy / 1Panel — 3 adım:
 #   1. GitHub imyigitcengiz/kobi-ops
 #   2. Build Pack: Docker Compose  ← Dockerfile tek başına DEĞİL
-#   3. Compose path: docker-compose.yaml (Coolify varsayılan) veya docker-compose.yml
+#   3. Compose path: docker-compose.yaml (repo kökü)
 #
 # Named volume gy_data otomatik oluşur; Persistent Storage UI gerekmez.
 
