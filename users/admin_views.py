@@ -216,3 +216,111 @@ class AdminUserDeleteView(SuperuserRequiredMixin, DeleteView):
         label = user.display_name
         messages.info(request, f'"{label}" kullanıcısı silindi.')
         return super().delete(request, *args, **kwargs)
+
+
+class AdminSystemBackupView(SuperuserRequiredMixin, TemplateView):
+    template_name = 'settings/system_backup.html'
+
+    def get_context_data(self, **kwargs):
+        from core_settings.backup import backup_status_summary
+        context = super().get_context_data(**kwargs)
+        context['backup_status'] = backup_status_summary()
+        context['admin_context'] = True
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from core_settings.backup import (
+            export_backup_response,
+            export_sqlite_response,
+            import_backup_file,
+            import_sqlite_file,
+        )
+        if 'export_backup' in request.POST:
+            try:
+                return export_backup_response()
+            except Exception as exc:
+                messages.error(request, f'Yedekleme sırasında hata oluştu: {exc}')
+                return redirect('admin_system_backup')
+
+        if 'import_backup' in request.POST:
+            ok, msg = import_backup_file(request.FILES.get('backup_file'))
+            if ok:
+                messages.success(request, msg)
+            else:
+                messages.error(request, msg)
+            return redirect('admin_system_backup')
+
+        if 'export_sqlite' in request.POST:
+            try:
+                return export_sqlite_response()
+            except Exception as exc:
+                messages.error(request, f'SQLite dışa aktarım hatası: {exc}')
+                return redirect('admin_system_backup')
+
+        if 'import_sqlite' in request.POST:
+            ok, msg = import_sqlite_file(request.FILES.get('sqlite_file'))
+            if ok:
+                messages.success(request, msg)
+            else:
+                messages.error(request, msg)
+            return redirect('admin_system_backup')
+
+        return redirect('admin_system_backup')
+
+
+class AdminSystemUpdatesView(SuperuserRequiredMixin, TemplateView):
+    template_name = 'users/yonetim/system_updates.html'
+
+    def get_context_data(self, **kwargs):
+        from core_settings.updater import check_for_updates
+
+        context = super().get_context_data(**kwargs)
+        status = check_for_updates(force=False)
+        context['update_status'] = status.to_dict()
+        return context
+
+
+class AdminSystemUpdateStatusApiView(SuperuserRequiredMixin, TemplateView):
+    """GET — güncelleme durumu JSON."""
+
+    def get(self, request, *args, **kwargs):
+        from django.http import JsonResponse
+        from core_settings.updater import check_for_updates
+
+        force = request.GET.get('force') in ('1', 'true', 'yes')
+        status = check_for_updates(force=force)
+        return JsonResponse(status.to_dict())
+
+
+class AdminSystemUpdateApplyApiView(SuperuserRequiredMixin, TemplateView):
+    """POST — güncellemeyi uygula."""
+
+    def post(self, request, *args, **kwargs):
+        from django.http import JsonResponse
+        from core_settings.updater import apply_update, check_for_updates, schedule_restart
+
+        status = check_for_updates(force=True)
+        if not status.update_available:
+            return JsonResponse({
+                'ok': True,
+                'message': 'Zaten güncelsiniz.',
+                'steps': [],
+                'restarting': False,
+            })
+        if not status.can_apply:
+            return JsonResponse({
+                'ok': False,
+                'error': status.message or 'Güncelleme uygulanamıyor.',
+                'steps': [],
+            }, status=400)
+
+        ok, msg, steps, restart = apply_update()
+        if ok and restart:
+            schedule_restart()
+        return JsonResponse({
+            'ok': ok,
+            'message': msg,
+            'steps': steps,
+            'restarting': ok and restart,
+            'apply_mode': status.apply_mode,
+        }, status=200 if ok else 500)

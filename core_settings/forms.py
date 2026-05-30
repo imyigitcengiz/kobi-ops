@@ -11,6 +11,7 @@ from .models import (
     ServiceTeam,
     ServicePersonnel,
     PersonnelPayment,
+    FinanceRecord,
     StatusOption,
     WhatsAppTemplate,
 )
@@ -40,11 +41,21 @@ class SiteSettingsForm(forms.ModelForm):
 class GeneralSiteSettingsForm(forms.ModelForm):
     class Meta:
         model = SiteSettings
-        fields = ['site_name', 'logo', 'company_phone', 'company_address']
+        fields = [
+            'site_name', 'logo', 'company_phone', 'company_address',
+            'whatsapp_cloud_token', 'whatsapp_cloud_phone_id',
+        ]
         widgets = {
             'site_name': forms.TextInput(attrs={'class': INPUT}),
             'company_phone': forms.TextInput(attrs={'class': INPUT}),
             'company_address': forms.Textarea(attrs={'class': INPUT, 'rows': 2}),
+            'whatsapp_cloud_token': forms.PasswordInput(
+                attrs={'class': INPUT, 'placeholder': 'EAA…', 'autocomplete': 'off'},
+                render_value=True,
+            ),
+            'whatsapp_cloud_phone_id': forms.TextInput(
+                attrs={'class': INPUT, 'placeholder': '123456789012345'},
+            ),
         }
 
 
@@ -215,4 +226,17 @@ class PersonnelPaymentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True).order_by('name')
         self.fields['personnel'].empty_label = 'Personel seçin'
+
+
+class FinanceRecordForm(forms.ModelForm):
+    class Meta:
+        model = FinanceRecord
+        fields = ['record_type', 'title', 'amount', 'record_date', 'notes']
+        widgets = {
+            'record_type': forms.Select(attrs={'class': INPUT}),
+            'title': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Örn: Ofis kirası'}),
+            'amount': forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
+            'record_date': forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+            'notes': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Opsiyonel not'}),
+        }
 

@@ -1,0 +1,108 @@
+{% extends 'muhasebe/base.html' %}
+
+{% block title %}{{ gy.mh_gelir_gider }}{% endblock %}
+
+{% block header %}
+<h1 class="text-lg font-bold text-slate-900">{{ gy.mh_gelir_gider }}</h1>
+<p class="text-sm text-slate-500">Genel gelir ve gider hareketleri — personel maaş/avans kayıtlarından ayrı tutulur.</p>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="font-bold text-slate-900">Yeni Kayıt</h3>
+            </div>
+            <form method="get" class="flex items-center gap-2">
+                <select name="record_type" class="p-2 bg-slate-50 border-none rounded-xl text-sm" onchange="this.form.submit()">
+                    <option value="">Tümü</option>
+                    <option value="income" {% if request.GET.record_type == 'income' %}selected{% endif %}>Gelir</option>
+                    <option value="expense" {% if request.GET.record_type == 'expense' %}selected{% endif %}>Gider</option>
+                </select>
+            </form>
+        </div>
+
+        <form method="post" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+            {% csrf_token %}
+            <input type="hidden" name="add_finance" value="1">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Tür</label>
+                {{ finance_form.record_type }}
+            </div>
+            <div class="space-y-1 lg:col-span-2">
+                <label class="text-xs font-bold text-slate-500 uppercase">Açıklama</label>
+                {{ finance_form.title }}
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Tutar (₺)</label>
+                {{ finance_form.amount }}
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Tarih</label>
+                {{ finance_form.record_date }}
+            </div>
+            <div class="space-y-1 lg:col-span-5">
+                <label class="text-xs font-bold text-slate-500 uppercase">Not</label>
+                {{ finance_form.notes }}
+            </div>
+            <button type="submit" class="lg:col-span-5 bg-brand-600 text-white py-2.5 rounded-xl font-bold hover:bg-brand-700">Kaydet</button>
+        </form>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-100">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-4 py-3 font-bold text-slate-700">Tarih</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Tür</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Açıklama</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Tutar</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Not</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Kaydeden</th>
+                        <th class="px-4 py-3 font-bold text-slate-700 text-right">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for rec in recent_records %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 whitespace-nowrap">{{ rec.record_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3">
+                            {% if rec.record_type == 'income' %}
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700">Gelir</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-red-50 text-red-700">Gider</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 font-semibold">{{ rec.title }}</td>
+                        <td class="px-4 py-3 font-bold text-slate-900">{{ rec.amount }} ₺</td>
+                        <td class="px-4 py-3 text-slate-500">{{ rec.notes|default:"—" }}</td>
+                        <td class="px-4 py-3 text-slate-500 text-xs">{{ rec.recorded_by.username|default:"—" }}</td>
+                        <td class="px-4 py-3 text-right">
+                            <form method="post" class="inline" onsubmit="return confirm('Kayıt silinsin mi?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_finance" value="1">
+                                <input type="hidden" name="id" value="{{ rec.id }}">
+                                <button type="submit" class="text-red-500 hover:underline text-xs font-semibold">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Henüz kayıt yok.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('input[name="record_date"]');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends 'settings/base.html' %}
+
+{% block title %}Firma etiketleri{% endblock %}
+
+{% block content %}
+<div class="pb-12">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="tags" class="w-7 h-7 text-amber-600"></i>
+                Firma etiketleri
+            </h1>
+            <p class="text-sm text-slate-600 mt-1">Firma rehberinde toplu atama için etiket tanımları.</p>
+        </div>
+        <a href="{% url 'contact_firmalar' %}" class="text-sm font-semibold text-amber-700 hover:text-amber-800">Firma rehberi →</a>
+    </div>
+
+{% csrf_token %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <section class="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4 h-fit">
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Yeni etiket</h2>
+        <form id="createTagForm" class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Etiket adı</label>
+                <input id="newTagName" type="text" required maxlength="60" placeholder="Örn: İzmir, VIP, Montaj"
+                       class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Renk</label>
+                <input id="newTagColor" type="color" value="#6366f1" class="w-full h-11 rounded-xl border border-slate-200 cursor-pointer">
+            </div>
+            <button type="submit" class="w-full py-3 bg-amber-600 text-white rounded-xl text-sm font-bold hover:bg-amber-700">Etiket oluştur</button>
+        </form>
+        <p class="text-xs text-slate-400">Toplam <strong id="tagCount">{{ tag_count }}</strong> etiket</p>
+    </section>
+
+    <section class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Etiketler</h2>
+            <input id="tagSearchInput" type="text" placeholder="Etiket ara…" class="p-2 bg-white border border-slate-200 rounded-xl text-sm min-w-[180px]">
+        </div>
+        <div id="tagsList" class="divide-y divide-slate-100">
+            <div class="p-8 text-center text-slate-400 text-sm">Yükleniyor…</div>
+        </div>
+    </section>
+</div>
+
+<p id="statusText" class="text-sm text-slate-500 mt-4"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const TAGS_URL = '{% url "contact_tags" %}';
+    const TAG_DETAIL_URL = '{% url "contact_tag_detail" pk=0 %}'.replace('/0/', '/');
+    let allTags = [];
+
+    function csrfToken() {
+        const fromInput = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (fromInput) return fromInput;
+        const v = '; ' + document.cookie;
+        const p = v.split('; csrftoken=');
+        return p.length === 2 ? p.pop().split(';').shift() : '';
+    }
+
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function fetchJson(url, options) {
+        const res = await fetch(url, options);
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) {
+            throw new Error(`Sunucu hatası (${res.status})`);
+        }
+        const data = await res.json();
+        if (!res.ok || data.ok === false) throw new Error(data.error || 'İşlem başarısız.');
+        return data;
+    }
+
+    function renderTags(tags) {
+        const box = document.getElementById('tagsList');
+        const q = (document.getElementById('tagSearchInput').value || '').trim().toLowerCase();
+        const filtered = q ? tags.filter(t => t.name.toLowerCase().includes(q)) : tags;
+        document.getElementById('tagCount').textContent = tags.length;
+
+        if (!filtered.length) {
+            box.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Etiket bulunamadı.</div>';
+            return;
+        }
+
+        box.innerHTML = filtered.map(t => `
+            <div class="p-4 flex flex-wrap items-center gap-3 hover:bg-slate-50" data-tag-id="${t.id}">
+                <span class="w-4 h-4 rounded-full shrink-0 border border-slate-200" style="background:${escapeHtml(t.color)}"></span>
+                <div class="flex-1 min-w-[140px]">
+                    <input type="text" value="${escapeHtml(t.name)}" data-name-input="${t.id}"
+                           class="font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-amber-500 focus:outline-none w-full max-w-xs">
+                    <p class="text-xs text-slate-500 mt-0.5">${t.firm_count} firma</p>
+                </div>
+                <input type="color" value="${escapeHtml(t.color)}" data-color-input="${t.id}"
+                       class="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer shrink-0">
+                <button type="button" data-save="${t.id}" class="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700">Kaydet</button>
+                <button type="button" data-delete="${t.id}" data-firm-count="${t.firm_count}"
+                        class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-bold hover:bg-red-100">Sil</button>
+            </div>
+        `).join('');
+    }
+
+    async function loadTags() {
+        const data = await fetchJson(TAGS_URL);
+        allTags = data.tags || [];
+        renderTags(allTags);
+    }
+
+    document.getElementById('createTagForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('newTagName').value.trim();
+        const color = document.getElementById('newTagColor').value;
+        if (!name) return;
+        try {
+            await fetchJson(TAGS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+                body: JSON.stringify({ name, color }),
+            });
+            document.getElementById('newTagName').value = '';
+            document.getElementById('statusText').textContent = `"${name}" oluşturuldu.`;
+            await loadTags();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+
+    document.getElementById('tagSearchInput').addEventListener('input', () => renderTags(allTags));
+
+    document.getElementById('tagsList').addEventListener('click', async (e) => {
+        const saveBtn = e.target.closest('[data-save]');
+        const deleteBtn = e.target.closest('[data-delete]');
+        if (saveBtn) {
+            const id = saveBtn.dataset.save;
+            const name = document.querySelector(`[data-name-input="${id}"]`)?.value.trim();
+            const color = document.querySelector(`[data-color-input="${id}"]`)?.value;
+            if (!name) return alert('Etiket adı boş olamaz.');
+            try {
+                await fetchJson(`${TAG_DETAIL_URL}${id}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+                    body: JSON.stringify({ name, color }),
+                });
+                document.getElementById('statusText').textContent = 'Etiket güncellendi.';
+                await loadTags();
+            } catch (err) {
+                alert(err.message);
+            }
+            return;
+        }
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.delete;
+            const count = parseInt(deleteBtn.dataset.firmCount, 10) || 0;
+            const msg = count
+                ? `${count} firmadan etiket kaldırılacak. Silinsin mi?`
+                : 'Bu etiket silinsin mi?';
+            if (!confirm(msg)) return;
+            try {
+                await fetchJson(`${TAG_DETAIL_URL}${id}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken() },
+                });
+                document.getElementById('statusText').textContent = 'Etiket silindi.';
+                await loadTags();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    });
+
+    loadTags().catch(err => {
+        document.getElementById('tagsList').innerHTML = `<div class="p-8 text-center text-red-600 text-sm">${escapeHtml(err.message)}</div>`;
+    });
+})();
+</script>
+{% endblock %}

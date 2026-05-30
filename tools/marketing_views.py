@@ -1,33 +1,37 @@
-"""Pazarlama — kampanya, firma, müşteri ve personel mesaj geçmişi (contact firmalardan ayrı)."""
+"""İletişim Merkezi — mesaj kayıtları ve kampanya ekranı."""
 
 from django.views.generic import TemplateView
 
 
-class MarketingMessagesView(TemplateView):
-    template_name = 'crm/marketing_messages.html'
+class OutreachCampaignView(TemplateView):
+    template_name = 'outreach/campaigns.html'
+
+
+class OutreachMessagesView(TemplateView):
+    template_name = 'outreach/message_log.html'
 
     SCOPE_META = {
         'kampanya': {
-            'title': 'Kampanya mesajları',
-            'subtitle': 'Koleksiyon ve toplu kampanya gönderimleri — firma rehberinden bağımsız.',
+            'title': 'Kampanya mesaj kayıtları',
+            'subtitle': 'WhatsApp Business API ile gönderilen toplu kampanya mesajları.',
             'icon': 'megaphone',
             'scope': 'campaign',
-            'empty_hint': 'Henüz kampanya mesajı yok. Firmalar rehberinden koleksiyon oluşturup gönderin.',
-            'action_url_name': 'contact_firmalar',
-            'action_label': 'Firma rehberi',
+            'empty_hint': 'Henüz kampanya mesajı yok. Kampanyalar bölümünden gönderim yapın.',
+            'action_url_name': 'outreach_campaigns',
+            'action_label': 'Kampanyalar',
         },
         'firma': {
-            'title': 'Firma mesajları',
-            'subtitle': 'Tekil ve toplu firma outreach (kampanya dışı): kazınan, ortak, bayi, özel mesaj.',
+            'title': 'Firma mesaj kayıtları',
+            'subtitle': 'Firma outreach geçmişi (kampanya dışı API gönderimleri dahil).',
             'icon': 'building-2',
             'scope': 'firm',
-            'empty_hint': 'Kampanya dışı firma mesajı bulunamadı.',
+            'empty_hint': 'Firma mesaj kaydı bulunamadı.',
             'action_url_name': 'contact_firmalar',
             'action_label': 'Firma rehberi',
         },
         'musteri': {
-            'title': 'Müşteri mesajları',
-            'subtitle': 'Müşteri kartlarına giden WhatsApp kayıtları.',
+            'title': 'Müşteri mesaj kayıtları',
+            'subtitle': 'Müşteri kartlarına giden WhatsApp kayıtları (QR köprüsü).',
             'icon': 'users',
             'scope': 'customer',
             'empty_hint': 'Müşteriye gönderilmiş mesaj yok.',
@@ -35,12 +39,12 @@ class MarketingMessagesView(TemplateView):
             'action_label': 'Müşteriler',
         },
         'personel': {
-            'title': 'Personel mesajları',
-            'subtitle': 'Otomatik senaryolar ve dahili bildirimler (müşteri / firma kampanyası hariç).',
+            'title': 'Personel mesaj kayıtları',
+            'subtitle': 'Servis ekibi otomatik senaryo bildirimleri.',
             'icon': 'id-card',
             'scope': 'personnel',
-            'empty_hint': 'Personel / dahili otomatik mesaj kaydı yok.',
-            'action_url_name': 'personnel_network',
+            'empty_hint': 'Personel mesaj kaydı yok.',
+            'action_url_name': 'accounting_payroll',
             'action_label': 'Personel',
         },
     }
@@ -59,14 +63,18 @@ class MarketingMessagesView(TemplateView):
         context['page_meta'] = meta
         context['message_scope'] = meta['scope']
         url_names = {
-            'kampanya': 'marketing_campaign_messages',
-            'firma': 'marketing_firm_messages',
-            'musteri': 'marketing_customer_messages',
-            'personel': 'marketing_personnel_messages',
+            'kampanya': 'outreach_campaign_messages',
+            'firma': 'outreach_firm_messages',
+            'musteri': 'outreach_customer_messages',
+            'personel': 'outreach_personnel_messages',
         }
-        context['marketing_nav'] = [
-            {'key': k, 'label': v['title'], 'url_name': url_names[k]}
+        context['outreach_nav'] = [
+            {'key': k, 'label': v['title'].replace(' kayıtları', ''), 'url_name': url_names[k]}
             for k, v in self.SCOPE_META.items()
         ]
         context['initial_firm_id'] = (self.request.GET.get('firm_id') or '').strip()
         return context
+
+
+# Geriye dönük uyumluluk
+MarketingMessagesView = OutreachMessagesView

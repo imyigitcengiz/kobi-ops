@@ -1,4 +1,4 @@
-﻿{% extends 'crm/base.html' %}
+{% extends 'crm/base.html' %}
 
 {% block title %}Firmalar{% endblock %}
 
@@ -151,12 +151,9 @@
         <input id="bulkRegionInput" type="text" placeholder="Bölge adı" class="p-2 bg-white border border-slate-200 rounded-xl text-xs w-28">
         <button type="button" id="setRegionBtn" disabled class="px-3 py-1.5 bg-teal-600 text-white rounded-xl text-xs font-bold disabled:opacity-40">Bölge ata</button>
         <button type="button" id="deleteSelectedBtn" disabled class="px-3 py-1.5 bg-red-100 text-red-700 rounded-xl text-xs font-bold disabled:opacity-40">Seçilenleri sil</button>
-        <button type="button" id="bulkMessageBtn" disabled class="px-3 py-1.5 bg-green-600 text-white rounded-xl text-xs font-bold disabled:opacity-40">Toplu özel mesaj</button>
         <button type="button" id="addFirmBtn" class="px-3 py-1.5 bg-brand-600 text-white rounded-xl text-xs font-bold">Manuel kayıt ekle</button>
         <button type="button" id="clearMemoryBtn" class="px-3 py-1.5 bg-red-600 text-white rounded-xl text-xs font-bold">Rehberi temizle</button>
-        <a href="{% url 'contact_tag_manager' %}" class="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-xl text-xs font-bold hover:bg-indigo-200">Etiket yönetimi</a>
-        <a href="{% url 'marketing_campaign_messages' %}" class="px-3 py-1.5 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold hover:bg-rose-200 ml-auto">Kampanya mesajları</a>
-        <a href="{% url 'marketing_firm_messages' %}" class="px-3 py-1.5 bg-rose-50 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-100">Firma mesajları</a>
+        <a href="{% url 'outreach_campaigns' %}" class="px-3 py-1.5 bg-brand-100 text-brand-800 rounded-xl text-xs font-bold hover:bg-brand-200 ml-auto">Kampanyalar →</a>
     </div>
 
     <div class="overflow-x-auto max-h-[480px] overflow-y-auto">
@@ -652,19 +649,6 @@
             refreshStats(data);
             await loadMemory('');
             await loadTags();
-        } catch (e) { alert(e.message); }
-    });
-
-    document.getElementById('bulkMessageBtn')?.addEventListener('click', async () => {
-        const ids = collectSelectedFirmIds();
-        if (!ids.length) return alert('Firma seçin.');
-        const message = prompt('Seçili firmalara gönderilecek özel mesaj:');
-        if (!message || !message.trim()) return;
-        try {
-            const data = await bulkAction({ action: 'send_message', firm_ids: ids, message: message.trim() });
-            statusText.textContent = `${data.sent} gönderildi, ${data.failed} başarısız.`;
-            if (data.errors?.length) alert(data.errors.join('\n'));
-            await loadMemory(memorySearchInput?.value.trim() || '');
         } catch (e) { alert(e.message); }
     });
 

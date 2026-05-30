@@ -15,6 +15,13 @@ from tools.whatsapp_client import (
     bridge_connection_status,
     bridge_send,
 )
+from tools.whatsapp_cloud_client import (
+    WhatsappCloudError,
+    WhatsappCloudNotConfigured,
+    cloud_api_configured,
+    cloud_api_status,
+    cloud_send,
+)
 
 
 def _list_connection_candidates(preferred_id=None) -> list[int]:
@@ -81,6 +88,69 @@ def _resolve_send_type(*, customer_id=None, firm=None, collection_id=None, sourc
     return WhatsappOutboundMessage.SEND_PRIVATE
 
 
+CLOUD_SEND_TYPES = frozenset({
+    WhatsappOutboundMessage.SEND_CAMPAIGN,
+    WhatsappOutboundMessage.SEND_PRIVATE,
+    WhatsappOutboundMessage.SEND_SCRAPED,
+    WhatsappOutboundMessage.SEND_PARTNER,
+    WhatsappOutboundMessage.SEND_DEALER,
+    WhatsappOutboundMessage.SEND_BUSINESS,
+})
+
+SALES_LEAD_SCENARIOS = frozenset({
+    'sales_lead_created',
+    'sales_lead_status',
+})
+
+
+def resolve_whatsapp_transport(*, send_type: str = '', scenario: str = '', explicit: str = '') -> str:
+    if explicit in ('bridge', 'cloud'):
+        return explicit
+    if scenario in SALES_LEAD_SCENARIOS:
+        return 'cloud'
+    if send_type == WhatsappOutboundMessage.SEND_CUSTOMER:
+        return 'bridge'
+    if send_type == WhatsappOutboundMessage.SEND_AUTO:
+        return 'bridge'
+    if send_type in CLOUD_SEND_TYPES:
+        return 'cloud'
+    return 'bridge'
+
+
+def _dispatch_send(
+    *,
+    transport: str,
+    phone_norm: str,
+    message: str,
+    connection_id: int | None,
+    outbound: WhatsappOutboundMessage,
+):
+    if transport == 'cloud':
+        if not cloud_api_configured():
+            return None, 'WhatsApp Business API yapılandırılmamış. Site ayarlarından API bilgilerini girin.', None
+        try:
+            result = cloud_send(phone_norm, message)
+        except WhatsappCloudNotConfigured as exc:
+            return None, str(exc), None
+        except WhatsappCloudError as exc:
+            return None, str(exc), None
+        return None, None, result
+
+    conn_id, _, conn_err = pick_ready_connection(connection_id, strict=bool(connection_id))
+    if conn_err:
+        return conn_id, conn_err, None
+    if not conn_id:
+        err = 'Bağlı WhatsApp hattı yok. Yardım Masası → WhatsApp Bağlan sayfasından QR ile bağlanın.'
+        return None, err, None
+    try:
+        result = bridge_send(conn_id, phone_norm, message)
+    except WhatsappBridgeOffline as exc:
+        raise
+    except WhatsappBridgeError as exc:
+        return conn_id, str(exc), None
+    return conn_id, None, result
+
+
 def _log_and_send(
     *,
     phone_raw: str,
@@ -93,6 +163,8 @@ def _log_and_send(
     collection_id=None,
     source: str = WhatsappOutboundMessage.SOURCE_MANUAL,
     send_type: str = '',
+    scenario: str = '',
+    transport: str = '',
 ):
     firm = None
     customer = None
@@ -132,32 +204,34 @@ def _log_and_send(
         status=WhatsappOutboundMessage.STATUS_SENDING,
         source=source,
         send_type=resolved_send_type,
+        collection_id=collection_id,
     )
 
-    conn_id, _, conn_err = pick_ready_connection(connection_id, strict=bool(connection_id))
-    if conn_err:
-        outbound.status = WhatsappOutboundMessage.STATUS_FAILED
-        outbound.error_message = conn_err
-        outbound.save(update_fields=['status', 'error_message'])
-        return connection_id, outbound, conn_err, None
-    if not conn_id:
-        outbound.status = WhatsappOutboundMessage.STATUS_FAILED
-        outbound.error_message = 'Bağlı WhatsApp hattı yok. Tools → WhatsApp Bağlan sayfasından QR ile bağlanın.'
-        outbound.save(update_fields=['status', 'error_message'])
-        return None, outbound, 'Bağlı WhatsApp hattı yok. Tools → WhatsApp Bağlan sayfasından QR ile bağlanın.', None
+    resolved_transport = resolve_whatsapp_transport(
+        send_type=resolved_send_type,
+        scenario=scenario,
+        explicit=transport,
+    )
 
     try:
-        result = bridge_send(conn_id, phone_norm, message)
+        conn_id, err, result = _dispatch_send(
+            transport=resolved_transport,
+            phone_norm=phone_norm,
+            message=message,
+            connection_id=connection_id,
+            outbound=outbound,
+        )
     except WhatsappBridgeOffline as exc:
         outbound.status = WhatsappOutboundMessage.STATUS_FAILED
         outbound.error_message = str(exc)
         outbound.save(update_fields=['status', 'error_message'])
         raise
-    except WhatsappBridgeError as exc:
+
+    if err:
         outbound.status = WhatsappOutboundMessage.STATUS_FAILED
-        outbound.error_message = str(exc)
+        outbound.error_message = err
         outbound.save(update_fields=['status', 'error_message'])
-        return conn_id, outbound, str(exc), None
+        return conn_id, outbound, err, None
 
     outbound.status = WhatsappOutboundMessage.STATUS_SENT
     outbound.sent_at = timezone.now()
@@ -166,6 +240,60 @@ def _log_and_send(
     if firm:
         sync_firm_message_stats(firm)
     return conn_id, outbound, None, result
+
+
+def send_pending_outbound(outbound: WhatsappOutboundMessage):
+    """Kuyruktaki bekleyen mesajı uygun kanaldan gönder."""
+    transport = resolve_whatsapp_transport(send_type=outbound.send_type or '')
+    outbound.status = WhatsappOutboundMessage.STATUS_SENDING
+    outbound.error_message = ''
+    outbound.save(update_fields=['status', 'error_message'])
+
+    try:
+        conn_id, err, result = _dispatch_send(
+            transport=transport,
+            phone_norm=outbound.phone_normalized,
+            message=outbound.message,
+            connection_id=None,
+            outbound=outbound,
+        )
+    except WhatsappBridgeOffline as exc:
+        outbound.status = WhatsappOutboundMessage.STATUS_FAILED
+        outbound.error_message = str(exc)
+        outbound.save(update_fields=['status', 'error_message'])
+        return {
+            'ok': False,
+            'offline': True,
+            'error': str(exc),
+            'recipient_name': outbound.recipient_name,
+            'message_id': outbound.id,
+        }
+
+    if err:
+        outbound.status = WhatsappOutboundMessage.STATUS_FAILED
+        outbound.error_message = err
+        outbound.save(update_fields=['status', 'error_message'])
+        return {
+            'ok': False,
+            'error': err,
+            'skipped': False,
+            'recipient_name': outbound.recipient_name,
+            'message_id': outbound.id,
+            'offline': transport == 'bridge' and 'köprü' in err.lower(),
+        }
+
+    outbound.status = WhatsappOutboundMessage.STATUS_SENT
+    outbound.sent_at = timezone.now()
+    outbound.error_message = ''
+    outbound.save(update_fields=['status', 'sent_at', 'error_message'])
+    if outbound.firm_id:
+        sync_firm_message_stats(outbound.firm)
+    return {
+        'ok': True,
+        'recipient_name': outbound.recipient_name,
+        'message_id': outbound.id,
+        'bridge_message_id': (result or {}).get('messageId'),
+    }
 
 
 @require_http_methods(['GET'])
@@ -220,6 +348,8 @@ def whatsapp_send_api(request):
     collection_id = body.get('collection_id')
     source = (body.get('source') or WhatsappOutboundMessage.SOURCE_MANUAL).strip()
     send_type = (body.get('send_type') or '').strip()
+    scenario = (body.get('scenario') or '').strip()
+    transport = (body.get('transport') or '').strip()
 
     phone_norm = normalize_phone(phone_raw)
     if not is_whatsapp_eligible(phone_raw, phone_norm):
@@ -241,6 +371,8 @@ def whatsapp_send_api(request):
             collection_id=collection_id,
             source=source,
             send_type=send_type,
+            scenario=scenario,
+            transport=transport,
         )
     except WhatsappBridgeOffline as exc:
         return JsonResponse({'ok': False, 'offline': True, 'error': str(exc)}, status=503)
@@ -259,4 +391,63 @@ def whatsapp_send_api(request):
         'message_id': outbound.id,
         'bridge_message_id': (result or {}).get('messageId'),
         'recipient_name': outbound.recipient_name,
+        'transport': resolve_whatsapp_transport(
+            send_type=outbound.send_type,
+            scenario=scenario,
+            explicit=transport,
+        ),
+    })
+
+
+@require_http_methods(['GET'])
+@json_auth_required
+@permission_required('access.outreach')
+def whatsapp_cloud_status_api(request):
+    status = cloud_api_status()
+    return JsonResponse({'ok': True, **status})
+
+
+@require_http_methods(['POST'])
+@json_auth_required
+@permission_required('access.outreach')
+def campaign_send_next_api(request):
+    body = _json_body(request) or {}
+    batch_id = (body.get('batch_id') or '').strip()
+    if not batch_id:
+        return JsonResponse({'ok': False, 'error': 'batch_id gerekli.'}, status=400)
+
+    outbound = (
+        WhatsappOutboundMessage.objects.filter(
+            batch_id=batch_id,
+            status=WhatsappOutboundMessage.STATUS_PENDING,
+        )
+        .order_by('id')
+        .first()
+    )
+    if not outbound:
+        return JsonResponse({'ok': True, 'done': True})
+
+    result = send_pending_outbound(outbound)
+    if result.get('done'):
+        return JsonResponse(result)
+    if not result.get('ok'):
+        status_code = 503 if result.get('offline') else 502
+        return JsonResponse(result, status=status_code)
+    return JsonResponse(result)
+
+
+@require_http_methods(['GET'])
+@json_auth_required
+@permission_required('access.outreach')
+def campaign_queue_status_api(request):
+    batch_id = (request.GET.get('batch_id') or '').strip()
+    if not batch_id:
+        return JsonResponse({'ok': False, 'error': 'batch_id gerekli.'}, status=400)
+    qs = WhatsappOutboundMessage.objects.filter(batch_id=batch_id)
+    return JsonResponse({
+        'ok': True,
+        'sent': qs.filter(status=WhatsappOutboundMessage.STATUS_SENT).count(),
+        'failed': qs.filter(status=WhatsappOutboundMessage.STATUS_FAILED).count(),
+        'skipped': qs.filter(status=WhatsappOutboundMessage.STATUS_SKIPPED).count(),
+        'pending': qs.filter(status=WhatsappOutboundMessage.STATUS_PENDING).count(),
     })

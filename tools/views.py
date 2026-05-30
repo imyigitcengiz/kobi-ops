@@ -56,7 +56,7 @@ FirmaKaziView = FirmaBulView  # geriye dönük
 
 
 class TagManagerView(TemplateView):
-    template_name = 'crm/tag_manager.html'
+    template_name = 'settings/tag_manager.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -98,6 +98,22 @@ def _json_body(request):
         return json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return None
+
+
+def _apply_template(template: str, firm=None, *, name: str = '', phone: str = '', region: str = '') -> str:
+    """Kampanya şablonu — {firma}, {telefon}, {bolge}, {adres}, {puan} yer tutucuları."""
+    text = template or ''
+    firm_name = name or (firm.name if firm else '') or 'Firma'
+    replacements = {
+        '{firma}': firm_name,
+        '{telefon}': phone or (firm.phone if firm else '') or '',
+        '{bolge}': region or (firm.region if firm else '') or '',
+        '{adres}': (firm.address if firm and getattr(firm, 'address', None) else '') or '',
+        '{puan}': str(getattr(firm, 'rating', '') or '') if firm else '',
+    }
+    for key, value in replacements.items():
+        text = text.replace(key, value)
+    return text.strip()
 
 
 @require_http_methods(['POST'])

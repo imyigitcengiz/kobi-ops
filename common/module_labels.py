@@ -3,6 +3,7 @@
 REHBER = 'Rehber'
 YARDIM_MASASI = 'Yardım Masası'
 SATIS_BIRIMI = 'Satış Birimi'
+MUHASEBE = 'Muhasebe'
 
 # Yardım Masası altı
 YM_OZET = 'Özet panel'
@@ -20,5 +21,10 @@ REHBER_FIRMA_BUL = 'Firma Bul'
 # Satış Birimi
 SB_OZET = 'Özet'
 SB_KAYITLAR = 'Satış kayıtları'
+
+# Muhasebe
+MH_OZET = 'Özet'
+MH_MAAS_AVANS = 'Maaş & avans'
+MH_GELIR_GIDER = 'Gelir & gider'
 
 ORTAK_URUNLER = 'Ürünler (ortak katalog)'

@@ -18,6 +18,8 @@ urlpatterns = [
     path('tools/', include('config.tools_urls')),
     path('sales-lead/', include('config.sales_lead_urls')),
     path('contact/', include('config.contact_urls')),
+    path('iletisim/', include('config.outreach_urls')),
+    path('muhasebe/', include('config.accounting_urls')),
     path('crm/', include('config.crm_urls')),
     path('ortak/', include('config.ortak_urls')),
     path('chat/', include('chat.urls')),

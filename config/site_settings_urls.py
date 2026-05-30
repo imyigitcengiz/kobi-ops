@@ -6,7 +6,6 @@ from django.views.generic import RedirectView
 from core_settings.system_views import (
     SettingsAIReportingView,
     SettingsAISettingsView,
-    SettingsSystemBackupView,
 )
 from core_settings.views import (
     SiteSettingsView,
@@ -16,6 +15,7 @@ from core_settings.views import (
     quick_option_create_api,
     quick_option_update_api,
 )
+from tools.views import TagManagerView
 
 _urunler = SiteSettingsView.as_view(section='urunler')
 _ariza = SiteSettingsView.as_view(section='ariza-tipleri')
@@ -31,6 +31,7 @@ urlpatterns = [
     path('durumlar/', _durum, name='settings_statuses'),
     path('oncelikler/', _oncelik, name='settings_priorities'),
     path('cozum-turleri/', _cozum, name='settings_partner_types'),
+    path('etiketler/', TagManagerView.as_view(), name='settings_tags'),
     # Eski hash yolları → sayfa
     path('urunler', RedirectView.as_view(pattern_name='settings_products', permanent=True)),
     path('ariza-tipleri', RedirectView.as_view(pattern_name='settings_service_types', permanent=True)),
@@ -41,7 +42,7 @@ urlpatterns = [
     path('ai/ayarlar/', SettingsAISettingsView.as_view(), name='settings_ai_settings'),
     path('ai/raporlama/', SettingsAIReportingView.as_view(), name='settings_ai_reporting'),
     path('ai/panel/', RedirectView.as_view(pattern_name='settings_ai_reporting', permanent=False), name='ai_panel'),
-    path('yedekler/', SettingsSystemBackupView.as_view(), name='settings_system_backup'),
+    path('yedekler/', RedirectView.as_view(pattern_name='admin_system_backup', permanent=False), name='settings_system_backup'),
 
     path('api/settings/', settings_api, name='settings_api'),
     path('api/options/catalog/', options_catalog_api, name='options_catalog_api'),

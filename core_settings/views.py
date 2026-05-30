@@ -4,14 +4,16 @@ from django.contrib import messages
 from .models import (
     SiteSettings, ServiceTypeOption, ProductOption, ProductColorOption, StatusOption, PriorityOption,
     WhatsAppTemplate, SolutionPartner, SolutionPartnerType, ServiceTeam, ServicePersonnel,
-    PersonnelPayment,
+    PersonnelPayment, FinanceRecord,
 )
 from .forms import (
     GeneralSiteSettingsForm, SiteSettingsForm, ServiceTypeOptionForm, ProductOptionForm, StatusOptionForm,
     PriorityOptionForm, WhatsAppTemplateForm, SolutionPartnerForm, SolutionPartnerTypeForm,
-    ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm,
+    ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm, FinanceRecordForm,
 )
-from common.permissions import can_manage_payroll, can_manage_teams, can_manage_personnel
+from common.permissions import (
+    can_manage_payroll, can_manage_finance, can_manage_teams, can_manage_personnel,
+)
 from django.http import HttpResponse, JsonResponse
 from common.decorators import json_auth_required, permission_required
 from django.db import transaction
@@ -382,11 +384,16 @@ class TeamNetworkView(TemplateView):
 class PersonnelNetworkView(TemplateView):
     template_name = 'crm/personnel_network.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        if not can_manage_personnel(request.user):
+            messages.error(request, 'Personel kayıtları için yetkiniz yok.')
+            return redirect('contact_hub')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         q = self.request.GET.get('q', '').strip()
         team = self.request.GET.get('team', '').strip()
-        payment_personnel = self.request.GET.get('payment_personnel', '').strip()
 
         personnel = ServicePersonnel.objects.select_related('team').prefetch_related('product_groups').all().order_by('name')
         if q:
@@ -394,41 +401,14 @@ class PersonnelNetworkView(TemplateView):
         if team and team.isdigit():
             personnel = personnel.filter(team_id=int(team))
 
-        payments = PersonnelPayment.objects.select_related('personnel', 'recorded_by').all()
-        if payment_personnel and payment_personnel.isdigit():
-            payments = payments.filter(personnel_id=int(payment_personnel))
-
-        context['can_manage_payroll'] = can_manage_payroll(self.request.user)
-        context['can_manage_personnel'] = can_manage_personnel(self.request.user)
+        context['can_manage_personnel'] = True
         context['personnel_form'] = ServicePersonnelForm()
-        context['payment_form'] = PersonnelPaymentForm()
         context['teams'] = ServiceTeam.objects.all().order_by('name')
         context['personnel_list'] = personnel
-        context['recent_payments'] = payments.order_by('-payment_date', '-created_at')[:100]
-        context['all_personnel'] = ServicePersonnel.objects.filter(is_active=True).order_by('name')
         return context
 
     def post(self, request, *args, **kwargs):
-        if 'add_payment' in request.POST:
-            if not can_manage_payroll(request.user):
-                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
-                return redirect('personnel_network')
-            form = PersonnelPaymentForm(request.POST)
-            if form.is_valid():
-                payment = form.save(commit=False)
-                if request.user.is_authenticated:
-                    payment.recorded_by = request.user
-                payment.save()
-                messages.success(request, 'Ödeme kaydı eklendi.')
-            else:
-                messages.error(request, 'Ödeme kaydı eklenemedi.')
-        elif 'delete_payment' in request.POST:
-            if not can_manage_payroll(request.user):
-                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
-                return redirect('personnel_network')
-            PersonnelPayment.objects.filter(id=request.POST.get('id')).delete()
-            messages.info(request, 'Ödeme kaydı silindi.')
-        elif 'add_personnel' in request.POST:
+        if 'add_personnel' in request.POST:
             if not can_manage_personnel(request.user):
                 messages.error(request, 'Personel yönetimi için yetkiniz yok.')
                 return redirect('personnel_network')
@@ -456,6 +436,95 @@ class PersonnelNetworkView(TemplateView):
             ServicePersonnel.objects.filter(id=request.POST.get('id')).delete()
             messages.info(request, 'Personel silindi.')
         return redirect('personnel_network')
+
+
+class AccountingHubView(TemplateView):
+    template_name = 'muhasebe/index.html'
+
+
+class AccountingPayrollView(TemplateView):
+    template_name = 'muhasebe/payroll.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_manage_payroll(request.user):
+            messages.error(request, 'Maaş/avans kayıtları için yetkiniz yok.')
+            return redirect('accounting_hub')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        payment_personnel = self.request.GET.get('payment_personnel', '').strip()
+        payments = PersonnelPayment.objects.select_related('personnel', 'recorded_by').all()
+        if payment_personnel and payment_personnel.isdigit():
+            payments = payments.filter(personnel_id=int(payment_personnel))
+        context['payment_form'] = PersonnelPaymentForm()
+        context['recent_payments'] = payments.order_by('-payment_date', '-created_at')[:100]
+        context['all_personnel'] = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if 'add_payment' in request.POST:
+            if not can_manage_payroll(request.user):
+                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
+                return redirect('accounting_payroll')
+            form = PersonnelPaymentForm(request.POST)
+            if form.is_valid():
+                payment = form.save(commit=False)
+                if request.user.is_authenticated:
+                    payment.recorded_by = request.user
+                payment.save()
+                messages.success(request, 'Ödeme kaydı eklendi.')
+            else:
+                messages.error(request, 'Ödeme kaydı eklenemedi.')
+        elif 'delete_payment' in request.POST:
+            if not can_manage_payroll(request.user):
+                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
+                return redirect('accounting_payroll')
+            PersonnelPayment.objects.filter(id=request.POST.get('id')).delete()
+            messages.info(request, 'Ödeme kaydı silindi.')
+        return redirect('accounting_payroll')
+
+
+class AccountingFinanceView(TemplateView):
+    template_name = 'muhasebe/finance.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_manage_finance(request.user):
+            messages.error(request, 'Gelir/gider kayıtları için yetkiniz yok.')
+            return redirect('accounting_hub')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        record_type = self.request.GET.get('record_type', '').strip()
+        records = FinanceRecord.objects.select_related('recorded_by').all()
+        if record_type in (FinanceRecord.TYPE_INCOME, FinanceRecord.TYPE_EXPENSE):
+            records = records.filter(record_type=record_type)
+        context['finance_form'] = FinanceRecordForm()
+        context['recent_records'] = records.order_by('-record_date', '-created_at')[:100]
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if 'add_finance' in request.POST:
+            if not can_manage_finance(request.user):
+                messages.error(request, 'Gelir/gider kaydı için yetkiniz yok.')
+                return redirect('accounting_finance')
+            form = FinanceRecordForm(request.POST)
+            if form.is_valid():
+                record = form.save(commit=False)
+                if request.user.is_authenticated:
+                    record.recorded_by = request.user
+                record.save()
+                messages.success(request, 'Kayıt eklendi.')
+            else:
+                messages.error(request, 'Kayıt eklenemedi.')
+        elif 'delete_finance' in request.POST:
+            if not can_manage_finance(request.user):
+                messages.error(request, 'Gelir/gider kaydı için yetkiniz yok.')
+                return redirect('accounting_finance')
+            FinanceRecord.objects.filter(id=request.POST.get('id')).delete()
+            messages.info(request, 'Kayıt silindi.')
+        return redirect('accounting_finance')
 
 
 @json_auth_required

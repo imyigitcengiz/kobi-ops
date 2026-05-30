@@ -81,10 +81,13 @@
                 <i data-lucide="handshake" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Çözüm ortağı türleri</span>
             </a>
+            <a href="{% url 'settings_tags' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_tags' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="tags" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Firma etiketleri</span>
+            </a>
 
-            {% if user_perms.tools_ai or user_perms.tools_backup %}
-            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</p>
             {% if user_perms.tools_ai %}
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</p>
             <a href="{% url 'settings_ai_settings' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_ai_settings' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">AI Ayarları</span>
@@ -94,18 +97,11 @@
                 <span class="font-medium text-sm">AI Raporlama ve Sohbet</span>
             </a>
             {% endif %}
-            {% if user_perms.tools_backup %}
-            <a href="{% url 'settings_system_backup' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if active == 'settings_system_backup' %}bg-amber-600/90 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="database-backup" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Sistem Yedekleri</span>
-            </a>
-            {% endif %}
-            {% endif %}
             {% endwith %}
 
             <div class="pt-4 mt-2 border-t border-slate-800">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Modüllere git</p>
-                {% include 'common/erp_sidebar_modules.html' %}
+                {% include 'common/erp_cross_nav.html' %}
                 {% if user_access.tools %}
                 <a href="{% url 'tools_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
                     <i data-lucide="hammer" class="w-5 h-5"></i>

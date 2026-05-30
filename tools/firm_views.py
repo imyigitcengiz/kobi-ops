@@ -5,10 +5,9 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 
-from tools.collections import DEFAULT_TEMPLATE, add_firm_to_collection, serialize_collection
-from tools.firm_memory import serialize_firm
 from tools.firm_directory import create_manual_firm, sync_all_partners_to_directory, sync_partner_to_directory
-from tools.models import FirmTag, MapsScrapedFirm, OutreachCollection, WhatsappOutboundMessage
+from tools.firm_memory import serialize_firm
+from tools.models import FirmTag, MapsScrapedFirm, WhatsappOutboundMessage
 from tools.outreach_memory import memory_stats
 from tools.views import _json_body
 
@@ -211,74 +210,6 @@ def firms_bulk_api(request):
             'action': action,
             'partner_id': partner.id,
             'firm': serialize_firm(firm) if firm else None,
-        })
-
-    if action == 'send_message':
-        message = (body.get('message') or '').strip()
-        if not message:
-            return JsonResponse({'ok': False, 'error': 'Mesaj metni girin.'}, status=400)
-        connection_id = body.get('connection_id')
-        from tools.whatsapp_send_views import _log_and_send
-
-        sent = 0
-        failed = 0
-        errors = []
-        for firm in firms:
-            if not firm.phone_normalized:
-                failed += 1
-                continue
-            try:
-                _, outbound, err, _ = _log_and_send(
-                    phone_raw=firm.phone,
-                    phone_norm=firm.phone_normalized,
-                    message=message,
-                    connection_id=connection_id,
-                    recipient_name=firm.name,
-                    firm_id=firm.id,
-                    source=WhatsappOutboundMessage.SOURCE_MANUAL,
-                    send_type=WhatsappOutboundMessage.SEND_PRIVATE,
-                )
-                if err:
-                    failed += 1
-                    errors.append(f'{firm.name}: {err}')
-                else:
-                    sent += 1
-            except Exception as exc:
-                failed += 1
-                errors.append(f'{firm.name}: {exc}')
-        return JsonResponse({
-            'ok': True,
-            'action': action,
-            'sent': sent,
-            'failed': failed,
-            'errors': errors[:10],
-        })
-
-    if action == 'create_collection':
-        name = (body.get('collection_name') or body.get('name') or '').strip()
-        if not name:
-            return JsonResponse({'ok': False, 'error': 'Kampanya adı girin.'}, status=400)
-        col = OutreachCollection.objects.create(
-            name=name[:120],
-            message_template=(body.get('message_template') or DEFAULT_TEMPLATE).strip(),
-            skip_globally_messaged=bool(body.get('skip_globally_messaged', False)),
-            allow_repeat_in_campaign=bool(body.get('allow_repeat_in_campaign', True)),
-            delay_seconds=int(body.get('delay_seconds') or 4),
-        )
-        added = 0
-        skipped = 0
-        for firm in firms:
-            member, _ = add_firm_to_collection(col, firm)
-            if member:
-                added += 1
-            else:
-                skipped += 1
-        return JsonResponse({
-            'ok': True,
-            'action': action,
-            'collection': serialize_collection(col, include_members=True),
-            'added': added,
-            'skipped': skipped,
         })
 
     return JsonResponse({'ok': False, 'error': 'Geçersiz işlem.'}, status=400)

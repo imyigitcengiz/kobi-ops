@@ -1,0 +1,31 @@
+{% extends 'muhasebe/base.html' %}
+
+{% block title %}{{ gy.mh_ozet }}{% endblock %}
+
+{% block header %}
+<h1 class="text-lg font-bold text-slate-900">{{ gy.muhasebe }}</h1>
+<p class="text-sm text-slate-500">Personel ödemeleri ve genel gelir-gider kayıtları — Yardım Masası ve personel tanımlarından ayrıdır.</p>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+    {% if user_perms.contact_payroll %}
+    <a href="{% url 'accounting_payroll' %}" class="group bg-white rounded-3xl border border-emerald-200 shadow-sm p-6 hover:border-emerald-400 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <i data-lucide="wallet" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">{{ gy.mh_maas_avans }}</h2>
+        <p class="text-sm text-slate-500 mt-2">Personel maaş ve avans ödemelerini kaydedin.</p>
+    </a>
+    {% endif %}
+    {% if user_perms.accounting_finance %}
+    <a href="{% url 'accounting_finance' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-brand-300 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+            <i data-lucide="receipt" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">{{ gy.mh_gelir_gider }}</h2>
+        <p class="text-sm text-slate-500 mt-2">Ofis giderleri, tahsilatlar ve diğer hareketler.</p>
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

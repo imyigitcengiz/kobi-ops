@@ -1,19 +1,2 @@
-{# Diğer ERP modüllerine kısayol — user_access ile filtrelenir #}
-{% if user_access.contact %}
-<a href="{% url 'contact_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-    <i data-lucide="book-user" class="w-5 h-5"></i>
-    <span class="font-medium text-sm">{{ gy.rehber }}</span>
-</a>
-{% endif %}
-{% if user_access.services %}
-<a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-    <i data-lucide="headphones" class="w-5 h-5"></i>
-    <span class="font-medium text-sm">{{ gy.yardim_masasi }}</span>
-</a>
-{% endif %}
-{% if user_access.sales %}
-<a href="{% url 'sales_lead_dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-    <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
-    <span class="font-medium text-sm">{{ gy.satis_birimi }}</span>
-</a>
-{% endif %}
+{# Geriye dönük uyumluluk — tam modül gezinmesi #}
+{% include 'common/erp_cross_nav.html' %}

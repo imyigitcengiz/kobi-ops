@@ -31,6 +31,15 @@
             <a href="{% url 'admin_roles' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if 'admin_role' in request.resolver_match.url_name %}bg-red-600 text-white{% else %}hover:bg-slate-900{% endif %}">
                 <i data-lucide="key-round" class="w-5 h-5"></i><span class="text-sm font-medium">Roller & İzinler</span>
             </a>
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</p>
+            <a href="{% url 'admin_system_backup' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'admin_system_backup' %}bg-red-600 text-white{% else %}hover:bg-slate-900{% endif %}">
+                <i data-lucide="database-backup" class="w-5 h-5"></i><span class="text-sm font-medium">Sistem yedekleri</span>
+            </a>
+            <a href="{% url 'admin_system_updates' %}" id="navSystemUpdates" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'admin_system_updates' %}bg-red-600 text-white{% else %}hover:bg-slate-900{% endif %}">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                <span class="text-sm font-medium flex-1">Uygulama güncellemeleri</span>
+                <span id="navUpdateBadge" class="hidden min-w-[1.25rem] h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
+            </a>
             <div class="pt-4 mt-4 border-t border-slate-800">
                 <a href="{% url 'home' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-900">
                     <i data-lucide="home" class="w-5 h-5"></i><span class="text-sm font-medium">Ana Portal</span>
@@ -51,10 +60,49 @@
         </div>
         {% endif %}
         <div class="p-8 max-w-6xl mx-auto">
+            <div id="globalUpdateBanner" class="hidden mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <p class="text-sm text-amber-900"><strong>Yeni uygulama güncellemesi</strong> — <span id="globalUpdateBannerText"></span></p>
+                <a href="{% url 'admin_system_updates' %}" class="text-sm font-bold text-amber-800 hover:underline">Güncelle →</a>
+            </div>
             {% block content %}{% endblock %}
         </div>
     </main>
     {% include 'common/team_chat_widget.html' %}
     <script>if (window.lucide) lucide.createIcons();</script>
+    {% block extra_js %}{% endblock %}
+    <script>
+    (function () {
+        const statusUrl = '{% url "admin_system_updates_status" %}';
+        function csrf() {
+            const m = document.cookie.match(/csrftoken=([^;]+)/);
+            return m ? m[1] : '';
+        }
+        function renderBanner(data) {
+            const navBadge = document.getElementById('navUpdateBadge');
+            const global = document.getElementById('globalUpdateBanner');
+            const globalText = document.getElementById('globalUpdateBannerText');
+            if (!data || !data.update_available) {
+                navBadge?.classList.add('hidden');
+                global?.classList.add('hidden');
+                return;
+            }
+            navBadge?.classList.remove('hidden');
+            global?.classList.remove('hidden');
+            if (globalText) {
+                globalText.textContent = (data.remote_message || data.remote_commit || 'Yeni sürüm') + '';
+            }
+        }
+        fetch(statusUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(renderBanner)
+            .catch(() => {});
+        setInterval(function () {
+            fetch(statusUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                .then(r => r.json())
+                .then(renderBanner)
+                .catch(() => {});
+        }, 15 * 60 * 1000);
+    })();
+    </script>
 </body>
 </html>

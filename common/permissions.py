@@ -1,4 +1,6 @@
 PAYROLL_PERM = 'contact.payroll'
+FINANCE_PERM = 'accounting.finance'
+ACCOUNTING_ACCESS_PERM = 'access.accounting'
 TEAM_PERM = 'contact.teams'
 PERSONNEL_PERM = 'contact.personnel'
 
@@ -61,6 +63,14 @@ def can_manage_payroll(user):
     return user_has_perm(user, PAYROLL_PERM)
 
 
+def can_manage_finance(user):
+    return user_has_perm(user, FINANCE_PERM)
+
+
+def can_access_accounting(user):
+    return user_has_perm(user, ACCOUNTING_ACCESS_PERM)
+
+
 def can_manage_teams(user):
     return user_has_perm(user, TEAM_PERM)
 
@@ -70,7 +80,7 @@ def can_manage_personnel(user):
 
 
 def can_access_personnel_page(user):
-    return can_manage_personnel(user) or can_manage_payroll(user)
+    return can_manage_personnel(user)
 
 
 def resolve_customer_route_permission(path, method):

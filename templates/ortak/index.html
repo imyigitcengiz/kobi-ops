@@ -27,7 +27,6 @@
         <p class="text-sm text-slate-500 mt-2">Manuel kayıt, kazınan firmalar ve çözüm ortakları — tek rehber.</p>
     </a>
     {% endif %}
-    {% if user_perms.contact_personnel or user_perms.contact_payroll %}
     {% if user_perms.contact_teams %}
     <a href="{% url 'team_network' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-indigo-300 hover:shadow-md transition-all">
         <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-100">
@@ -37,15 +36,23 @@
         <p class="text-sm text-slate-500 mt-2">Servis modülü için ekip tanımları; personel atamalarında kullanılır.</p>
     </a>
     {% endif %}
-    {% if user_perms.contact_personnel or user_perms.contact_payroll %}
+    {% if user_perms.contact_personnel %}
     <a href="{% url 'personnel_network' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-amber-300 hover:shadow-md transition-all">
         <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-100">
             <i data-lucide="id-card" class="w-6 h-6"></i>
         </div>
         <h2 class="text-lg font-bold text-slate-900">Personel</h2>
-        <p class="text-sm text-slate-500 mt-2">Personel kayıtları; maaş ve avans ödemeleri (satış & muhasebe).</p>
+        <p class="text-sm text-slate-500 mt-2">Servis personeli kayıtları — maaş/avans Muhasebe modülündedir.</p>
     </a>
     {% endif %}
+    {% if user_access.accounting %}
+    <a href="{% url 'accounting_hub' %}" class="group bg-white rounded-3xl border border-emerald-200 shadow-sm p-6 hover:border-emerald-400 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-100">
+            <i data-lucide="calculator" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">{{ gy.muhasebe }}</h2>
+        <p class="text-sm text-slate-500 mt-2">Maaş, avans ve gelir-gider kayıtları.</p>
+    </a>
     {% endif %}
 </div>
 {% endblock %}

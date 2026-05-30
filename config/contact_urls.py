@@ -28,7 +28,6 @@ from core_settings.views import (
 from tools.views import (
     FirmaBulView,
     FirmalarView,
-    TagManagerView,
     google_maps_search,
     google_maps_export_csv,
     firms_memory_list,
@@ -78,7 +77,7 @@ urlpatterns = [
     path('firmalar/hafiza/toplu/', firms_bulk_api, name='contact_firms_bulk'),
     path('firmalar/etiketler/', tags_api, name='contact_tags'),
     path('firmalar/etiketler/<int:pk>/', tag_detail_api, name='contact_tag_detail'),
-    path('etiketler/', TagManagerView.as_view(), name='contact_tag_manager'),
+    path('etiketler/', RedirectView.as_view(pattern_name='settings_tags', permanent=False), name='contact_tag_manager'),
     path('firmalar/bolgeler/', regions_api, name='contact_regions'),
     path('firmalar/mesajlar/', sent_messages_api, name='contact_sent_messages'),
 ]

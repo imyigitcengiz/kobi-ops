@@ -9,6 +9,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        KOBIOPS_BUILD_COMMIT: ${KOBIOPS_BUILD_COMMIT:-unknown}
     restart: unless-stopped
     ports:
       - *app_port
@@ -32,6 +34,10 @@ services:
       DJANGO_WHATSAPP_BRIDGE_AUTO_START: "0"
       DJANGO_WHATSAPP_BRIDGE_WAIT_ON_START: "0"
       KOBIOPS_COMPOSE_STACK: "1"
+      KOBIOPS_BUILD_COMMIT: ${KOBIOPS_BUILD_COMMIT:-unknown}
+      KOBIOPS_DEPLOY_WEBHOOK_URL: ${KOBIOPS_DEPLOY_WEBHOOK_URL:-}
+      KOBIOPS_UPDATE_REPO: ${KOBIOPS_UPDATE_REPO:-imyigitcengiz/kobi-ops}
+      KOBIOPS_UPDATE_BRANCH: ${KOBIOPS_UPDATE_BRANCH:-main}
       MEDIA_COMPRESS_ENABLED: ${MEDIA_COMPRESS_ENABLED:-1}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-}

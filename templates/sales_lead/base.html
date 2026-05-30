@@ -49,26 +49,7 @@
                 <span class="font-medium text-sm">Ana Sayfa</span>
             </a>
             {% endif %}
-            <a href="{% url 'sales_lead_dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'sales_lead_dashboard' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Özet Panel</span>
-            </a>
-            <a href="{% url 'sales_lead_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'sales_lead_list' or request.resolver_match.url_name == 'sales_lead_create' or request.resolver_match.url_name == 'sales_lead_edit' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="list" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Satış Listesi</span>
-            </a>
-            {% if user_perms.sales_reports %}
-            <a href="{% url 'sales_lead_reports' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'sales_lead_reports' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Raporlar</span>
-            </a>
-            {% endif %}
-            {% if user_perms.contact_customers_view or user_perms.contact_customers %}
-            <a href="{% url 'customers' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
-                <i data-lucide="users" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Müşteriler</span>
-            </a>
-            {% endif %}
+            {% include 'common/erp_module_own_nav.html' with module='sales' %}
             {% if user_perms.tools_media %}
             <a href="{% url 'tools_media_library' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'tools_media_library' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="images" class="w-5 h-5"></i>
@@ -77,7 +58,7 @@
             {% endif %}
             <div class="pt-4 mt-4 border-t border-slate-800">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Diğer modüller</p>
-                {% include 'common/erp_sidebar_modules.html' %}
+                {% include 'common/erp_cross_nav.html' with skip_module='sales' %}
             </div>
             {% include 'common/settings_nav_link.html' %}
         </nav>

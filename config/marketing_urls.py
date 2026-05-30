@@ -1,36 +1,32 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
-from tools.marketing_views import MarketingMessagesView
+from tools.marketing_views import OutreachMessagesView
 
 urlpatterns = [
     path(
         'kampanya-mesajlari/',
-        MarketingMessagesView.as_view(),
-        {'scope_key': 'kampanya'},
+        RedirectView.as_view(pattern_name='outreach_campaign_messages', permanent=False),
         name='marketing_campaign_messages',
     ),
     path(
         'firma-mesajlari/',
-        MarketingMessagesView.as_view(),
-        {'scope_key': 'firma'},
+        RedirectView.as_view(pattern_name='outreach_firm_messages', permanent=False),
         name='marketing_firm_messages',
     ),
     path(
         'musteri-mesajlari/',
-        MarketingMessagesView.as_view(),
-        {'scope_key': 'musteri'},
+        RedirectView.as_view(pattern_name='outreach_customer_messages', permanent=False),
         name='marketing_customer_messages',
     ),
     path(
         'personel-mesajlari/',
-        MarketingMessagesView.as_view(),
-        {'scope_key': 'personel'},
+        RedirectView.as_view(pattern_name='outreach_personnel_messages', permanent=False),
         name='marketing_personnel_messages',
     ),
     path(
         '',
-        MarketingMessagesView.as_view(),
-        {'scope_key': 'kampanya'},
+        RedirectView.as_view(pattern_name='outreach_hub', permanent=False),
         name='marketing_messages',
     ),
 ]

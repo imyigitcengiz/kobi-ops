@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}İletişim Merkezi{% endblock %} | {{ site_settings.site_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+                            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="flex h-screen overflow-hidden bg-slate-50">
+    <aside class="w-60 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col">
+        <div class="p-5 border-b border-slate-800">
+            <a href="{% url 'outreach_hub' %}" class="text-lg font-bold text-white flex items-center gap-2">
+                <span class="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
+                    <i data-lucide="messages-square" class="w-5 h-5"></i>
+                </span>
+                İletişim
+            </a>
+            <p class="text-[11px] text-slate-500 mt-2">Kampanya & mesaj kayıtları</p>
+        </div>
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto text-sm">
+            {% if user_access.home %}
+            <a href="{% url 'home' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+                <i data-lucide="home" class="w-4 h-4"></i> Ana Sayfa
+            </a>
+            {% endif %}
+            <a href="{% url 'outreach_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_hub' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i> Özet
+            </a>
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Gönderim</p>
+            <a href="{% url 'outreach_campaigns' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_campaigns' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="megaphone" class="w-4 h-4"></i> Kampanyalar
+            </a>
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Kayıtlar</p>
+            <a href="{% url 'outreach_campaign_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_campaign_messages' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="list" class="w-4 h-4"></i> Kampanya mesajları
+            </a>
+            <a href="{% url 'outreach_firm_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_firm_messages' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="building-2" class="w-4 h-4"></i> Firma mesajları
+            </a>
+            <a href="{% url 'outreach_customer_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_customer_messages' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="users" class="w-4 h-4"></i> Müşteri mesajları
+            </a>
+            <a href="{% url 'outreach_personnel_messages' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'outreach_personnel_messages' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="id-card" class="w-4 h-4"></i> Personel mesajları
+            </a>
+            <div class="pt-4 mt-2 border-t border-slate-800">
+                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Diğer modüller</p>
+                <a href="{% url 'settings_genel' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i data-lucide="key-round" class="w-4 h-4"></i> WhatsApp API ayarları
+                </a>
+                {% include 'common/erp_cross_nav.html' with skip_module='outreach' %}
+            </div>
+        </nav>
+        {% include 'common/profile_sidebar_card.html' %}
+    </aside>
+    <main class="flex-1 overflow-y-auto">
+        {% if messages %}
+        <div class="fixed top-4 right-4 z-[200] space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl shadow-lg text-sm font-semibold {% if message.tags == 'success' %}bg-emerald-600 text-white{% elif message.tags == 'error' %}bg-red-600 text-white{% else %}bg-slate-800 text-white{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-4">
+            {% block header %}{% endblock %}
+        </header>
+        <div class="p-6 max-w-[1500px] mx-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    {% load static %}
+    <script src="{% static 'js/live-sync.js' %}" defer></script>
+    {% block extra_js %}{% endblock %}
+    {% include 'common/team_chat_widget.html' %}
+    <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

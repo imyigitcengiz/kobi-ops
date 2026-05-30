@@ -29,6 +29,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+ARG KOBIOPS_BUILD_COMMIT=unknown
+RUN echo "${KOBIOPS_BUILD_COMMIT}" > /app/.build_commit
+
 RUN sed -i 's/\r$//' docker-entrypoint.sh deploy/bootstrap-env.sh \
     && mkdir -p staticfiles \
     && chmod +x docker-entrypoint.sh deploy/bootstrap-env.sh

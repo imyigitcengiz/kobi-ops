@@ -46,7 +46,7 @@ urlpatterns = [
     path('whatsapp/senaryolar/<int:pk>/', whatsapp_scenario_template_detail_api, name='tools_whatsapp_scenario_template_detail'),
     path('ai/ayarlar/', RedirectView.as_view(pattern_name='settings_ai_settings', permanent=False)),
     path('ai/panel/', RedirectView.as_view(pattern_name='settings_ai_reporting', permanent=False)),
-    path('yedekler/', RedirectView.as_view(pattern_name='settings_system_backup', permanent=False)),
+    path('yedekler/', RedirectView.as_view(pattern_name='admin_system_backup', permanent=False)),
     path('medya/', ToolsMediaLibraryView.as_view(), name='tools_media_library'),
     path('medya/sil/', ToolsMediaDeleteView.as_view(), name='tools_media_delete'),
     path('api/ai-chat/chat/', ai_chat_view, name='ai_chat'),

@@ -1,0 +1,86 @@
+{# Modüller arası gezinme — sıra: Muhasebe → Satış → Yardım Masası → Rehber → İletişim #}
+{# skip_module: accounting | sales | services | contact | outreach (bulunulan modül tekrarlanmaz) #}
+{% with url_name=request.resolver_match.url_name %}
+{% with inactive_class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800" %}
+{% with active_class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-700 text-white" %}
+
+{% if user_access.accounting and skip_module != 'accounting' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-400/90">{{ gy.muhasebe }}</p>
+<a href="{% url 'accounting_hub' %}" class="{% if url_name == 'accounting_hub' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="layout-grid" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_ozet }}</span>
+</a>
+{% if user_perms.contact_payroll %}
+<a href="{% url 'accounting_payroll' %}" class="{% if url_name == 'accounting_payroll' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="wallet" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_maas_avans }}</span>
+</a>
+{% endif %}
+{% if user_perms.accounting_finance %}
+<a href="{% url 'accounting_finance' %}" class="{% if url_name == 'accounting_finance' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="receipt" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_gelir_gider }}</span>
+</a>
+{% endif %}
+{% endif %}
+
+{% if user_access.sales and skip_module != 'sales' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-amber-400/90">{{ gy.satis_birimi }}</p>
+<a href="{% url 'sales_lead_dashboard' %}" class="{% if url_name == 'sales_lead_dashboard' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.sb_ozet }}</span>
+</a>
+<a href="{% url 'sales_lead_list' %}" class="{% if url_name == 'sales_lead_list' or url_name == 'sales_lead_create' or url_name == 'sales_lead_edit' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="list" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.sb_kayitlar }}</span>
+</a>
+{% if user_perms.sales_reports %}
+<a href="{% url 'sales_lead_reports' %}" class="{% if url_name == 'sales_lead_reports' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="bar-chart-3" class="w-4 h-4"></i><span class="font-medium text-sm">Raporlar</span>
+</a>
+{% endif %}
+{% endif %}
+
+{% if user_access.services and skip_module != 'services' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-sky-400/90">{{ gy.yardim_masasi }}</p>
+<a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.ym_ozet }}</span>
+</a>
+<a href="{% url 'services' %}" class="{% if url_name == 'services' or url_name == 'service_create' or url_name == 'service_update' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="clipboard-list" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.ym_kayitlar }}</span>
+</a>
+{% endif %}
+
+{% if user_access.contact and skip_module != 'contact' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-violet-400/90">{{ gy.rehber }}</p>
+<a href="{% url 'contact_hub' %}" class="{% if url_name == 'contact_hub' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="book-user" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.rehber_ozet }}</span>
+</a>
+{% if user_perms.contact_customers_view or user_perms.contact_customers %}
+<a href="{% url 'customers' %}" class="{% if url_name == 'customers' or url_name == 'customer_create' or url_name == 'customer_update' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="users" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.rehber_musteriler }}</span>
+</a>
+{% endif %}
+{% if user_perms.contact_firms %}
+<a href="{% url 'contact_firmalar' %}" class="{% if url_name == 'contact_firmalar' or url_name == 'contact_firma_bul' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="building-2" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.rehber_firmalar }}</span>
+</a>
+{% endif %}
+{% if user_perms.contact_teams %}
+<a href="{% url 'team_network' %}" class="{% if url_name == 'team_network' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="users-round" class="w-4 h-4"></i><span class="font-medium text-sm">Ekipler</span>
+</a>
+{% endif %}
+{% if user_perms.contact_personnel %}
+<a href="{% url 'personnel_network' %}" class="{% if url_name == 'personnel_network' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="id-card" class="w-4 h-4"></i><span class="font-medium text-sm">Personel</span>
+</a>
+{% endif %}
+{% endif %}
+
+{% if user_access.outreach and skip_module != 'outreach' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-blue-400/90">İletişim</p>
+<a href="{% url 'outreach_hub' %}" class="{% if url_name == 'outreach_hub' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="messages-square" class="w-4 h-4"></i><span class="font-medium text-sm">İletişim Merkezi</span>
+</a>
+<a href="{% url 'outreach_campaigns' %}" class="{% if url_name == 'outreach_campaigns' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="megaphone" class="w-4 h-4"></i><span class="font-medium text-sm">Kampanyalar</span>
+</a>
+{% endif %}
+
+{% endwith %}{% endwith %}{% endwith %}

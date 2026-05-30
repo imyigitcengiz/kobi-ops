@@ -278,6 +278,7 @@ def _send_template(template: WhatsAppTemplate, *, phone_raw: str, context: dict,
             customer_id=customer_id,
             source=WhatsappOutboundMessage.SOURCE_AUTO,
             send_type=WhatsappOutboundMessage.SEND_AUTO,
+            scenario=template.scenario,
         )
     except Exception as exc:
         logger.exception('Scenario WhatsApp send failed')

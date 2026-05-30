@@ -1,0 +1,71 @@
+{% extends 'users/yonetim/base.html' %}
+{% load static %}
+{% block title %}Uygulama güncellemeleri{% endblock %}
+{% block content %}
+<div class="space-y-6" id="systemUpdatesRoot"
+     data-status-url="{% url 'admin_system_updates_status' %}"
+     data-apply-url="{% url 'admin_system_updates_apply' %}">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Uygulama güncellemeleri</h1>
+            <p class="text-sm text-slate-500 mt-1">GitHub’daki <code class="text-xs bg-slate-100 px-1 rounded">{{ update_status.repo }}</code> deposu izlenir; yeni sürüm geldiğinde bildirim alırsınız ve panelden güncelleyebilirsiniz.</p>
+        </div>
+        <button type="button" id="btnCheckUpdates" class="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800">
+            Güncellemeyi kontrol et
+        </button>
+    </div>
+
+    <div id="updateAlertBanner" class="hidden rounded-2xl border p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <i data-lucide="bell-ring" class="w-5 h-5"></i>
+            </span>
+            <div class="min-w-0">
+                <p class="font-bold text-slate-900" id="updateAlertTitle">Yeni güncelleme mevcut</p>
+                <p class="text-sm text-slate-600 mt-0.5 truncate" id="updateAlertSubtitle"></p>
+            </div>
+        </div>
+        <button type="button" id="btnApplyUpdate" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shrink-0">
+            Şimdi güncelle
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Kurulu sürüm</h2>
+            <p class="text-3xl font-bold text-slate-900" id="localVersion">v{{ update_status.local_version|default:"—" }}</p>
+            <p class="text-sm text-slate-600">Commit: <code class="font-mono text-xs bg-slate-50 px-1.5 py-0.5 rounded" id="localCommit">{{ update_status.local_commit|default:"—" }}</code></p>
+            <p class="text-xs text-slate-400" id="localChecked">Son kontrol: —</p>
+        </section>
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Uzak sürüm ({{ update_status.branch }})</h2>
+            <p class="text-3xl font-bold text-slate-900" id="remoteCommit">{{ update_status.remote_commit|default:"—" }}</p>
+            <p class="text-sm text-slate-600 line-clamp-2" id="remoteMessage">{{ update_status.remote_message|default:"" }}</p>
+            <p class="text-xs text-slate-400" id="remoteDate">{{ update_status.remote_date|default:"" }}</p>
+        </section>
+    </div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+        <div class="flex items-center gap-2">
+            <span id="statusBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">Kontrol ediliyor…</span>
+            <span class="text-xs text-slate-500">Yöntem: <strong id="applyModeLabel">{{ update_status.apply_mode }}</strong></span>
+        </div>
+        <p class="text-sm text-slate-600" id="statusMessage">{{ update_status.message }}</p>
+        <ul id="applySteps" class="hidden text-sm text-slate-600 space-y-1 font-mono bg-slate-50 rounded-xl p-3"></ul>
+    </section>
+
+    <section class="bg-slate-50 rounded-2xl border border-slate-200 p-5 text-sm text-slate-600 space-y-2">
+        <p class="font-bold text-slate-800">Nasıl çalışır?</p>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Yerel geliştirme:</strong> <code class="text-xs bg-white px-1 rounded">git pull</code> + migrate + otomatik yeniden başlatma.</li>
+            <li><strong>Coolify / Docker:</strong> Environment’a <code class="text-xs bg-white px-1 rounded">KOBIOPS_DEPLOY_WEBHOOK_URL</code> ekleyin (Deploy Webhook URL); panel güncellemeyi tetikler.</li>
+            <li>İsteğe bağlı: <code class="text-xs bg-white px-1 rounded">KOBIOPS_BUILD_COMMIT</code> build arg ile imajdaki commit etiketlenir.</li>
+        </ul>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ update_status|json_script:"initialUpdateStatus" }}
+<script src="{% static 'js/system-updates.js' %}"></script>
+{% endblock %}

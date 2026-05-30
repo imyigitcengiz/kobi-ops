@@ -53,6 +53,18 @@ class SiteSettings(models.Model):
         verbose_name='Yazdırma: WhatsApp konum isteme mesajı',
         help_text='Toplu yazdırmada konum yoksa QR bu metinle oluşturulur. Değişkenler: {site_name}, {ariza}',
     )
+    whatsapp_cloud_token = models.CharField(
+        max_length=512,
+        blank=True,
+        default='',
+        verbose_name='WhatsApp Business API token',
+    )
+    whatsapp_cloud_phone_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        verbose_name='WhatsApp Business telefon numarası ID',
+    )
 
     class Meta:
         verbose_name = "Site Ayarları"
@@ -336,6 +348,38 @@ class PersonnelPayment(models.Model):
 
     def __str__(self):
         return f'{self.personnel.name} — {self.get_payment_type_display()} ({self.amount})'
+
+
+class FinanceRecord(models.Model):
+    TYPE_INCOME = 'income'
+    TYPE_EXPENSE = 'expense'
+    TYPE_CHOICES = (
+        (TYPE_INCOME, 'Gelir'),
+        (TYPE_EXPENSE, 'Gider'),
+    )
+
+    record_type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name='Tür')
+    title = models.CharField(max_length=120, verbose_name='Açıklama')
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Tutar')
+    record_date = models.DateField(verbose_name='Tarih')
+    notes = models.CharField(max_length=255, blank=True, verbose_name='Not')
+    recorded_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='finance_records',
+        verbose_name='Kaydeden',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Gelir/gider kaydı'
+        verbose_name_plural = 'Gelir/gider kayıtları'
+        ordering = ['-record_date', '-created_at']
+
+    def __str__(self):
+        return f'{self.get_record_type_display()} — {self.title} ({self.amount})'
 
 
 class SolutionPartner(models.Model):

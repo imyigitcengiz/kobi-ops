@@ -1,0 +1,158 @@
+{% extends 'outreach/base.html' %}
+
+{% block title %}{{ page_meta.title }}{% endblock %}
+
+{% block header %}
+<div class="flex items-start justify-between gap-4 flex-wrap">
+    <div>
+        <h1 class="text-xl font-bold text-slate-900">{{ page_meta.title }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">{{ page_meta.subtitle }}</p>
+    </div>
+    {% if page_meta.action_url_name %}
+    <a href="{% url page_meta.action_url_name %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-800 text-sm font-bold hover:bg-slate-200">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> {{ page_meta.action_label }}
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<nav class="flex flex-wrap gap-2 mb-6 p-1 bg-white rounded-2xl border border-slate-200 shadow-sm">
+    {% for item in outreach_nav %}
+    <a href="{% url item.url_name %}"
+       class="px-4 py-2 rounded-xl text-sm font-bold transition-colors {% if scope_key == item.key %}bg-brand-600 text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
+        {{ item.label }}
+    </a>
+    {% endfor %}
+</nav>
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+                <i data-lucide="{{ page_meta.icon }}" class="w-5 h-5"></i>
+            </span>
+            <p class="text-sm font-bold text-slate-900" id="messagesSummary">Yükleniyor…</p>
+        </div>
+        <div class="flex gap-2 items-center flex-wrap">
+            <select id="msgStatusFilter" class="p-2 bg-white border border-slate-200 rounded-xl text-sm">
+                <option value="sent">Gönderildi</option>
+                <option value="failed">Başarısız</option>
+                <option value="skipped">Atlandı</option>
+                <option value="all">Tümü</option>
+            </select>
+            <input id="msgSearchInput" type="text" placeholder="Alıcı / telefon / mesaj ara…" class="p-2 bg-white border border-slate-200 rounded-xl text-sm min-w-[200px]">
+            <button type="button" id="msgSearchBtn" class="px-3 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold">Ara</button>
+        </div>
+    </div>
+    <div class="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 border-b border-slate-100 sticky top-0 z-[1]">
+                <tr>
+                    <th class="px-4 py-3 font-bold text-slate-700">Alıcı</th>
+                    <th class="px-4 py-3 font-bold text-slate-700">Telefon</th>
+                    <th class="px-4 py-3 font-bold text-slate-700">Tür</th>
+                    {% if message_scope == 'campaign' or message_scope == 'firm' %}
+                    <th class="px-4 py-3 font-bold text-slate-700">Kampanya</th>
+                    {% endif %}
+                    <th class="px-4 py-3 font-bold text-slate-700">Durum</th>
+                    <th class="px-4 py-3 font-bold text-slate-700">Tarih</th>
+                    <th class="px-4 py-3 font-bold text-slate-700">Mesaj</th>
+                </tr>
+            </thead>
+            <tbody id="messagesBody">
+                <tr><td colspan="7" class="px-4 py-12 text-center text-slate-400">Yükleniyor…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const MESSAGE_SCOPE = '{{ message_scope|escapejs }}';
+    const MESSAGES_URL = '{% url "outreach_sent_messages" %}';
+    const EMPTY_HINT = '{{ page_meta.empty_hint|escapejs }}';
+    const INITIAL_FIRM_ID = '{{ initial_firm_id|escapejs }}';
+    const SHOW_CAMPAIGN_COL = MESSAGE_SCOPE === 'campaign' || MESSAGE_SCOPE === 'firm';
+    const COL_COUNT = SHOW_CAMPAIGN_COL ? 7 : 6;
+
+    function csrfToken() {
+        const fromInput = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (fromInput) return fromInput;
+        const v = '; ' + document.cookie;
+        const p = v.split('; csrftoken=');
+        return p.length === 2 ? p.pop().split(';').shift() : '';
+    }
+
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function statusLabel(st) {
+        const map = { sent: 'Gönderildi', failed: 'Hata', skipped: 'Atlandı', pending: 'Bekliyor', sending: 'Gönderiliyor' };
+        return map[st] || st;
+    }
+
+    function renderMessages(rows) {
+        const body = document.getElementById('messagesBody');
+        const summary = document.getElementById('messagesSummary');
+        body.innerHTML = '';
+        if (!rows.length) {
+            body.innerHTML = `<tr><td colspan="${COL_COUNT}" class="px-4 py-12 text-center text-slate-400">${escapeHtml(EMPTY_HINT)}</td></tr>`;
+            if (summary) summary.textContent = '0 kayıt';
+            return;
+        }
+        if (summary) summary.textContent = `${rows.length} kayıt (sayfa)`;
+        rows.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-slate-100 hover:bg-slate-50';
+            const stClass = m.status === 'sent' ? 'text-green-600' : m.status === 'failed' ? 'text-red-600' : 'text-slate-500';
+            const campaignCol = SHOW_CAMPAIGN_COL
+                ? `<td class="px-4 py-2 text-xs">${escapeHtml(m.collection_name || '—')}</td>`
+                : '';
+            tr.innerHTML = `
+                <td class="px-4 py-2 font-semibold">${escapeHtml(m.recipient_name)}</td>
+                <td class="px-4 py-2 whitespace-nowrap">${escapeHtml(m.phone)}</td>
+                <td class="px-4 py-2 text-xs"><span class="px-2 py-0.5 rounded-lg bg-slate-100 font-semibold">${escapeHtml(m.send_type_label || '—')}</span></td>
+                ${campaignCol}
+                <td class="px-4 py-2 text-xs font-bold ${stClass}">${escapeHtml(statusLabel(m.status))}</td>
+                <td class="px-4 py-2 text-xs text-slate-500 whitespace-nowrap">${escapeHtml((m.sent_at || m.created_at || '').slice(0, 16).replace('T', ' '))}</td>
+                <td class="px-4 py-2 text-xs text-slate-600 max-w-md truncate" title="${escapeHtml(m.message)}">${escapeHtml(m.message.slice(0, 120))}${m.message.length > 120 ? '…' : ''}</td>`;
+            body.appendChild(tr);
+        });
+    }
+
+    async function loadMessages(extra) {
+        const params = new URLSearchParams({
+            page_size: '100',
+            status: document.getElementById('msgStatusFilter').value,
+            scope: MESSAGE_SCOPE,
+        });
+        const q = document.getElementById('msgSearchInput').value.trim();
+        if (q) params.set('q', q);
+        if (extra) Object.entries(extra).forEach(([k, v]) => { if (v) params.set(k, v); });
+        const res = await fetch(`${MESSAGES_URL}?${params}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Mesajlar yüklenemedi.');
+        renderMessages(data.results || []);
+    }
+
+    document.getElementById('msgSearchBtn')?.addEventListener('click', () => loadMessages().catch(err => alert(err.message)));
+    document.getElementById('msgStatusFilter')?.addEventListener('change', () => loadMessages().catch(err => alert(err.message)));
+    document.getElementById('msgSearchInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('msgSearchBtn')?.click();
+    });
+
+    const extra = {};
+    if (INITIAL_FIRM_ID) extra.firm_id = INITIAL_FIRM_ID;
+    loadMessages(extra).catch(err => {
+        document.getElementById('messagesBody').innerHTML =
+            `<tr><td colspan="${COL_COUNT}" class="px-4 py-12 text-center text-red-500">${escapeHtml(err.message)}</td></tr>`;
+    });
+})();
+</script>
+{% endblock %}

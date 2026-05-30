@@ -1,0 +1,34 @@
+{% extends 'outreach/base.html' %}
+
+{% block title %}İletişim Merkezi — Özet{% endblock %}
+
+{% block header %}
+<h1 class="text-xl font-bold text-slate-900">İletişim Merkezi</h1>
+<p class="text-sm text-slate-500 mt-0.5">Firma kampanyaları (WhatsApp API) ve tüm mesaj kayıtları.</p>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <a href="{% url 'outreach_campaigns' %}" class="group bg-white rounded-2xl border border-slate-200 p-6 hover:border-brand-300 hover:shadow-md transition-all">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+            <i data-lucide="megaphone" class="w-5 h-5"></i>
+        </div>
+        <h2 class="font-bold text-slate-900">Kampanyalar</h2>
+        <p class="text-sm text-slate-500 mt-2">Firma rehberinden alıcı seçin, toplu mesajı WhatsApp Business API ile gönderin.</p>
+    </a>
+    <a href="{% url 'outreach_campaign_messages' %}" class="group bg-white rounded-2xl border border-slate-200 p-6 hover:border-slate-300 hover:shadow-md transition-all">
+        <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4">
+            <i data-lucide="scroll-text" class="w-5 h-5"></i>
+        </div>
+        <h2 class="font-bold text-slate-900">Mesaj kayıtları</h2>
+        <p class="text-sm text-slate-500 mt-2">Kampanya, firma, müşteri ve personel WhatsApp geçmişi.</p>
+    </a>
+    <a href="{% url 'contact_firmalar' %}" class="group bg-white rounded-2xl border border-slate-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+            <i data-lucide="building-2" class="w-5 h-5"></i>
+        </div>
+        <h2 class="font-bold text-slate-900">Firma rehberi</h2>
+        <p class="text-sm text-slate-500 mt-2">Kayıt, etiket ve Maps kazıma — mesaj gönderimi burada değil.</p>
+    </a>
+</div>
+{% endblock %}

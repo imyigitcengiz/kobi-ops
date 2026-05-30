@@ -69,7 +69,7 @@
                 <span class="font-medium text-sm">Ekipler</span>
             </a>
             {% endif %}
-            {% if user_perms.contact_personnel or user_perms.contact_payroll %}
+            {% if user_perms.contact_personnel %}
             <a href="{% url 'personnel_network' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'personnel_network' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="id-card" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Personel</span>
@@ -77,7 +77,9 @@
             {% endif %}
             <div class="pt-4 mt-4 border-t border-slate-800">
                 <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Diğer modüller</p>
-                {% include 'common/erp_sidebar_modules.html' %}
+            <div class="pt-4 mt-4 border-t border-slate-800">
+                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Diğer modüller</p>
+                {% include 'common/erp_cross_nav.html' with skip_module='contact' %}
             </div>
             {% include 'common/settings_nav_link.html' %}
         </nav>
