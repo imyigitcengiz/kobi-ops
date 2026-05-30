@@ -2,9 +2,10 @@ import os
 
 from django.contrib import admin
 from django.urls import path, include, re_path
+from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
-from analytics.views import HomeView, PublicLandingView, ModuleHubView, AgencyHubView, ProfileSetupView, ProfileAppHubView
+from analytics.views import HomeView, PublicLandingView, ModuleHubView, ProfileSetupView, ProfileAppHubView
 from common.media_views import serve_media_file
 from common.views import healthz
 
@@ -16,7 +17,8 @@ urlpatterns = [
     path('panel/kurulum/', ProfileSetupView.as_view(), name='profile_setup'),
     path('panel/uygulama/<path:app_slug>/', ProfileAppHubView.as_view(), name='profile_app_hub'),
     path('panel/moduller/', ModuleHubView.as_view(), name='module_hub'),
-    path('panel/ajans/', AgencyHubView.as_view(), name='agency_hub'),
+    path('panel/ajans/', RedirectView.as_view(pattern_name='agency_hub', permanent=False)),
+    path('ajans/', include('config.agency_urls')),
     path('', include('users.urls')),
     path('services-dashboard/', include('config.services_dashboard_urls')),
     path('tools/', include('config.tools_urls')),

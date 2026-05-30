@@ -1,187 +1,103 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajans Çalışma Alanı | {{ site_settings.site_name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
-</head>
-<body class="min-h-screen bg-slate-900 text-slate-100 flex">
-    <aside class="w-64 shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col min-h-screen">
-        <div class="p-4 border-b border-slate-800">
-            <a href="{% url 'home' %}" class="text-xs font-semibold text-slate-500 hover:text-white">← Panel</a>
-            <h1 class="text-lg font-bold text-white mt-2 flex items-center gap-2">
-                <i data-lucide="palette" class="w-5 h-5 text-violet-400"></i> Ajans
-            </h1>
-            <p class="text-xs text-slate-500 mt-1">Retainer & proje panosu</p>
+{% extends 'agency/base.html' %}
+{% block title %}Retainer Stüdyosu{% endblock %}
+{% block content %}
+<header class="bg-slate-900/80 border-b border-slate-800 sticky top-0 z-10 px-8 py-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-white">Retainer Stüdyosu</h2>
+            <p class="text-sm text-slate-400">Ajans retainer projeleri — KOBİ yardım masasından ayrı</p>
         </div>
-        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-            <a href="{% url 'agency_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl bg-violet-600 text-white">
-                <i data-lucide="layout-grid" class="w-4 h-4"></i><span class="text-sm font-medium">Özet</span>
-            </a>
-            {% include 'common/erp_cross_nav.html' with skip_platform_module='agency_suite' %}
-        </nav>
-    </aside>
+        <div class="flex gap-2 text-xs font-bold">
+            <span class="px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-200">{{ agency_active_count }} aktif</span>
+            <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">{{ agency_project_count }} proje</span>
+        </div>
+    </div>
+</header>
+<div class="p-8 space-y-8 max-w-6xl">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
+            <p class="text-xs font-bold uppercase text-slate-500">Aylık retainer (aktif)</p>
+            <p class="text-2xl font-bold text-white mt-2">{{ agency_retainer_monthly|floatformat:0 }} ₺</p>
+        </div>
+        <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
+            <p class="text-xs font-bold uppercase text-slate-500">Potansiyel proje</p>
+            <p class="text-2xl font-bold text-amber-300 mt-2">{{ agency_lead_count }}</p>
+        </div>
+        <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
+            <p class="text-xs font-bold uppercase text-slate-500">Açık pipeline</p>
+            <p class="text-2xl font-bold text-sky-300 mt-2">{{ agency_pipeline_open }}</p>
+            <a href="{% url 'agency_pipeline' %}" class="text-xs text-sky-400 hover:underline mt-2 inline-block">Pipeline →</a>
+        </div>
+    </div>
 
-    <main class="flex-1 min-w-0 overflow-y-auto">
-        <header class="bg-slate-900/80 border-b border-slate-800 sticky top-0 z-10 px-8 py-4">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-white">Ajans Çalışma Alanı</h2>
-                    <p class="text-sm text-slate-400">Retainer projeler, pipeline ve hızlı kısayollar</p>
-                </div>
-                <div class="flex gap-2 text-xs font-bold">
-                    <span class="px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-200">{{ agency_active_count }} aktif retainer</span>
-                    <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300">{{ agency_project_count }} proje</span>
-                </div>
-            </div>
-        </header>
-
-        <div class="p-8 space-y-8 max-w-6xl">
-            {% if messages %}
-            <div class="space-y-2">
-                {% for message in messages %}
-                <div class="px-4 py-3 rounded-xl text-sm font-semibold {% if message.tags == 'error' %}bg-red-500/20 text-red-200{% else %}bg-emerald-500/20 text-emerald-200{% endif %}">{{ message }}</div>
+    <section class="grid lg:grid-cols-2 gap-8">
+        <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Projeler</h3>
+            <div class="space-y-3">
+                {% for p in agency_projects %}
+                <article class="rounded-2xl border border-slate-700 bg-slate-800/40 p-4">
+                    <div class="flex justify-between gap-2">
+                        <div>
+                            <h4 class="font-bold text-white">{{ p.name }}</h4>
+                            {% if p.client %}<p class="text-sm text-slate-400">{{ p.client.name }}</p>{% endif %}
+                        </div>
+                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-slate-700 text-slate-300">{{ p.get_status_display }}</span>
+                    </div>
+                    {% if p.monthly_retainer %}
+                    <p class="text-sm text-violet-300 mt-2 font-semibold">{{ p.monthly_retainer|floatformat:0 }} ₺ / ay</p>
+                    {% endif %}
+                    <details class="mt-3">
+                        <summary class="text-xs font-bold text-slate-400 cursor-pointer">Düzenle</summary>
+                        <form method="post" class="mt-3 space-y-2 text-sm">
+                            {% csrf_token %}
+                            <input type="hidden" name="project_id" value="{{ p.pk }}">
+                            <input name="name" value="{{ p.name }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600" required>
+                            <select name="status" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                                {% for val, label in agency_status_choices %}
+                                <option value="{{ val }}" {% if p.status == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="client_id" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                                <option value="">— Müşteri —</option>
+                                {% for c in agency_clients %}
+                                <option value="{{ c.pk }}" {% if p.client_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input name="monthly_retainer" value="{{ p.monthly_retainer }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                            <textarea name="notes" rows="2" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">{{ p.notes }}</textarea>
+                            <button type="submit" class="px-3 py-1.5 bg-violet-600 rounded-lg text-xs font-bold">Kaydet</button>
+                        </form>
+                        <form method="post" class="mt-2" onsubmit="return confirm('Silinsin mi?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete_project">
+                            <input type="hidden" name="project_id" value="{{ p.pk }}">
+                            <button type="submit" class="text-xs text-red-400 font-bold">Sil</button>
+                        </form>
+                    </details>
+                </article>
+                {% empty %}
+                <p class="text-slate-500 text-sm">Henüz proje yok.</p>
                 {% endfor %}
             </div>
-            {% endif %}
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
-                    <p class="text-xs font-bold uppercase text-slate-500">Aylık retainer (aktif)</p>
-                    <p class="text-2xl font-bold text-white mt-2">{{ agency_retainer_monthly|floatformat:0 }} ₺</p>
-                </div>
-                <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
-                    <p class="text-xs font-bold uppercase text-slate-500">Potansiyel</p>
-                    <p class="text-2xl font-bold text-amber-300 mt-2">{{ agency_lead_count }}</p>
-                </div>
-                {% if agency_pipeline_open is not None %}
-                <div class="rounded-2xl bg-slate-800/60 border border-slate-700 p-5">
-                    <p class="text-xs font-bold uppercase text-slate-500">Bekleyen satış</p>
-                    <p class="text-2xl font-bold text-sky-300 mt-2">{{ agency_pipeline_open }}</p>
-                    <a href="{% url 'sales_lead_list' %}" class="text-xs text-sky-400 hover:underline mt-2 inline-block">Satış kayıtları →</a>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-                {% if modules_nav.outreach %}
-                <a href="{% url 'outreach_hub' %}" class="px-4 py-2 rounded-xl bg-blue-600/80 hover:bg-blue-600 text-sm font-bold">İletişim Merkezi</a>
-                {% endif %}
-                {% if modules_nav.contact %}
-                <a href="{% url 'customers' %}" class="px-4 py-2 rounded-xl bg-violet-600/80 hover:bg-violet-600 text-sm font-bold">Müşteriler</a>
-                {% endif %}
-                {% if modules_nav.accounting %}
-                <a href="{% url 'accounting_hub' %}" class="px-4 py-2 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 text-sm font-bold">Muhasebe</a>
-                {% endif %}
-            </div>
-
-            <section class="grid lg:grid-cols-2 gap-8">
-                <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Projeler</h3>
-                    <div class="space-y-3">
-                        {% for p in agency_projects %}
-                        <article class="rounded-2xl border border-slate-700 bg-slate-800/40 p-4">
-                            <div class="flex justify-between gap-2">
-                                <div>
-                                    <h4 class="font-bold text-white">{{ p.name }}</h4>
-                                    {% if p.customer %}<p class="text-sm text-slate-400">{{ p.customer.name }}</p>{% endif %}
-                                </div>
-                                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-slate-700 text-slate-300">{{ p.get_status_display }}</span>
-                            </div>
-                            {% if p.monthly_retainer %}
-                            <p class="text-sm text-violet-300 mt-2 font-semibold">{{ p.monthly_retainer|floatformat:0 }} ₺ / ay</p>
-                            {% endif %}
-                            {% if p.notes %}<p class="text-xs text-slate-500 mt-2">{{ p.notes|truncatewords:20 }}</p>{% endif %}
-                            <details class="mt-3">
-                                <summary class="text-xs font-bold text-slate-400 cursor-pointer hover:text-white">Düzenle</summary>
-                                <form method="post" class="mt-3 space-y-2 text-sm">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="update">
-                                    <input type="hidden" name="project_id" value="{{ p.pk }}">
-                                    <input name="name" value="{{ p.name }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600" required>
-                                    <select name="status" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
-                                        {% for val, label in agency_status_choices %}
-                                        <option value="{{ val }}" {% if p.status == val %}selected{% endif %}>{{ label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <select name="customer_id" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
-                                        <option value="">— Müşteri —</option>
-                                        {% for c in agency_customers %}
-                                        <option value="{{ c.pk }}" {% if p.customer_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <input name="monthly_retainer" value="{{ p.monthly_retainer }}" placeholder="Retainer ₺" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
-                                    <textarea name="notes" rows="2" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">{{ p.notes }}</textarea>
-                                    <button type="submit" class="px-3 py-1.5 bg-violet-600 rounded-lg text-xs font-bold">Kaydet</button>
-                                </form>
-                                <form method="post" class="mt-2" onsubmit="return confirm('Silinsin mi?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="project_id" value="{{ p.pk }}">
-                                    <button type="submit" class="text-xs text-red-400 font-bold hover:underline">Sil</button>
-                                </form>
-                            </details>
-                        </article>
-                        {% empty %}
-                        <p class="text-slate-500 text-sm">Henüz proje yok — sağdan ekleyin.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="rounded-2xl border border-violet-500/30 bg-violet-950/30 p-6">
-                    <h3 class="font-bold text-white mb-4">Yeni proje / retainer</h3>
-                    <form method="post" class="space-y-3">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="create">
-                        <div>
-                            <label class="text-xs font-bold text-slate-400">Proje adı</label>
-                            <input name="name" required class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400">Durum</label>
-                            <select name="status" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
-                                {% for val, label in agency_status_choices %}
-                                <option value="{{ val }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400">Müşteri</label>
-                            <select name="customer_id" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
-                                <option value="">— Seçin —</option>
-                                {% for c in agency_customers %}
-                                <option value="{{ c.pk }}">{{ c.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400">Aylık retainer (₺)</label>
-                            <input name="monthly_retainer" type="text" inputmode="decimal" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600" placeholder="örn. 45000">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400">Başlangıç</label>
-                                <input name="start_date" type="date" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-400">Bitiş</label>
-                                <input name="end_date" type="date" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-400">Notlar</label>
-                            <textarea name="notes" rows="3" class="mt-1 w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600"></textarea>
-                        </div>
-                        <button type="submit" class="w-full py-3 bg-violet-600 hover:bg-violet-500 rounded-xl font-bold text-white">Ekle</button>
-                    </form>
-                </div>
-            </section>
         </div>
-    </main>
-    <script>if (window.lucide) lucide.createIcons();</script>
-</body>
-</html>
+        <div class="rounded-2xl border border-violet-500/30 bg-violet-950/30 p-6">
+            <h3 class="font-bold text-white mb-4">Yeni retainer projesi</h3>
+            <form method="post" class="space-y-3">
+                {% csrf_token %}
+                <input name="name" required placeholder="Proje adı" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+                <select name="status" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+                    {% for val, label in agency_status_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+                </select>
+                <select name="client_id" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+                    <option value="">— Ajans müşterisi —</option>
+                    {% for c in agency_clients %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+                </select>
+                <input name="monthly_retainer" placeholder="Aylık retainer ₺" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+                <textarea name="notes" rows="2" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600"></textarea>
+                <button type="submit" class="w-full py-3 bg-violet-600 rounded-xl font-bold">Ekle</button>
+            </form>
+            <p class="text-xs text-slate-500 mt-4">Müşteri kartı yoksa önce <a href="{% url 'agency_clients' %}" class="text-violet-400 underline">Müşteri & Marka</a> modülünden ekleyin.</p>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ajans{% endblock %} | {{ site_settings.site_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 flex">
+    {% include 'agency/_nav.html' %}
+    <main class="flex-1 min-w-0 overflow-y-auto">
+        {% if messages %}
+        <div class="px-8 pt-4 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl text-sm font-semibold {% if message.tags == 'error' %}bg-red-500/20 text-red-200{% else %}bg-emerald-500/20 text-emerald-200{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

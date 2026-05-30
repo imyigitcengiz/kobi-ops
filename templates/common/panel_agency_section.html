@@ -13,18 +13,18 @@
                 {% if agency_retainer_monthly %} · ~{{ agency_retainer_monthly|floatformat:0 }} ₺/ay{% endif %}
             </p>
         </a>
-        {% if modules_nav.outreach %}
-        <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+        {% if modules_nav.agency_campaigns %}
+        <a href="{% url 'agency_campaigns' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
             <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
-            <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
-            <p class="text-sm text-slate-500 mt-2">Toplu WhatsApp ve iletişim.</p>
+            <h4 class="text-lg font-bold text-slate-900">Ajans Kampanyaları</h4>
+            <p class="text-sm text-slate-500 mt-2">Müşteri kampanya taslakları.</p>
         </a>
         {% endif %}
     </div>
     {% if agency_recent_projects %}
     <ul class="mt-4 text-sm text-slate-600 space-y-1">
         {% for p in agency_recent_projects %}
-        <li><span class="font-semibold text-slate-800">{{ p.name }}</span>{% if p.customer %} — {{ p.customer.name }}{% endif %}</li>
+        <li><span class="font-semibold text-slate-800">{{ p.name }}</span>{% if p.client %} — {{ p.client.name }}{% endif %}</li>
         {% endfor %}
     </ul>
     {% endif %}

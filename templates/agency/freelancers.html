@@ -1,0 +1,41 @@
+{% extends 'agency/base.html' %}
+{% block title %}Freelancer Ağı{% endblock %}
+{% block content %}
+<header class="px-8 py-6 border-b border-slate-800">
+    <h2 class="text-2xl font-bold text-white">Freelancer Ağı</h2>
+    <p class="text-sm text-slate-400">Taşeron ve uzman kadro — çözüm ortağı rehberinden ayrı</p>
+</header>
+<div class="p-8 grid lg:grid-cols-2 gap-8 max-w-6xl">
+    <div class="space-y-3">
+        {% for item in items %}
+        <article class="rounded-2xl border border-slate-700 bg-slate-800/50 p-4">
+            <div class="flex justify-between"><h4 class="font-bold text-white">{{ item.name }}</h4>
+            {% if not item.is_active %}<span class="text-[10px] text-amber-400">Pasif</span>{% endif %}</div>
+            {% if item.specialty %}<p class="text-sm text-slate-400">{{ item.specialty }}</p>{% endif %}
+            {% if item.hourly_rate %}<p class="text-sm text-violet-300">{{ item.hourly_rate }} ₺/saat</p>{% endif %}
+            <details class="mt-2"><summary class="text-xs text-slate-500 cursor-pointer">Düzenle</summary>
+            <form method="post" class="mt-2 space-y-2 text-sm">{% csrf_token %}
+                <input type="hidden" name="pk" value="{{ item.pk }}">
+                <input name="name" value="{{ item.name }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600" required>
+                <input name="specialty" value="{{ item.specialty }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                <input name="hourly_rate" value="{{ item.hourly_rate }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                <label class="flex items-center gap-2 text-slate-300"><input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}> Aktif</label>
+                <button type="submit" class="text-xs font-bold text-violet-400">Kaydet</button>
+            </form>
+            <form method="post" onsubmit="return confirm('Sil?');">{% csrf_token %}
+                <input type="hidden" name="action" value="delete"><input type="hidden" name="pk" value="{{ item.pk }}">
+                <button class="text-xs text-red-400">Sil</button>
+            </form></details>
+        </article>
+        {% empty %}<p class="text-slate-500">Freelancer yok.</p>{% endfor %}
+    </div>
+    <form method="post" class="rounded-2xl border border-violet-500/30 bg-violet-950/20 p-6 space-y-3 h-fit">
+        {% csrf_token %}<h3 class="font-bold text-white">Yeni freelancer</h3>
+        <input name="name" required class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+        <input name="specialty" placeholder="Uzmanlık" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+        <input name="hourly_rate" placeholder="Saatlik ₺" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" checked> Aktif</label>
+        <button type="submit" class="w-full py-3 bg-violet-600 rounded-xl font-bold">Ekle</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+<aside class="w-64 shrink-0 bg-slate-950 border-r border-slate-800 flex flex-col min-h-screen">
+    <div class="p-4 border-b border-slate-800">
+        <a href="{% url 'home' %}" class="text-xs font-semibold text-slate-500 hover:text-white">← Panel</a>
+        <h1 class="text-lg font-bold text-white mt-2 flex items-center gap-2">
+            <i data-lucide="palette" class="w-5 h-5 text-violet-400"></i> Ajans Modülleri
+        </h1>
+        <p class="text-xs text-slate-500 mt-1">KOBİ modüllerinden bağımsız</p>
+    </div>
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto text-sm">
+        {% if modules_nav.agency_retainer %}
+        <a href="{% url 'agency_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'hub' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i> Retainer Stüdyosu
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_clients %}
+        <a href="{% url 'agency_clients' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'clients' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Müşteri & Marka
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_freelancers %}
+        <a href="{% url 'agency_freelancers' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'freelancers' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Freelancer Ağı
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_firms %}
+        <a href="{% url 'agency_firms' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'firms' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="building-2" class="w-4 h-4"></i> Firma Rehberi
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_pipeline %}
+        <a href="{% url 'agency_pipeline' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'pipeline' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="trending-up" class="w-4 h-4"></i> Proje Pipeline
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_finance %}
+        <a href="{% url 'agency_finance' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'finance' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="receipt" class="w-4 h-4"></i> Ajans Finans
+        </a>
+        {% endif %}
+        {% if modules_nav.agency_campaigns %}
+        <a href="{% url 'agency_campaigns' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if agency_nav_active == 'campaigns' %}bg-violet-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i data-lucide="megaphone" class="w-4 h-4"></i> Kampanya Merkezi
+        </a>
+        {% endif %}
+        <div class="pt-4 mt-2 border-t border-slate-800">
+            <a href="{% url 'module_hub' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800">
+                <i data-lucide="puzzle" class="w-4 h-4"></i> Uygulama Merkezi
+            </a>
+        </div>
+    </nav>
+</aside>

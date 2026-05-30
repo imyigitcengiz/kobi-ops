@@ -96,7 +96,7 @@ class HomeView(TemplateView):
             profile_app_available_for_nav,
             vertical_by_slug,
         )
-        from analytics.agency_summary import build_agency_panel_context
+        from agency.summary import build_agency_panel_context
 
         vertical = get_primary_vertical_slug()
         context.update(build_profile_hub_context(user, query=''))
@@ -204,120 +204,6 @@ class ModuleHubView(TemplateView):
 
         from django.urls import reverse
         return redirect(f"{reverse('module_hub')}{redirect_qs}")
-
-
-class AgencyHubView(TemplateView):
-    """Ajans retainer / proje çalışma alanı."""
-
-    template_name = 'agency/hub.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        from common.module_runtime import is_profile_app_enabled, profile_app_available_for_nav
-
-        if not request.user.is_authenticated:
-            return redirect('login')
-        if not is_profile_app_enabled('app.agency.retainer_studio'):
-            messages.warning(request, 'Retainer Stüdyosu kapalı. Uygulama Merkezi\'nden açın.')
-            return redirect('module_hub')
-        if not profile_app_available_for_nav(request.user, 'app.agency.retainer_studio'):
-            messages.error(request, 'Ajans alanı için Rehber, İletişim veya Muhasebe erişiminiz olmalı.')
-            return redirect('home')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        from analytics.agency_summary import build_agency_panel_context
-        from analytics.models import AgencyProject
-        from customers.models import Customer
-        from sales_leads.models import SalesLead
-
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context.update(build_agency_panel_context(user))
-
-        from django.db.models import Q
-        qs = AgencyProject.objects.select_related('customer', 'owner').all()
-        if not user.is_superuser:
-            qs = qs.filter(Q(owner=user) | Q(owner__isnull=True))
-        context['agency_projects'] = qs
-        context['agency_customers'] = Customer.objects.order_by('name')[:200]
-        context['agency_status_choices'] = AgencyProject.Status.choices
-        if user.has_perm_codename('access.accounting') or user.is_superuser:
-            context['agency_pipeline_open'] = SalesLead.objects.filter(
-                status=SalesLead.STATUS_PENDING,
-            ).count()
-        else:
-            context['agency_pipeline_open'] = None
-        return context
-
-    def post(self, request, *args, **kwargs):
-        from analytics.models import AgencyProject
-        from customers.models import Customer
-
-        action = request.POST.get('action', 'create')
-        if action == 'delete':
-            proj = get_object_or_404(AgencyProject, pk=request.POST.get('project_id'))
-            if not request.user.is_superuser and proj.owner_id and proj.owner_id != request.user.id:
-                messages.error(request, 'Bu projeyi silme yetkiniz yok.')
-            else:
-                name = proj.name
-                proj.delete()
-                messages.success(request, f'"{name}" silindi.')
-            return redirect('agency_hub')
-
-        name = (request.POST.get('name') or '').strip()
-        if not name:
-            messages.error(request, 'Proje adı zorunludur.')
-            return redirect('agency_hub')
-
-        status = request.POST.get('status', AgencyProject.Status.LEAD)
-        if status not in dict(AgencyProject.Status.choices):
-            status = AgencyProject.Status.LEAD
-
-        retainer_raw = (request.POST.get('monthly_retainer') or '').strip().replace(',', '.')
-        monthly_retainer = None
-        if retainer_raw:
-            try:
-                monthly_retainer = Decimal(retainer_raw)
-            except InvalidOperation:
-                messages.error(request, 'Retainer tutarı geçersiz.')
-                return redirect('agency_hub')
-
-        customer = None
-        cid = request.POST.get('customer_id')
-        if cid:
-            customer = Customer.objects.filter(pk=cid).first()
-
-        start_date = parse_date(request.POST.get('start_date') or '') or None
-        end_date = parse_date(request.POST.get('end_date') or '') or None
-        notes = (request.POST.get('notes') or '').strip()
-
-        if action == 'update':
-            proj = get_object_or_404(AgencyProject, pk=request.POST.get('project_id'))
-            if not request.user.is_superuser and proj.owner_id and proj.owner_id != request.user.id:
-                messages.error(request, 'Bu projeyi düzenleme yetkiniz yok.')
-                return redirect('agency_hub')
-            proj.name = name
-            proj.status = status
-            proj.monthly_retainer = monthly_retainer
-            proj.customer = customer
-            proj.start_date = start_date
-            proj.end_date = end_date
-            proj.notes = notes
-            proj.save()
-            messages.success(request, f'"{proj.name}" güncellendi.')
-        else:
-            AgencyProject.objects.create(
-                name=name,
-                status=status,
-                monthly_retainer=monthly_retainer,
-                customer=customer,
-                start_date=start_date,
-                end_date=end_date,
-                notes=notes,
-                owner=request.user,
-            )
-            messages.success(request, f'"{name}" eklendi.')
-        return redirect('agency_hub')
 
 
 class ProfileSetupView(TemplateView):

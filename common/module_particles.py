@@ -107,8 +107,8 @@ PARTICLES: tuple[dict, ...] = (
         'name': 'Retainer proje panosu',
         'summary': 'Aylık retainer ve proje durumu — ajans çalışma alanı.',
         'category': 'ajans',
-        'parent_module': 'agency_suite',
-        'route_prefixes': ('/panel/ajans/',),
+        'parent_module': 'agency_retainer',
+        'route_prefixes': ('/ajans/',),
         'vertical_tags': ('agency',),
         'default_enabled': False,
         'sort': 15,
@@ -141,13 +141,12 @@ VERTICAL_CATALOG_PRESETS: dict[str, dict[str, tuple[str, ...]]] = {
     },
     'agency': {
         'modules': (
-            'contact', 'outreach', 'accounting', 'agency_suite',
+            'agency_retainer', 'agency_clients', 'agency_freelancers', 'agency_firms',
+            'agency_pipeline', 'agency_finance', 'agency_campaigns',
             'integration_whatsapp_bridge', 'integration_whatsapp_api', 'integration_media',
         ),
         'particles': (
-            'p.contact.customers', 'p.contact.firms', 'p.contact.freelancers',
-            'p.accounting.finance', 'p.accounting.sales',
-            'p.agency.retainer', 'p.outreach.campaigns',
+            'p.agency.retainer',
         ),
     },
     'retail': {

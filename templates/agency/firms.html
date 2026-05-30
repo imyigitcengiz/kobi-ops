@@ -1,0 +1,38 @@
+{% extends 'agency/base.html' %}
+{% block title %}Firma Rehberi{% endblock %}
+{% block content %}
+<header class="px-8 py-6 border-b border-slate-800">
+    <h2 class="text-2xl font-bold text-white">Firma Rehberi</h2>
+    <p class="text-sm text-slate-400">Potansiyel müşteri firmaları</p>
+</header>
+<div class="p-8 grid lg:grid-cols-2 gap-8 max-w-6xl">
+    <div class="space-y-3">
+        {% for item in items %}
+        <article class="rounded-2xl border border-slate-700 bg-slate-800/50 p-4">
+            <h4 class="font-bold text-white">{{ item.name }}</h4>
+            <p class="text-xs text-slate-400">{{ item.get_status_display }}{% if item.city %} · {{ item.city }}{% endif %}</p>
+            <details class="mt-2"><summary class="text-xs text-slate-500 cursor-pointer">Düzenle</summary>
+            <form method="post" class="mt-2 space-y-2 text-sm">{% csrf_token %}
+                <input type="hidden" name="pk" value="{{ item.pk }}">
+                <input name="name" value="{{ item.name }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600" required>
+                <input name="city" value="{{ item.city }}" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                <select name="status" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600">
+                    {% for v,l in status_choices %}<option value="{{ v }}" {% if item.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="text-xs font-bold text-violet-400">Kaydet</button>
+            </form>
+            <form method="post" onsubmit="return confirm('Sil?');">{% csrf_token %}
+                <input type="hidden" name="action" value="delete"><input type="hidden" name="pk" value="{{ item.pk }}">
+                <button class="text-xs text-red-400">Sil</button>
+            </form></details>
+        </article>
+        {% empty %}<p class="text-slate-500">Firma yok.</p>{% endfor %}
+    </div>
+    <form method="post" class="rounded-2xl border border-violet-500/30 bg-violet-950/20 p-6 space-y-3 h-fit">
+        {% csrf_token %}<h3 class="font-bold text-white">Yeni firma</h3>
+        <input name="name" required class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+        <input name="city" placeholder="Şehir" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-600">
+        <button type="submit" class="w-full py-3 bg-violet-600 rounded-xl font-bold">Ekle</button>
+    </form>
+</div>
+{% endblock %}
