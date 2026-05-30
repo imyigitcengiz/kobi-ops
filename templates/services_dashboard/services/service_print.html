@@ -111,7 +111,7 @@
         <div style="margin-bottom: 10px;"><strong>Durum:</strong> {{ s.status.name }}</div>
         <div style="margin-bottom: 10px;"><strong>Çözüm Ortağı:</strong> {% if s.solution_partner %}{{ s.solution_partner.name }} ({{ s.solution_partner.partner_type.name|default:"-" }}){% if s.solution_partner.notes %} - {{ s.solution_partner.notes }}{% endif %}{% else %}-{% endif %}</div>
         <div style="margin-bottom: 10px;"><strong>Servis Personeli:</strong> {% if s.service_personnel %}{{ s.service_personnel.name }}{% if s.service_personnel.team %} ({{ s.service_personnel.team.name }}){% endif %}{% else %}-{% endif %}</div>
-        <div style="margin-bottom: 10px;"><strong>Atanan Personel:</strong> {{ s.assigned_to.get_full_name|default:s.assigned_to.username|default:"-" }}</div>
+        <div style="margin-bottom: 10px;"><strong>Atanan Personel:</strong> {{ s.assigned_to.display_name|default:"-" }}</div>
     </div>
 
     <div class="section-title" style="margin-top: 30px;">TEKNİSYEN NOTLARI & YAPILAN İŞLEMLER</div>

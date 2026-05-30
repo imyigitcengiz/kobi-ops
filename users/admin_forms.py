@@ -65,6 +65,9 @@ class AdminUserCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['role'].queryset = Role.objects.order_by('name')
         self.fields['is_active'].initial = True
+        self.fields['username'].help_text = 'Giriş için kullanılır; ekranda ad soyad görünür.'
+        self.fields['first_name'].label = 'Ad'
+        self.fields['last_name'].label = 'Soyad'
 
     def clean_password2(self):
         p1 = self.cleaned_data.get('password1')
@@ -106,6 +109,9 @@ class AdminUserUpdateForm(forms.ModelForm):
         self.editor = kwargs.pop('editor', None)
         super().__init__(*args, **kwargs)
         self.fields['role'].queryset = Role.objects.order_by('name')
+        self.fields['username'].help_text = 'Giriş için kullanılır; ekranda ad soyad görünür.'
+        self.fields['first_name'].label = 'Ad'
+        self.fields['last_name'].label = 'Soyad'
         if self.instance and self.instance.is_superuser:
             self.fields['role'].disabled = True
             self.fields['is_active'].disabled = True

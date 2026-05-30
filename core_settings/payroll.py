@@ -124,6 +124,9 @@ def build_personnel_period_row(personnel: ServicePersonnel, period: date) -> dic
     salary_payment = salary_payment_for_period(personnel, period)
     net = (gross - advances_total) if gross else None
     due_date = salary_due_date(personnel, period)
+    advances_deducted = advances_total
+    if salary_payment and salary_payment.gross_amount:
+        advances_deducted = salary_payment.gross_amount - salary_payment.amount
     return {
         'personnel': personnel,
         'gross': gross,
@@ -131,6 +134,7 @@ def build_personnel_period_row(personnel: ServicePersonnel, period: date) -> dic
         'due_date': due_date,
         'default_pay_date': default_salary_payment_date(personnel, period),
         'advances_total': advances_total,
+        'advances_deducted': advances_deducted,
         'advance_items': list(advances_qs),
         'net': net,
         'salary_payment': salary_payment,

@@ -1,0 +1,64 @@
+{# Yardım Masası — /panel rapor özeti (muhasebe paneli ile aynı düzen) #}
+{% if services_show_panel %}
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-brand-600 mb-1 flex items-center gap-2">
+            <i data-lucide="headphones" class="w-4 h-4"></i> {{ gy.yardim_masasi }}
+        </h3>
+        <p class="text-sm text-slate-500">{{ services_panel_period_label }} dönemi özeti</p>
+    </div>
+    <a href="{% url 'dashboard' %}" class="text-sm font-bold text-brand-700 hover:text-brand-900 hover:underline">Tümünü gör →</a>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+    <div class="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-emerald-700/80">Aktif servis</p>
+        <p class="text-xl font-black text-emerald-800 mt-0.5">{{ services_active|default:0 }}</p>
+        <p class="text-[11px] text-emerald-600/80">Açık yük {{ services_open|default:0 }}</p>
+    </div>
+    <div class="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-amber-700/80">Beklemede</p>
+        <p class="text-xl font-black text-amber-800 mt-0.5">{{ services_pending|default:0 }}</p>
+        <p class="text-[11px] text-amber-600/80">Tamamlanma %{{ services_completion_rate|default:0 }}</p>
+    </div>
+    <div class="rounded-2xl bg-sky-50 border border-sky-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-sky-700/80">Bu ay yeni</p>
+        <p class="text-xl font-black text-sky-800 mt-0.5">{{ services_month_new|default:0 }}</p>
+        <p class="text-[11px] text-sky-600/80">{% if services_month_delta >= 0 %}+{% endif %}{{ services_month_delta|default:0 }} geçen aya göre</p>
+    </div>
+    <div class="rounded-2xl bg-violet-50 border border-violet-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-violet-700/80">Kapalı</p>
+        <p class="text-xl font-black text-violet-800 mt-0.5">{{ services_closed|default:0 }}</p>
+        <p class="text-[11px] text-violet-600/80">Toplam {{ services_total|default:0 }} kayıt</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <a href="{% url 'dashboard' %}" class="group block bg-white rounded-3xl border border-brand-200 shadow-sm hover:shadow-lg hover:border-brand-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_ozet }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Durum dağılımı, aylık bant analizi ve ürün/öncelik raporları.</p>
+        {% if services_open %}
+        <span class="inline-flex mt-3 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[11px] font-bold">{{ services_open }} açık kayıt</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'services' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-brand-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+            <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_kayitlar }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Talep listesi, durum güncelleme, toplu işlem ve WhatsApp.</p>
+    </a>
+    {% if user_perms.services_manage %}
+    <a href="{% url 'service_create' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">Yeni servis</h4>
+        <p class="text-sm text-slate-500 mt-2">Müşteri seçerek hızlı talep kaydı oluştur.</p>
+    </a>
+    {% endif %}
+</div>
+{% endif %}

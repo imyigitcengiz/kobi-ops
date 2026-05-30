@@ -7,7 +7,11 @@
 <form method="post" class="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 max-w-2xl">
     {% csrf_token %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label class="text-sm font-semibold text-slate-700">Kullanıcı adı</label><div class="mt-1">{{ form.username }}</div></div>
+        <div>
+            <label class="text-sm font-semibold text-slate-700">Kullanıcı adı (giriş)</label>
+            <div class="mt-1">{{ form.username }}</div>
+            <p class="text-xs text-slate-400 mt-1">Panelde görünen isim için ad ve soyad alanlarını doldurun.</p>
+        </div>
         <div><label class="text-sm font-semibold text-slate-700">E-posta</label><div class="mt-1">{{ form.email }}</div></div>
         <div><label class="text-sm font-semibold text-slate-700">Ad</label><div class="mt-1">{{ form.first_name }}</div></div>
         <div><label class="text-sm font-semibold text-slate-700">Soyad</label><div class="mt-1">{{ form.last_name }}</div></div>

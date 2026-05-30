@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from django.views import View
 import csv
 from datetime import date
@@ -16,7 +16,7 @@ from .forms import (
     PriorityOptionForm, WhatsAppTemplateForm, SolutionPartnerForm, SolutionPartnerTypeForm,
     ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm, PersonnelAdvanceForm,
     PersonnelSalaryPayForm, PersonnelSalaryAddForm, PayrollPersonnelQuickForm,
-    PayrollQuickAdvanceForm, FinanceRecordForm,
+    AccountingPersonnelForm, PayrollQuickAdvanceForm, FinanceRecordForm,
 )
 from .payroll import (
     build_period_summary,
@@ -33,6 +33,7 @@ from .payroll import (
 )
 from common.permissions import (
     can_manage_payroll, can_manage_finance, can_manage_teams, can_manage_personnel,
+    can_access_accounting, can_manage_payroll_personnel,
 )
 from django.http import HttpResponse, JsonResponse
 from common.decorators import json_auth_required, permission_required
@@ -401,65 +402,136 @@ class TeamNetworkView(TemplateView):
         return redirect('team_network')
 
 
-class PersonnelNetworkView(TemplateView):
-    template_name = 'crm/personnel_network.html'
+class PersonnelNetworkView(RedirectView):
+    """Personel yönetimi Muhasebe modülüne taşındı."""
+    pattern_name = 'accounting_personnel'
+    permanent = False
+
+
+class AccountingPersonnelView(TemplateView):
+    template_name = 'muhasebe/personnel.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not can_manage_personnel(request.user):
-            messages.error(request, 'Personel kayıtları için yetkiniz yok.')
-            return redirect('contact_hub')
+        if not can_manage_payroll_personnel(request.user):
+            messages.error(request, 'Personel yönetimi için yetkiniz yok.')
+            return redirect('home')
         return super().dispatch(request, *args, **kwargs)
+
+    def _show_product_groups(self):
+        return can_manage_personnel(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         q = self.request.GET.get('q', '').strip()
         team = self.request.GET.get('team', '').strip()
+        period = parse_period(self.request.GET.get('period'))
+        show_skills = self._show_product_groups()
 
-        personnel = ServicePersonnel.objects.select_related('team').prefetch_related('product_groups').all().order_by('name')
+        personnel = ServicePersonnel.objects.select_related('team').prefetch_related('product_groups').order_by('name')
         if q:
-            personnel = personnel.filter(Q(name__icontains=q) | Q(company_phone__icontains=q) | Q(notes__icontains=q))
+            personnel = personnel.filter(
+                Q(name__icontains=q) | Q(company_phone__icontains=q) | Q(notes__icontains=q),
+            )
         if team and team.isdigit():
             personnel = personnel.filter(team_id=int(team))
 
-        context['can_manage_personnel'] = True
-        context['personnel_form'] = ServicePersonnelForm()
-        context['teams'] = ServiceTeam.objects.all().order_by('name')
-        context['personnel_list'] = personnel
+        payroll_by_person = {}
+        if can_manage_payroll(self.request.user):
+            for row in build_period_summary(period)['rows']:
+                payroll_by_person[row['personnel'].id] = row
+
+        personnel_rows = [
+            {'personnel': p, 'payroll': payroll_by_person.get(p.id)}
+            for p in personnel
+        ]
+
+        context.update({
+            'personnel_form': AccountingPersonnelForm(show_product_groups=show_skills),
+            'show_product_groups': show_skills,
+            'teams': ServiceTeam.objects.filter(is_active=True).order_by('name'),
+            'personnel_list': personnel,
+            'personnel_rows': personnel_rows,
+            'period': period,
+            'period_str': period.strftime('%Y-%m'),
+            'period_label': period_label(period),
+            'can_payroll': can_manage_payroll(self.request.user),
+        })
         return context
 
+    def _apply_pay_date(self, person, form):
+        pay_date = form.cleaned_data.get('salary_pay_date')
+        if pay_date:
+            update_personnel_salary_schedule(person, pay_date=pay_date)
+
     def post(self, request, *args, **kwargs):
-        if 'add_personnel' in request.POST:
-            if not can_manage_personnel(request.user):
-                messages.error(request, 'Personel yönetimi için yetkiniz yok.')
-                return redirect('personnel_network')
-            form = ServicePersonnelForm(request.POST)
+        if not can_manage_payroll_personnel(request.user):
+            messages.error(request, 'Personel yönetimi için yetkiniz yok.')
+            return redirect('accounting_personnel')
+
+        period_qs = ''
+        if request.GET.get('period'):
+            period_qs = f'?period={request.GET.get("period")}'
+        if request.GET.get('team'):
+            period_qs += ('&' if period_qs else '?') + f'team={request.GET.get("team")}'
+        if request.GET.get('q'):
+            period_qs += ('&' if period_qs else '?') + f'q={request.GET.get("q")}'
+
+        show_skills = self._show_product_groups()
+
+        if 'quick_advance' in request.POST and can_manage_payroll(request.user):
+            form = PayrollQuickAdvanceForm(request.POST)
             if form.is_valid():
-                form.save()
-                messages.success(request, 'Personel eklendi.')
+                pay_period = parse_period(form.cleaned_data['period'])
+                PersonnelPayment.objects.create(
+                    personnel=form.cleaned_data['personnel'],
+                    payment_type=PersonnelPayment.TYPE_ADVANCE,
+                    period=pay_period,
+                    amount=form.cleaned_data['amount'],
+                    payment_date=form.cleaned_data.get('payment_date') or timezone.localdate(),
+                    notes=form.cleaned_data.get('notes') or '',
+                    recorded_by=request.user if request.user.is_authenticated else None,
+                )
+                messages.success(request, f'{form.cleaned_data["personnel"].name} için avans kaydedildi.')
             else:
-                messages.error(request, 'Personel kaydı eklenemedi.')
-        elif 'update_personnel' in request.POST:
-            if not can_manage_personnel(request.user):
-                messages.error(request, 'Personel yönetimi için yetkiniz yok.')
-                return redirect('personnel_network')
-            obj = get_object_or_404(ServicePersonnel, pk=request.POST.get('id'))
-            form = ServicePersonnelForm(request.POST, instance=obj)
+                messages.error(request, 'Avans kaydedilemedi.')
+        elif 'add_personnel' in request.POST:
+            form = AccountingPersonnelForm(request.POST, show_product_groups=show_skills)
             if form.is_valid():
-                form.save()
-                messages.success(request, 'Personel güncellendi.')
+                person = form.save()
+                self._apply_pay_date(person, form)
+                messages.success(request, f'{person.name} eklendi.')
+            else:
+                messages.error(request, 'Personel eklenemedi.')
+        elif 'update_personnel' in request.POST:
+            obj = get_object_or_404(ServicePersonnel, pk=request.POST.get('id'))
+            form = AccountingPersonnelForm(request.POST, instance=obj, show_product_groups=show_skills)
+            if form.is_valid():
+                person = form.save()
+                self._apply_pay_date(person, form)
+                messages.success(request, f'{person.name} güncellendi.')
             else:
                 messages.error(request, 'Personel güncellenemedi.')
         elif 'delete_personnel' in request.POST:
-            if not can_manage_personnel(request.user):
-                messages.error(request, 'Personel yönetimi için yetkiniz yok.')
-                return redirect('personnel_network')
             ServicePersonnel.objects.filter(id=request.POST.get('id')).delete()
             messages.info(request, 'Personel silindi.')
-        return redirect('personnel_network')
+        return redirect(f"{reverse('accounting_personnel')}{period_qs}")
 
 
 class AccountingHubView(TemplateView):
     template_name = 'muhasebe/index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_access_accounting(request.user):
+            messages.error(request, 'Muhasebe modülüne erişim yetkiniz yok.')
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from core_settings.accounting_summary import build_accounting_panel_context
+
+        context = super().get_context_data(**kwargs)
+        context.update(build_accounting_panel_context(self.request.user))
+        return context
 
 
 class AccountingReportsHubView(TemplateView):
@@ -523,11 +595,14 @@ class AccountingPayrollView(TemplateView):
         context['recent_payments'] = payments.order_by('-payment_date', '-created_at')
         context['all_personnel'] = ServicePersonnel.objects.filter(is_active=True).order_by('name')
         context['filter_personnel'] = payment_personnel
+        rows_by_id = {r['personnel'].id: r for r in summary['rows']}
         context['personnel_pay_meta'] = {
             str(p.id): {
                 'due_date': default_salary_payment_date(p, period).isoformat(),
                 'gross': str(p.monthly_salary) if p.monthly_salary else '',
                 'pay_day': p.salary_pay_day or '',
+                'advances': str(rows_by_id.get(p.id, {}).get('advances_total') or '0'),
+                'net': str(rows_by_id.get(p.id, {}).get('net') or ''),
             }
             for p in context['all_personnel']
         }

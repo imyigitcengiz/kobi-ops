@@ -79,6 +79,11 @@ def can_manage_personnel(user):
     return user_has_perm(user, PERSONNEL_PERM)
 
 
+def can_manage_payroll_personnel(user):
+    """Muhasebe personel kayıtları — maaş/avans veya rehber personel izni."""
+    return can_manage_payroll(user) or can_manage_personnel(user)
+
+
 def can_access_personnel_page(user):
     return can_manage_personnel(user)
 

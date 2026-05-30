@@ -12,11 +12,14 @@ SCENARIOS = [
     {
         'slug': 'accounting',
         'username': '_rbac_muhasebe',
+        'first_name': 'Muhasebe',
+        'last_name': '',
         'checks': [
             ('GET', '/contact/musteriler/', 200, 'Muhasebe müşteri listesini görebilmeli'),
             ('GET', '/contact/musteriler/yeni/', 302, 'Muhasebe müşteri oluşturamaz'),
             ('GET', '/contact/personel/', 302, 'Muhasebe personel sayfasına giremez'),
             ('GET', '/muhasebe/', 200, 'Muhasebe modülüne erişebilmeli'),
+            ('GET', '/muhasebe/personel/', 200, 'Muhasebe personel yönetimine erişebilmeli'),
             ('GET', '/muhasebe/maas-avans/', 200, 'Muhasebe maaş/avans sayfasına erişebilmeli'),
             ('GET', '/muhasebe/raporlar/', 200, 'Muhasebe raporlar hub sayfasına erişebilmeli'),
             ('GET', '/muhasebe/maas-avans/raporlar/', 200, 'Muhasebe maaş raporlarına erişebilmeli'),
@@ -30,6 +33,8 @@ SCENARIOS = [
     {
         'slug': 'sales',
         'username': '_rbac_satis',
+        'first_name': 'Satış',
+        'last_name': 'Temsilcisi',
         'checks': [
             ('GET', '/contact/musteriler/', 200, 'Satış müşteri listesini görebilmeli'),
             ('GET', '/contact/musteriler/yeni/', 200, 'Satış müşteri oluşturabilmeli'),
@@ -43,6 +48,8 @@ SCENARIOS = [
     {
         'slug': 'service',
         'username': '_rbac_servis',
+        'first_name': 'Servis',
+        'last_name': 'Personeli',
         'checks': [
             ('GET', '/services-dashboard/services/', 200, 'Servis personeli servis listesini görebilmeli'),
             ('GET', '/contact/musteriler/', 200, 'Servis personeli müşteri listesini görebilmeli'),
@@ -54,10 +61,13 @@ SCENARIOS = [
     {
         'slug': 'operation',
         'username': '_rbac_operasyon',
+        'first_name': 'Operasyon',
+        'last_name': '',
         'checks': [
             ('GET', '/services-dashboard/services/', 200, 'Operasyon servis listesine erişebilmeli'),
             ('GET', '/contact/ekip/', 200, 'Operasyon ekip sayfasına erişebilmeli'),
-            ('GET', '/contact/personel/', 200, 'Operasyon personel kayıtlarına erişebilmeli'),
+            ('GET', '/contact/personel/', 302, 'Operasyon eski personel URL muhasebeye yönlendirir'),
+            ('GET', '/muhasebe/personel/', 200, 'Operasyon muhasebe personel sayfasına erişebilmeli'),
             ('GET', '/muhasebe/', 302, 'Operasyon muhasebe modülüne giremez'),
             ('GET', '/contact/musteriler/', 200, 'Operasyon müşteri listesine erişebilmeli'),
         ],
@@ -89,6 +99,8 @@ class Command(BaseCommand):
             )
             user.set_password('test1234')
             user.role = role
+            user.first_name = scenario.get('first_name', role.name)
+            user.last_name = scenario.get('last_name', '')
             user.is_superuser = False
             user.is_staff = False
             user.save()

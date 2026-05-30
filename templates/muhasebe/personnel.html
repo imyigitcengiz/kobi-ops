@@ -1,0 +1,202 @@
+{% extends 'muhasebe/base.html' %}
+
+{% block title %}{{ gy.mh_personel }}{% endblock %}
+
+{% block header %}
+<h1 class="text-lg font-bold text-slate-900">{{ gy.mh_personel }}</h1>
+<p class="text-sm text-slate-500">Personel kayıtları, maaş tanımı ve aylık avans/ödeme takibi — tek merkez.</p>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
+        <form method="get" class="flex flex-wrap items-end gap-3">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Dönem</label>
+                <input type="month" name="period" value="{{ period_str }}" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Ekip</label>
+                <select name="team" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm min-w-[140px]">
+                    <option value="">Tüm ekipler</option>
+                    {% for t in teams %}
+                    <option value="{{ t.id }}" {% if request.GET.team == t.id|stringformat:"i" %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Ara</label>
+                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Ad, telefon…" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm w-36">
+            </div>
+            <button type="submit" class="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold">Göster</button>
+            {% if can_payroll %}
+            <a href="{% url 'accounting_payroll' %}?period={{ period_str }}" class="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 ml-auto">Dönem detayı →</a>
+            {% endif %}
+        </form>
+        <p class="text-xs text-slate-500 mt-3">{{ period_label }} dönemi</p>
+    </section>
+
+    <form method="post" class="bg-white rounded-3xl border border-emerald-200 shadow-sm p-5 space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="add_personnel" value="1">
+        <h3 class="font-bold text-slate-900">Yeni personel</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Ad Soyad</label>{{ personnel_form.name }}</div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Ekip</label>{{ personnel_form.team }}</div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Telefon</label>{{ personnel_form.company_phone }}</div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Aylık maaş</label>{{ personnel_form.monthly_salary }}</div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Maaş tarihi</label>{{ personnel_form.salary_pay_date }}</div>
+            <div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase">Not</label>{{ personnel_form.notes }}</div>
+            {% if show_product_groups %}
+            <div class="space-y-1 lg:col-span-3"><label class="text-xs font-bold text-slate-500 uppercase">Yetenekli ürün grupları (servis)</label>{{ personnel_form.product_groups }}</div>
+            {% endif %}
+        </div>
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700">{{ personnel_form.is_active }} Aktif personel</label>
+        <button type="submit" class="w-full md:w-auto px-6 bg-emerald-600 text-white py-2.5 rounded-xl font-bold hover:bg-emerald-700">Personel ekle</button>
+    </form>
+
+    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/80">
+            <h3 class="font-bold text-slate-900">Personel listesi</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left min-w-[880px]">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-4 py-3 font-bold text-slate-700">Personel</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Maaş</th>
+                        {% if can_payroll %}
+                        <th class="px-4 py-3 font-bold text-slate-700">Avans <span class="font-normal text-slate-400">(maaştan düşülür)</span></th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Bu ay alınacak</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">İşlem</th>
+                        {% endif %}
+                        <th class="px-4 py-3 font-bold text-slate-700 text-right">Düzenle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in personnel_rows %}
+                    {% with p=row.personnel pr=row.payroll %}
+                    <tr class="hover:bg-slate-50 align-top">
+                        <td class="px-4 py-3">
+                            <p class="font-semibold text-slate-900">{{ p.name }}{% if not p.is_active %} <span class="text-[10px] text-slate-400">(pasif)</span>{% endif %}</p>
+                            <p class="text-xs text-slate-500">{% if p.team %}{{ p.team.name }}{% else %}—{% endif %}{% if p.company_phone %} · {{ p.company_phone }}{% endif %}</p>
+                            {% if show_product_groups and p.product_groups.all %}
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                {% for product in p.product_groups.all %}
+                                <span class="px-1.5 py-0.5 text-[10px] rounded bg-sky-50 text-sky-700">{{ product.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-slate-700">
+                            {% if p.monthly_salary %}{{ p.monthly_salary }} ₺{% else %}<span class="text-slate-400">—</span>{% endif %}
+                            {% if p.salary_pay_day %}<span class="block text-[11px] text-emerald-600">Ayın {{ p.salary_pay_day }}. günü</span>{% endif %}
+                        </td>
+                        {% if can_payroll %}
+                        <td class="px-4 py-3">
+                            {% if pr %}
+                            {% if pr.advance_items %}
+                            <span class="font-bold text-amber-700">{{ pr.advances_total }} ₺</span>
+                            {% else %}
+                            <span class="text-slate-400">—</span>
+                            {% endif %}
+                            {% if pr.can_pay and not pr.is_paid %}
+                            <form method="post" class="mt-2 flex flex-wrap gap-1 items-center">
+                                {% csrf_token %}
+                                <input type="hidden" name="quick_advance" value="1">
+                                <input type="hidden" name="personnel" value="{{ p.id }}">
+                                <input type="hidden" name="period" value="{{ period_str }}">
+                                <input type="number" name="amount" step="0.01" min="0.01" placeholder="₺" class="w-16 p-1 text-xs border border-slate-200 rounded-lg" required>
+                                <input type="text" name="notes" placeholder="Not" class="w-20 p-1 text-xs border border-slate-200 rounded-lg">
+                                <button type="submit" class="text-[10px] font-bold text-amber-700 hover:underline">Avans</button>
+                            </form>
+                            {% endif %}
+                            {% else %}<span class="text-slate-400">—</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if pr %}
+                            {% include 'muhasebe/_payroll_net_formula.html' with row=pr %}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if pr and pr.can_pay %}
+                            <a href="{% url 'accounting_payroll' %}?period={{ period_str }}&payment_personnel={{ p.id }}" class="inline-block px-2 py-1 text-[10px] font-bold text-white bg-violet-600 rounded-lg hover:bg-violet-700">Döngü işlem</a>
+                            {% elif pr and pr.is_paid %}
+                            <a href="{% url 'accounting_payroll' %}?period={{ period_str }}&payment_personnel={{ p.id }}" class="text-[10px] font-bold text-slate-500 hover:underline">Detay</a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="px-4 py-3 text-right">
+                            <button type="button" class="personnel-edit-toggle text-xs font-bold text-emerald-700 hover:underline">Düzenle</button>
+                            <form method="post" class="inline ml-2" onsubmit="return confirm('Silinsin mi?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_personnel" value="1">
+                                <input type="hidden" name="id" value="{{ p.id }}">
+                                <button type="submit" class="text-xs font-bold text-red-500 hover:underline">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr class="personnel-edit-row hidden bg-emerald-50/30">
+                        <td colspan="{% if can_payroll %}6{% else %}3{% endif %}" class="px-4 py-3">
+                            <form method="post" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="update_personnel" value="1">
+                                <input type="hidden" name="id" value="{{ p.id }}">
+                                <input type="text" name="name" value="{{ p.name }}" required class="p-2 bg-white border border-slate-200 rounded-lg text-sm" placeholder="Ad Soyad">
+                                <select name="team" class="p-2 bg-white border border-slate-200 rounded-lg text-sm">
+                                    <option value="">Ekip</option>
+                                    {% for t in teams %}
+                                    <option value="{{ t.id }}" {% if p.team_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="company_phone" value="{{ p.company_phone|default:'' }}" class="p-2 bg-white border border-slate-200 rounded-lg text-sm" placeholder="Telefon">
+                                <input type="number" name="monthly_salary" step="0.01" min="0" value="{{ p.monthly_salary|default_if_none:'' }}" class="p-2 bg-white border border-slate-200 rounded-lg text-sm" placeholder="Aylık maaş">
+                                <input type="date" name="salary_pay_date" class="p-2 bg-white border border-slate-200 rounded-lg text-sm salary-pay-date" data-pay-day="{{ p.salary_pay_day|default:'' }}">
+                                <input type="text" name="notes" value="{{ p.notes|default:'' }}" class="p-2 bg-white border border-slate-200 rounded-lg text-sm" placeholder="Not">
+                                {% if show_product_groups %}
+                                <select name="product_groups" multiple class="p-2 bg-white border border-slate-200 rounded-lg text-sm lg:col-span-2" size="3">
+                                    {% for product in personnel_form.fields.product_groups.queryset %}
+                                    <option value="{{ product.id }}" {% if product in p.product_groups.all %}selected{% endif %}>{{ product.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% endif %}
+                                <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                    <input type="checkbox" name="is_active" class="w-4 h-4 accent-emerald-600 rounded" {% if p.is_active %}checked{% endif %}> Aktif
+                                </label>
+                                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700">Kaydet</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% empty %}
+                    <tr><td colspan="{% if can_payroll %}6{% else %}3{% endif %}" class="px-4 py-10 text-center text-slate-400">Personel yok. Yukarıdaki formdan ekleyin.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        document.querySelectorAll('.salary-pay-date').forEach(function(input) {
+            const day = parseInt(input.dataset.payDay, 10);
+            if (day >= 1 && day <= 31) {
+                const d = new Date(today.getFullYear(), today.getMonth(), Math.min(day, 28));
+                input.value = d.toISOString().slice(0, 10);
+            }
+        });
+        document.querySelectorAll('.personnel-edit-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const row = btn.closest('tr').nextElementSibling;
+                if (row && row.classList.contains('personnel-edit-row')) {
+                    row.classList.toggle('hidden');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

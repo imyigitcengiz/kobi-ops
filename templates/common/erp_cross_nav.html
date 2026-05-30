@@ -9,10 +9,15 @@
 <a href="{% url 'accounting_hub' %}" class="{% if url_name == 'accounting_hub' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
     <i data-lucide="layout-grid" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_ozet }}</span>
 </a>
+{% if user_perms.contact_payroll or user_perms.contact_personnel %}
+<a href="{% url 'accounting_personnel' %}" class="{% if url_name == 'accounting_personnel' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="id-card" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_personel }}</span>
+</a>
 {% if user_perms.contact_payroll %}
 <a href="{% url 'accounting_payroll' %}" class="{% if url_name == 'accounting_payroll' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
     <i data-lucide="wallet" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_maas_avans }}</span>
 </a>
+{% endif %}
 {% endif %}
 {% if user_perms.accounting_finance %}
 <a href="{% url 'accounting_finance' %}" class="{% if url_name == 'accounting_finance' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
@@ -64,11 +69,13 @@
     <i data-lucide="users-round" class="w-4 h-4"></i><span class="font-medium text-sm">Ekipler</span>
 </a>
 {% endif %}
-{% if user_perms.contact_personnel %}
-<a href="{% url 'personnel_network' %}" class="{% if url_name == 'personnel_network' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
-    <i data-lucide="id-card" class="w-4 h-4"></i><span class="font-medium text-sm">Personel</span>
-</a>
 {% endif %}
+
+{% if not user_access.accounting and user_perms.contact_personnel and skip_module != 'accounting' %}
+<p class="px-3 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-400/90">{{ gy.muhasebe }}</p>
+<a href="{% url 'accounting_personnel' %}" class="{% if url_name == 'accounting_personnel' %}{{ active_class }}{% else %}{{ inactive_class }}{% endif %}">
+    <i data-lucide="id-card" class="w-4 h-4"></i><span class="font-medium text-sm">{{ gy.mh_personel }}</span>
+</a>
 {% endif %}
 
 {% if user_access.outreach and skip_module != 'outreach' %}

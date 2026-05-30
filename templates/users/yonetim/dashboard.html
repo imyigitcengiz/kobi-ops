@@ -57,7 +57,7 @@
             <div class="px-5 py-3 flex items-center justify-between">
                 <div>
                     <p class="font-semibold text-slate-900">{{ u.display_name }}</p>
-                    <p class="text-xs text-slate-500">@{{ u.username }} · {{ u.role_label }}</p>
+                    <p class="text-xs text-slate-500">{{ u.list_subtitle }}</p>
                 </div>
                 <a href="{% url 'admin_user_edit' u.pk %}" class="text-xs font-bold text-brand-600">Düzenle</a>
             </div>

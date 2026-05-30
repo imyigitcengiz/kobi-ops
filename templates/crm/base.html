@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -76,20 +76,19 @@
             </a>
             {% endif %}
 
-            {% if user_perms.contact_teams or user_perms.contact_personnel %}
-            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Ekip & personel</p>
             {% if user_perms.contact_teams %}
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Ekip</p>
             <a href="{% url 'team_network' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'team_network' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
                 <i data-lucide="users-round" class="w-5 h-5"></i>
                 <span class="font-medium text-sm">Ekipler</span>
             </a>
             {% endif %}
             {% if user_perms.contact_personnel %}
-            <a href="{% url 'personnel_network' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'personnel_network' %}bg-brand-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
-                <i data-lucide="badge-check" class="w-5 h-5"></i>
-                <span class="font-medium text-sm">Personel kayıtları</span>
+            <p class="px-3 pt-4 text-[10px] font-bold uppercase tracking-wider text-emerald-500/90">Muhasebe</p>
+            <a href="{% url 'accounting_personnel' %}" class="flex items-center gap-3 px-3 py-2 rounded-xl {% if request.resolver_match.url_name == 'accounting_personnel' %}bg-emerald-600 text-white{% else %}text-slate-400 hover:text-white hover:bg-slate-800{% endif %}">
+                <i data-lucide="id-card" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">{{ gy.mh_personel }}</span>
             </a>
-            {% endif %}
             {% endif %}
 
             {% if user_perms.tools_media or user_access.tools %}

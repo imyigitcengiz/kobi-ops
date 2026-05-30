@@ -4,7 +4,7 @@
 
 {% block header_title %}
 <h1 class="text-lg font-bold text-slate-900">{{ gy.rehber }}</h1>
-<p class="text-sm text-slate-500">Müşteriler, firmalar ve personel — ortak veri merkezi.</p>
+<p class="text-sm text-slate-500">Müşteriler, firmalar ve ekipler — ortak veri merkezi.</p>
 {% endblock %}
 
 {% block content %}
@@ -60,12 +60,12 @@
     {% endif %}
 
     {% if user_perms.contact_personnel %}
-    <a href="{% url 'personnel_network' %}" class="group bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-amber-300 hover:shadow-md transition-all">
-        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-100">
+    <a href="{% url 'accounting_personnel' %}" class="group bg-white rounded-3xl border border-emerald-200 shadow-sm p-6 hover:border-emerald-400 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-100">
             <i data-lucide="id-card" class="w-6 h-6"></i>
         </div>
-        <h2 class="text-lg font-bold text-slate-900">Personel</h2>
-        <p class="text-sm text-slate-500 mt-2">Servis personeli ve ekip atamaları — maaş kayıtları Muhasebe modülündedir.</p>
+        <h2 class="text-lg font-bold text-slate-900">{{ gy.mh_personel }}</h2>
+        <p class="text-sm text-slate-500 mt-2">Personel kayıtları ve ekip atamaları — muhasebe modülünde.</p>
     </a>
     {% endif %}
 </div>

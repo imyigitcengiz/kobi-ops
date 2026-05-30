@@ -3,6 +3,7 @@ from django.urls import path
 from core_settings.views import (
     AccountingHubView, AccountingReportsHubView, AccountingPayrollView,
     AccountingPayrollReportsView, AccountingPayrollExportView, AccountingFinanceView,
+    AccountingPersonnelView,
 )
 from sales_leads.views import (
     SalesLeadCreateView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('', AccountingHubView.as_view(), name='accounting_hub'),
     path('raporlar/', AccountingReportsHubView.as_view(), name='accounting_reports'),
     path('maas-avans/', AccountingPayrollView.as_view(), name='accounting_payroll'),
+    path('personel/', AccountingPersonnelView.as_view(), name='accounting_personnel'),
     path('maas-avans/raporlar/', AccountingPayrollReportsView.as_view(), name='accounting_payroll_reports'),
     path('maas-avans/raporlar/export-csv/', AccountingPayrollExportView.as_view(), name='accounting_payroll_export'),
     path('gelir-gider/', AccountingFinanceView.as_view(), name='accounting_finance'),

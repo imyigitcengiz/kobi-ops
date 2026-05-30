@@ -244,6 +244,46 @@ class PayrollPersonnelQuickForm(forms.ModelForm):
         self.fields['monthly_salary'].required = False
 
 
+class AccountingPersonnelForm(forms.ModelForm):
+    """Muhasebe — personel, maaş ve (opsiyonel) saha yetkinlikleri."""
+
+    salary_pay_date = forms.DateField(
+        required=False,
+        label='Maaş tarihi',
+        widget=forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+    )
+
+    class Meta:
+        model = ServicePersonnel
+        fields = ['name', 'team', 'company_phone', 'monthly_salary', 'product_groups', 'notes', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Ad Soyad'}),
+            'team': forms.Select(attrs={'class': INPUT}),
+            'company_phone': forms.TextInput(attrs={'class': INPUT, 'placeholder': '+905…'}),
+            'monthly_salary': forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0', 'placeholder': 'Aylık maaş'}),
+            'product_groups': forms.SelectMultiple(attrs={'class': INPUT, 'size': 4}),
+            'notes': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Not (opsiyonel)'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'w-4 h-4 accent-brand-600 rounded'}),
+        }
+
+    def __init__(self, *args, show_product_groups=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['team'].queryset = ServiceTeam.objects.filter(is_active=True).order_by('name')
+        self.fields['team'].required = False
+        self.fields['team'].empty_label = 'Ekip (opsiyonel)'
+        self.fields['monthly_salary'].required = False
+        if show_product_groups:
+            self.fields['product_groups'].queryset = ProductOption.objects.order_by('name')
+        else:
+            del self.fields['product_groups']
+        if self.instance.pk and self.instance.salary_pay_day:
+            from django.utils import timezone
+            from core_settings.payroll import default_salary_payment_date, period_start
+
+            period = period_start(timezone.localdate())
+            self.fields['salary_pay_date'].initial = default_salary_payment_date(self.instance, period)
+
+
 class PayrollQuickAdvanceForm(forms.Form):
     personnel = forms.ModelChoiceField(
         queryset=ServicePersonnel.objects.none(),

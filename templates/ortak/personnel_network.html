@@ -85,7 +85,7 @@
                         </td>
                         <td class="px-4 py-3 font-bold text-slate-900">{{ pay.amount }} ₺</td>
                         <td class="px-4 py-3 text-slate-500">{{ pay.notes|default:"—" }}</td>
-                        <td class="px-4 py-3 text-slate-500 text-xs">{{ pay.recorded_by.username|default:"—" }}</td>
+                        <td class="px-4 py-3 text-slate-500 text-xs">{{ pay.recorded_by.display_name|default:"—" }}</td>
                         <td class="px-4 py-3 text-right">
                             <form method="post" class="inline" onsubmit="return confirm('Ödeme kaydı silinsin mi?');">
                                 {% csrf_token %}

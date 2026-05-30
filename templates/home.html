@@ -63,82 +63,33 @@
             {% endif %}
             <div class="mb-10">
                 <h2 class="text-2xl font-bold text-slate-900">Hoş geldiniz, {{ user_profile_card.display_name }}</h2>
-                <p class="text-slate-600 mt-2">ERP modüllerine göre gruplandırılmış kısayollar.</p>
+                <p class="text-slate-600 mt-2">Rehber, muhasebe ve yardım masası modüllerine hızlı erişim.</p>
             </div>
 
             {% if user_access.contact %}
-            <section class="mb-10">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-violet-600 mb-4 flex items-center gap-2">
-                    <i data-lucide="book-user" class="w-4 h-4"></i> {{ gy.rehber }}
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{% url 'contact_hub' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_ozet }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Müşteriler, firmalar, ekip ve personel.</p>
-                    </a>
-                    {% if user_perms.contact_customers_view or user_perms.contact_customers %}
-                    <a href="{% url 'customers' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4"><i data-lucide="users" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_musteriler }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Müşteri kartları ve sözleşmeler.</p>
-                    </a>
-                    {% endif %}
-                    {% if user_perms.contact_firms %}
-                    <a href="{% url 'contact_firmalar' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="building-2" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_firmalar }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Manuel kayıt, kazınan ve ortak firmalar; Maps araması tek panelde.</p>
-                    </a>
-                    {% endif %}
-                </div>
-            </section>
+            {% include 'common/panel_rehber_section.html' %}
             {% endif %}
 
             {% if user_access.accounting %}
+            <section class="mb-10">
+                {% include 'common/accounting_panel_section.html' with section_title=gy.muhasebe show_hub_link=True show_hub_card=False card_layout='wide' highlight_payroll=True %}
+                {% if not accounting_show_payroll and not accounting_show_finance and not accounting_show_reports %}
+                <div class="mt-4 p-5 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 text-sm">
+                    Muhasebe erişiminiz var; maaş, gelir-gider veya rapor izinleri için yöneticinize başvurun.
+                    <a href="{% url 'accounting_hub' %}" class="block mt-2 font-bold text-emerald-700 hover:underline">Muhasebe →</a>
+                </div>
+                {% endif %}
+            </section>
+            {% elif user_perms.contact_personnel %}
             <section class="mb-10">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-4 flex items-center gap-2">
                     <i data-lucide="calculator" class="w-4 h-4"></i> {{ gy.muhasebe }}
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{% url 'accounting_hub' %}" class="group block bg-white rounded-3xl border border-emerald-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_ozet }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Maaş, avans ve gelir-gider kayıtları.</p>
-                    </a>
-                    {% if user_perms.contact_payroll %}
-                    <a href="{% url 'accounting_payroll' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="wallet" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_maas_avans }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Personel ödeme kayıtları.</p>
-                    </a>
-                    {% endif %}
-                    {% if user_perms.accounting_finance %}
-                    <a href="{% url 'accounting_finance' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="receipt" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_gelir_gider }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Genel gelir ve gider hareketleri.</p>
-                    </a>
-                    {% endif %}
-                </div>
-            </section>
-            {% endif %}
-
-            {% if user_access.sales %}
-            <section class="mb-10">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-amber-600 mb-4 flex items-center gap-2">
-                    <i data-lucide="badge-dollar-sign" class="w-4 h-4"></i> {{ gy.satis_birimi }}
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{% url 'sales_lead_dashboard' %}" class="group block bg-white rounded-3xl border border-amber-200 shadow-sm hover:shadow-lg hover:border-amber-300 transition-all p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors"><i data-lucide="bar-chart-3" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_ozet }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Satış özeti ve raporlar.</p>
-                    </a>
-                    <a href="{% url 'sales_lead_list' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4"><i data-lucide="list" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_kayitlar }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Satış işlemleri listesi.</p>
+                    <a href="{% url 'accounting_personnel' %}" class="group block bg-white rounded-3xl border border-emerald-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i data-lucide="id-card" class="w-6 h-6"></i></div>
+                        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_personel }}</h4>
+                        <p class="text-sm text-slate-500 mt-2">Personel kaydı, ekip ataması ve servis yetkinlikleri.</p>
                     </a>
                 </div>
             </section>
@@ -146,42 +97,12 @@
 
             {% if user_access.services %}
             <section class="mb-10">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-brand-600 mb-4 flex items-center gap-2">
-                    <i data-lucide="headphones" class="w-4 h-4"></i> {{ gy.yardim_masasi }}
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{% url 'dashboard' %}" class="group block bg-white rounded-3xl border border-brand-200 shadow-sm hover:shadow-lg hover:border-brand-300 transition-all p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors"><i data-lucide="layout-dashboard" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_ozet }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Operasyon paneli ve istatistikler.</p>
-                    </a>
-                    <a href="{% url 'services' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4"><i data-lucide="clipboard-list" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_kayitlar }}</h4>
-                        <p class="text-sm text-slate-500 mt-2">Talep kayıtları, durum ve WhatsApp.</p>
-                    </a>
-                </div>
+                {% include 'common/panel_services_section.html' %}
             </section>
             {% endif %}
 
             {% if user_access.outreach %}
-            <section class="mb-10">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
-                    <i data-lucide="messages-square" class="w-4 h-4"></i> İletişim Merkezi
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">Özet</h4>
-                        <p class="text-sm text-slate-500 mt-2">Kampanyalar ve mesaj kayıtları.</p>
-                    </a>
-                    <a href="{% url 'outreach_campaigns' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
-                        <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
-                        <p class="text-sm text-slate-500 mt-2">WhatsApp toplu gönderim.</p>
-                    </a>
-                </div>
-            </section>
+            {% include 'common/panel_outreach_section.html' %}
             {% endif %}
 
             {% if user_perms.tools_media or user_access.tools or user_access.settings or user_access.admin_panel %}
@@ -222,7 +143,7 @@
             </section>
             {% endif %}
 
-            {% if not user_access.contact and not user_access.services and not user_access.sales and not user_access.accounting and not user_access.outreach and not user_access.tools and not user_access.admin_panel and not user_access.settings %}
+            {% if not user_access.contact and not user_access.services and not user_access.accounting and not user_access.outreach and not user_access.tools and not user_access.admin_panel and not user_access.settings %}
             <div class="p-6 rounded-2xl bg-amber-50 border border-amber-100 text-amber-800 text-sm">
                 Hesabınıza henüz modül izni atanmamış. Yöneticinizle iletişime geçin.
             </div>

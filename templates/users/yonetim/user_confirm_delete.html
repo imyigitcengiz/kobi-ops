@@ -5,7 +5,7 @@
     <h1 class="text-xl font-bold text-slate-900">Kullanıcı silinsin mi?</h1>
     <p class="text-sm text-slate-600 mt-2">
         <span class="font-semibold text-slate-900">{{ object.display_name }}</span>
-        (@{{ object.username }}) kalıcı olarak silinecek. Bu işlem geri alınamaz.
+        {{ object.display_name }} kalıcı olarak silinecek. Bu işlem geri alınamaz.
     </p>
     <p class="text-xs text-slate-500 mt-2">Rol: {{ object.role_label }}</p>
     <form method="post" class="flex gap-3 mt-6">

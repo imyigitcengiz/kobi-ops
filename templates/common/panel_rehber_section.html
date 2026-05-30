@@ -1,0 +1,41 @@
+{# Rehber modülü kısayolları — /panel ana sayfa #}
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-violet-600 mb-4 flex items-center gap-2">
+        <i data-lucide="book-user" class="w-4 h-4"></i> {{ gy.rehber }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% if user_perms.contact_customers_view or user_perms.contact_customers %}
+        <a href="{% url 'customers' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors"><i data-lucide="users" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_musteriler }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Müşteri kartları, ürünler ve sözleşme bilgileri.</p>
+        </a>
+        {% endif %}
+        {% if user_perms.contact_firms %}
+        <a href="{% url 'contact_firmalar' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i data-lucide="building-2" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_firmalar }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Manuel kayıt, etiketler ve Maps araması.</p>
+        </a>
+        <a href="{% url 'contact_firma_bul' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4"><i data-lucide="map-pin" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_firma_bul }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Google Maps üzerinden firma arama ve dışa aktarım.</p>
+        </a>
+        {% endif %}
+        {% if user_perms.contact_teams %}
+        <a href="{% url 'team_network' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"><i data-lucide="users-round" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_ekipler }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Servis ekipleri ve ürün yetkinlikleri.</p>
+        </a>
+        {% endif %}
+        {% if not user_perms.contact_customers_view and not user_perms.contact_customers and not user_perms.contact_firms and not user_perms.contact_teams %}
+        <a href="{% url 'contact_hub' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6 sm:col-span-2 lg:col-span-3 max-w-md">
+            <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors"><i data-lucide="book-user" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.rehber_ozet }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Müşteri, firma ve ekip merkezi.</p>
+        </a>
+        {% endif %}
+    </div>
+</section>

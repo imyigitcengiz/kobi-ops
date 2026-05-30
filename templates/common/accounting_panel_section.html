@@ -1,0 +1,119 @@
+{# Ortak muhasebe kısayolları — /panel ve muhasebe özeti. accounting_* bağlamı gerekir. #}
+{% if accounting_show_payroll or accounting_show_finance or accounting_show_reports or accounting_show_sales or user_perms.contact_personnel %}
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div>
+        {% if section_title %}
+        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-2">
+            <i data-lucide="calculator" class="w-4 h-4"></i> {{ section_title }}
+        </h3>
+        {% endif %}
+        <p class="text-sm text-slate-500">{{ accounting_period_label }} dönemi özeti</p>
+    </div>
+    {% if show_hub_link %}
+    <a href="{% url 'accounting_hub' %}" class="text-sm font-bold text-emerald-700 hover:text-emerald-900 hover:underline">Tümünü gör →</a>
+    {% endif %}
+</div>
+
+{% if accounting_show_payroll or accounting_show_finance %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+    {% if accounting_show_payroll %}
+    <div class="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-emerald-700/80">Bekleyen maaş</p>
+        <p class="text-xl font-black text-emerald-800 mt-0.5">{{ accounting_payroll_pending|default:0 }}</p>
+        <p class="text-[11px] text-emerald-600/80">{{ accounting_payroll_paid|default:0 }}/{{ accounting_payroll_staff|default:0 }} ödendi</p>
+    </div>
+    <div class="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-amber-700/80">Bekleyen avans</p>
+        <p class="text-xl font-black text-amber-800 mt-0.5">{{ accounting_payroll_advances|default:0 }} ₺</p>
+        <p class="text-[11px] text-amber-600/80">Brüt {{ accounting_payroll_gross|default:0 }} ₺</p>
+    </div>
+    {% endif %}
+    {% if accounting_show_finance %}
+    <div class="rounded-2xl bg-sky-50 border border-sky-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-sky-700/80">Gelir (ay)</p>
+        <p class="text-xl font-black text-sky-800 mt-0.5">{{ accounting_finance_income|default:0 }} ₺</p>
+    </div>
+    <div class="rounded-2xl bg-rose-50 border border-rose-100 px-4 py-3">
+        <p class="text-[10px] font-bold uppercase text-rose-700/80">Gider (ay)</p>
+        <p class="text-xl font-black text-rose-800 mt-0.5">{{ accounting_finance_expense|default:0 }} ₺</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 {% if card_layout == 'wide' %}lg:grid-cols-3{% endif %} gap-4">
+    {% if show_hub_card %}
+    <a href="{% url 'accounting_hub' %}" class="group block bg-white rounded-3xl border border-emerald-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_ozet }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Maaş, gelir-gider, satış ve raporlar.</p>
+    </a>
+    {% endif %}
+
+    {% if user_perms.contact_payroll or user_perms.contact_personnel %}
+    <a href="{% url 'accounting_personnel' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <i data-lucide="id-card" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_personel }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Personel kaydı, maaş tarihi ve aylık avans/ödeme takibi.</p>
+    </a>
+    {% if user_perms.contact_payroll %}
+    <a href="{% url 'accounting_payroll' %}" class="group block bg-white rounded-3xl border {% if highlight_payroll %}border-emerald-300 ring-1 ring-emerald-100{% else %}border-slate-200{% endif %} shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <i data-lucide="wallet" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_maas_avans }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Maaş tarihi, döngü işlem, avans ve not alanları — aylık personel döngüsü.</p>
+        {% if accounting_payroll_pending %}
+        <span class="inline-flex mt-3 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-[11px] font-bold">{{ accounting_payroll_pending }} bekleyen ödeme</span>
+        {% endif %}
+    </a>
+    {% endif %}
+    {% endif %}
+
+    {% if accounting_show_finance and user_perms.accounting_finance %}
+    <a href="{% url 'accounting_finance' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-brand-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+            <i data-lucide="receipt" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_gelir_gider }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Ofis giderleri, tahsilatlar ve genel nakit hareketleri.</p>
+        {% if accounting_finance_net is not None %}
+        <span class="inline-flex mt-3 px-2.5 py-1 rounded-lg {% if accounting_finance_net >= 0 %}bg-emerald-100 text-emerald-800{% else %}bg-red-100 text-red-800{% endif %} text-[11px] font-bold">Net {{ accounting_finance_net }} ₺</span>
+        {% endif %}
+    </a>
+    {% endif %}
+
+    {% if accounting_show_sales and user_access.sales %}
+    <a href="{% url 'sales_lead_dashboard' %}" class="group block bg-white rounded-3xl border border-amber-200 shadow-sm hover:shadow-lg hover:border-amber-300 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+            <i data-lucide="badge-dollar-sign" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_ozet }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Satış performansı, tahsilat ve proje özeti.</p>
+    </a>
+    <a href="{% url 'sales_lead_list' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+            <i data-lucide="list" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_kayitlar }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Proje ve satış kayıtları listesi.</p>
+    </a>
+    {% endif %}
+
+    {% if accounting_show_reports %}
+    {% if user_perms.contact_payroll or user_perms.sales_reports %}
+    <a href="{% url 'accounting_reports' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6 {% if card_layout == 'wide' and not accounting_show_sales %}sm:col-span-2 lg:col-span-1{% endif %}">
+        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+        </div>
+        <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_raporlar }}</h4>
+        <p class="text-sm text-slate-500 mt-2">Maaş & avans ve satış raporları — dönem filtresi ve CSV.</p>
+    </a>
+    {% endif %}
+    {% endif %}
+</div>
+{% endif %}

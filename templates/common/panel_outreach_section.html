@@ -1,0 +1,64 @@
+{# İletişim Merkezi — /panel rapor özeti #}
+{% if outreach_show_panel %}
+<section class="mb-10">
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1 flex items-center gap-2">
+                <i data-lucide="messages-square" class="w-4 h-4"></i> İletişim Merkezi
+            </h3>
+            <p class="text-sm text-slate-500">{{ outreach_panel_period_label }} dönemi özeti</p>
+        </div>
+        <a href="{% url 'outreach_hub' %}" class="text-sm font-bold text-blue-700 hover:text-blue-900 hover:underline">Tümünü gör →</a>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="rounded-2xl bg-blue-50 border border-blue-100 px-4 py-3">
+            <p class="text-[10px] font-bold uppercase text-blue-700/80">Gönderilen</p>
+            <p class="text-xl font-black text-blue-800 mt-0.5">{{ outreach_sent_month|default:0 }}</p>
+            <p class="text-[11px] text-blue-600/80">Bu ay WhatsApp</p>
+        </div>
+        <div class="rounded-2xl bg-amber-50 border border-amber-100 px-4 py-3">
+            <p class="text-[10px] font-bold uppercase text-amber-700/80">Bekleyen</p>
+            <p class="text-xl font-black text-amber-800 mt-0.5">{{ outreach_pending_month|default:0 }}</p>
+            <p class="text-[11px] text-amber-600/80">Kuyrukta / gönderiliyor</p>
+        </div>
+        <div class="rounded-2xl bg-rose-50 border border-rose-100 px-4 py-3">
+            <p class="text-[10px] font-bold uppercase text-rose-700/80">Başarısız</p>
+            <p class="text-xl font-black text-rose-800 mt-0.5">{{ outreach_failed_month|default:0 }}</p>
+            <p class="text-[11px] text-rose-600/80">Bu ay hata</p>
+        </div>
+        <div class="rounded-2xl bg-violet-50 border border-violet-100 px-4 py-3">
+            <p class="text-[10px] font-bold uppercase text-violet-700/80">Kampanyalar</p>
+            <p class="text-xl font-black text-violet-800 mt-0.5">{{ outreach_campaigns|default:0 }}</p>
+            <p class="text-[11px] text-violet-600/80">{{ outreach_members|default:0 }} alıcı kayıtlı</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="{% url 'outreach_campaign_messages' %}" class="group block bg-white rounded-3xl border border-violet-200 shadow-sm hover:shadow-lg hover:border-violet-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Mesaj raporu</h4>
+            <p class="text-sm text-slate-500 mt-2">Kampanya, firma, müşteri ve personel WhatsApp geçmişi.</p>
+            {% if outreach_campaign_messages_month %}
+            <span class="inline-flex mt-3 px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 text-[11px] font-bold">{{ outreach_campaign_messages_month }} kampanya mesajı (ay)</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'outreach_campaigns' %}" class="group block bg-white rounded-3xl border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <i data-lucide="megaphone" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
+            <p class="text-sm text-slate-500 mt-2">Alıcı listesi, şablon ve toplu WhatsApp gönderimi.</p>
+        </a>
+        <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                <i data-lucide="messages-square" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Genel bakış</h4>
+            <p class="text-sm text-slate-500 mt-2">İletişim merkezi özeti ve firma rehberi kısayolu.</p>
+        </a>
+    </div>
+</section>
+{% endif %}

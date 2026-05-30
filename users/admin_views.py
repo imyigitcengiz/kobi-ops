@@ -11,17 +11,22 @@ from .models import Permission, Role
 User = get_user_model()
 
 
+def production_users_queryset():
+    """RBAC test hesaplarını yönetim listelerinden gizler."""
+    return User.objects.select_related('role').exclude(username__startswith='_rbac_')
+
+
 class SuperAdminDashboardView(SuperuserRequiredMixin, TemplateView):
     template_name = 'users/yonetim/dashboard.html'
 
     def get_context_data(self, **kwargs):
         from django.db.models import Count
         context = super().get_context_data(**kwargs)
-        context['total_users'] = User.objects.count()
-        context['active_users'] = User.objects.filter(is_active=True).count()
+        context['total_users'] = production_users_queryset().count()
+        context['active_users'] = production_users_queryset().filter(is_active=True).count()
         context['total_roles'] = Role.objects.count()
         context['total_permissions'] = Permission.objects.count()
-        context['recent_users'] = User.objects.select_related('role').order_by('-date_joined')[:8]
+        context['recent_users'] = production_users_queryset().order_by('-date_joined')[:8]
         context['roles'] = Role.objects.annotate(user_count=Count('users')).order_by('name')
         return context
 
@@ -135,7 +140,7 @@ class AdminUserListView(SuperuserRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return User.objects.select_related('role').order_by('-date_joined')
+        return production_users_queryset().order_by('-date_joined')
 
 
 class AdminUserCreateView(SuperuserRequiredMixin, CreateView):

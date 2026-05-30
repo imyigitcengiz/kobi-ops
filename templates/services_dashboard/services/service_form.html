@@ -235,7 +235,7 @@
                     <div class="absolute left-[-5px] top-0 w-2 h-2 rounded-full bg-brand-500"></div>
                     <p class="text-xs text-slate-400 mb-1">{{ entry.created_at|date:"d.m.Y H:i" }}</p>
                     <p class="text-sm font-medium text-slate-700">{{ entry.action }}</p>
-                    <p class="text-[10px] text-slate-400">Yapan: {{ entry.user.username|default:"Sistem" }}</p>
+                    <p class="text-[10px] text-slate-400">Yapan: {{ entry.user.display_name|default:"Sistem" }}</p>
                     {% if entry.snapshot %}
                     <form method="post" action="{% url 'service_restore_history' object.id entry.id %}" class="pt-2">
                         {% csrf_token %}

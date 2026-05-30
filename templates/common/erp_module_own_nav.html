@@ -4,16 +4,25 @@
 {% with active="flex items-center gap-3 px-3 py-2 rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-900/20" %}
 {% with reports_active="accounting_reports,accounting_payroll_reports,accounting_payroll_export,sales_lead_reports" %}
 
-{% if module == 'accounting' and user_access.accounting %}
+{% if module == 'accounting' %}
+{% if user_access.accounting or user_perms.contact_personnel or user_perms.contact_payroll %}
 <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-emerald-400/90">{{ gy.muhasebe }}</p>
+{% if user_access.accounting %}
 <a href="{% url 'accounting_hub' %}" class="{% if url_name == 'accounting_hub' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
     <i data-lucide="layout-grid" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_ozet }}</span>
+</a>
+{% endif %}
+{% if user_perms.contact_payroll or user_perms.contact_personnel %}
+<a href="{% url 'accounting_personnel' %}" class="{% if url_name == 'accounting_personnel' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
+    <i data-lucide="id-card" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_personel }}</span>
 </a>
 {% if user_perms.contact_payroll %}
 <a href="{% url 'accounting_payroll' %}" class="{% if url_name == 'accounting_payroll' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
     <i data-lucide="wallet" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_maas_avans }}</span>
 </a>
 {% endif %}
+{% endif %}
+{% if user_access.accounting %}
 {% if user_perms.accounting_finance %}
 <a href="{% url 'accounting_finance' %}" class="{% if url_name == 'accounting_finance' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
     <i data-lucide="receipt" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_gelir_gider }}</span>
@@ -31,6 +40,8 @@
 <a href="{% url 'accounting_reports' %}" class="{% if url_name == 'accounting_reports' or url_name == 'accounting_payroll_reports' or url_name == 'accounting_payroll_export' or url_name == 'sales_lead_reports' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
     <i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_raporlar }}</span>
 </a>
+{% endif %}
+{% endif %}
 {% endif %}
 {% endif %}
 

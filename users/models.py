@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .display import humanize_username, is_rbac_test_username
+
 
 class Permission(models.Model):
     KIND_ACCESS = 'access'
@@ -67,7 +69,25 @@ class User(AbstractUser):
     @property
     def display_name(self):
         full = self.get_full_name().strip()
-        return full or self.username
+        if full:
+            return full
+        role_name = self.role.name if self.role_id else ''
+        label = humanize_username(self.username, role_name=role_name)
+        if label != self.username:
+            return label
+        return self.username
+
+    @property
+    def is_rbac_test_account(self):
+        return is_rbac_test_username(self.username)
+
+    @property
+    def list_subtitle(self):
+        """Admin listeleri — teknik kullanıcı adı yerine rol/e-posta."""
+        parts = [self.role_label]
+        if self.email:
+            parts.append(self.email)
+        return ' · '.join(parts)
 
     @property
     def initials(self):

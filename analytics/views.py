@@ -34,6 +34,23 @@ class HomeView(TemplateView):
 
     template_name = 'home.html'
 
+    def get_context_data(self, **kwargs):
+        from common.permissions import can_access_accounting
+        from core_settings.accounting_summary import build_accounting_panel_context
+        from analytics.panel_summary import build_services_panel_context, build_outreach_panel_context
+
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if not user.is_authenticated:
+            return context
+        if can_access_accounting(user):
+            context.update(build_accounting_panel_context(user))
+        if user.has_perm_codename('access.services'):
+            context.update(build_services_panel_context(user))
+        if user.has_perm_codename('access.outreach'):
+            context.update(build_outreach_panel_context(user))
+        return context
+
 
 class DashboardView(TemplateView):
     template_name = 'services_dashboard/dashboard.html'
