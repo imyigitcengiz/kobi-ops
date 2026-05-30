@@ -28,20 +28,11 @@
                     <label class="text-sm font-semibold text-slate-700">Firma adresi</label>
                     {{ settings_form.company_address }}
                 </div>
-            </div>
-            <div class="md:col-span-2 pt-4 border-t border-slate-100 space-y-4">
-                <div>
-                    <h3 class="text-sm font-bold text-slate-900">WhatsApp Business API</h3>
-                    <p class="text-xs text-slate-500 mt-1">Kampanya ve firma toplu mesajları bu API üzerinden gönderilir. Servis ekibi ve müşteri mesajları QR köprüsünü kullanır.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-slate-700">API token</label>
-                        {{ settings_form.whatsapp_cloud_token }}
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-slate-700">Telefon numarası ID</label>
-                        {{ settings_form.whatsapp_cloud_phone_id }}
+                <div class="flex items-center gap-3 pt-2">
+                    {{ settings_form.registration_enabled }}
+                    <div>
+                        <label class="text-sm font-semibold text-slate-700">Herkese açık üye kaydı</label>
+                        <p class="text-xs text-slate-500">Kapalıyken yalnızca yönetici kullanıcı oluşturabilir.</p>
                     </div>
                 </div>
             </div>

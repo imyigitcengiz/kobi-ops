@@ -19,7 +19,7 @@ def _service_type_label(service) -> str:
     return ', '.join(names) if names else 'servis'
 
 
-def build_bulk_print_qr(service, *, site_name: str = 'Gölgede Yaşam') -> dict:
+def build_bulk_print_qr(service, *, site_name: str = 'CoolOPS') -> dict:
     """
     kind: location | whatsapp | none
     location → müşteri konum linki QR

@@ -603,7 +603,7 @@ class ServiceBulkPrintView(ServiceListView):
         context['current_sort'] = self._resolve_sort_key()
         context['filter_summary'] = self._build_filter_summary()
         context['record_count'] = self.get_queryset().count()
-        site_name = 'Gölgede Yaşam'
+        site_name = 'CoolOPS'
         if context.get('site_settings') and context['site_settings'].site_name:
             site_name = context['site_settings'].site_name
         for service in context['services']:

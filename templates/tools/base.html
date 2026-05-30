@@ -39,7 +39,6 @@
             <div class="flex items-center gap-2" data-nav-popup-zone>
                 {% include 'common/nav_media_library_btn.html' %}
                 {% if user_access.accounting %}<a href="{% url 'accounting_hub' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">{{ gy.muhasebe }}</a>{% endif %}
-                {% if user_access.sales %}<a href="{% url 'sales_lead_dashboard' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">{{ gy.satis_birimi }}</a>{% endif %}
                 {% if user_access.services %}<a href="{% url 'dashboard' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">{{ gy.yardim_masasi }}</a>{% endif %}
                 {% if user_access.contact %}<a href="{% url 'contact_hub' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">{{ gy.rehber }}</a>{% endif %}
                 {% if user_access.outreach %}<a href="{% url 'outreach_hub' %}" class="text-sm font-semibold text-slate-600 hover:text-brand-600 px-3 py-2 rounded-lg hover:bg-slate-50">İletişim</a>{% endif %}
@@ -61,6 +60,13 @@
         </div>
     </header>
     <main class="max-w-6xl mx-auto px-6 py-8">
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl text-sm font-semibold {% if message.tags == 'success' %}bg-emerald-600 text-white{% elif message.tags == 'error' %}bg-red-600 text-white{% else %}bg-slate-800 text-white{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
     {% block extra_js %}{% endblock %}

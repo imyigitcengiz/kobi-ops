@@ -117,7 +117,7 @@ def local_branch() -> str:
 def _github_request(url: str) -> dict | None:
     headers = {
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'KobiOps-Updater',
+        'User-Agent': 'CoolOPS-Updater',
     }
     token = settings.KOBIOPS_GITHUB_TOKEN
     if token:

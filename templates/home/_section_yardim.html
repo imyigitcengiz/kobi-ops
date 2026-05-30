@@ -1,0 +1,19 @@
+{% if user_access.services %}
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-brand-600 mb-4 flex items-center gap-2">
+        <i data-lucide="headphones" class="w-4 h-4"></i> {{ gy.yardim_masasi }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="{% url 'dashboard' %}" class="group block bg-white rounded-3xl border border-brand-200 shadow-sm hover:shadow-lg hover:border-brand-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors"><i data-lucide="layout-dashboard" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_ozet }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Operasyon paneli ve istatistikler.</p>
+        </a>
+        <a href="{% url 'services' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4"><i data-lucide="clipboard-list" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.ym_kayitlar }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Talep kayıtları, durum ve WhatsApp.</p>
+        </a>
+    </div>
+</section>
+{% endif %}

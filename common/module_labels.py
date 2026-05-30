@@ -1,5 +1,9 @@
 """ERP/CRM modül adları — arayüz metinleri (URL ve izin kodları değişmez)."""
 
+APP_NAME = 'CoolOPS'
+KOBI_APP = 'Kobi App'
+AGENCY_APP = 'Agency App'
+
 REHBER = 'Rehber'
 YARDIM_MASASI = 'Yardım Masası'
 SATIS_BIRIMI = 'Satış Birimi'
@@ -25,6 +29,7 @@ SB_KAYITLAR = 'Satış kayıtları'
 # Muhasebe
 MH_OZET = 'Özet'
 MH_MAAS_AVANS = 'Maaş & avans'
+MH_RAPORLAR = 'Raporlar'
 MH_GELIR_GIDER = 'Gelir & gider'
 
 ORTAK_URUNLER = 'Ürünler (ortak katalog)'

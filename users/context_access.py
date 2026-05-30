@@ -31,7 +31,11 @@ def user_access(request):
             'services': user.has_perm_codename('access.services'),
             'contact': user.has_perm_codename('access.contact'),
             'outreach': user.has_perm_codename('access.outreach'),
-            'sales': user.has_perm_codename('access.sales'),
+            'sales': (
+                user.has_perm_codename('sales.manage')
+                or user.has_perm_codename('sales.reports')
+                or user.has_perm_codename('sales.export')
+            ),
             'accounting': user.has_perm_codename('access.accounting'),
             'tools': user.has_perm_codename('access.tools'),
             'settings': user.has_perm_codename('access.settings'),

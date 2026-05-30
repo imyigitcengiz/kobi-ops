@@ -17,7 +17,7 @@ class SiteSettings(models.Model):
         ('priority', 'Önceliğe Göre'),
     ]
 
-    site_name = models.CharField(max_length=255, default="GÖLGEDE YAŞAM")
+    site_name = models.CharField(max_length=255, default="CoolOPS")
     logo = models.ImageField(upload_to=site_logo_upload_to, null=True, blank=True)
     company_phone = models.CharField(max_length=50, blank=True, null=True, verbose_name="Firma Telefonu")
     company_address = models.TextField(blank=True, null=True, verbose_name="Firma Adresi")
@@ -64,6 +64,11 @@ class SiteSettings(models.Model):
         blank=True,
         default='',
         verbose_name='WhatsApp Business telefon numarası ID',
+    )
+    registration_enabled = models.BooleanField(
+        default=True,
+        verbose_name='Herkese açık üye kaydı',
+        help_text='Kapalıyken yalnızca yönetici kullanıcı oluşturabilir (ilk kurulum hariç).',
     )
 
     class Meta:
@@ -301,6 +306,20 @@ class ServicePersonnel(models.Model):
         verbose_name='Yetenekli ürün grupları',
     )
     company_phone = models.CharField(max_length=30, blank=True, null=True, verbose_name='Şirket numarası')
+    monthly_salary = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Aylık maaş',
+        help_text='Muhasebe modülünde aylık döngü hesabı için.',
+    )
+    salary_pay_day = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Maaş günü',
+        help_text='Her ay maaşın ödeneceği gün (1–31).',
+    )
     is_active = models.BooleanField(default=True, verbose_name='Aktif')
     notes = models.CharField(max_length=255, blank=True, null=True, verbose_name='Not')
 
@@ -328,9 +347,29 @@ class PersonnelPayment(models.Model):
         verbose_name='Personel',
     )
     payment_type = models.CharField(max_length=20, choices=TYPE_CHOICES, verbose_name='Tür')
+    period = models.DateField(
+        verbose_name='Maaş dönemi',
+        help_text='Ayın ilk günü — avans ve maaş hangi aya ait.',
+    )
+    gross_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Brüt maaş',
+        help_text='Maaş ödemesinde brüt tutar; net amount alanına yazılır.',
+    )
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Tutar')
     payment_date = models.DateField(verbose_name='Ödeme tarihi')
     notes = models.CharField(max_length=255, blank=True, verbose_name='Not')
+    settled_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='settled_advances',
+        verbose_name='Mahsup eden maaş',
+    )
     recorded_by = models.ForeignKey(
         'users.User',
         on_delete=models.SET_NULL,

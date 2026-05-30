@@ -1,0 +1,40 @@
+{% if user_access.accounting %}
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-4 flex items-center gap-2">
+        <i data-lucide="calculator" class="w-4 h-4"></i> {{ gy.muhasebe }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="{% url 'accounting_hub' %}" class="group block bg-white rounded-3xl border border-emerald-200 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_ozet }}</h4>
+            <p class="text-sm text-slate-500 mt-2">{% if user_business_mode == 'agency' %}Proje geliri, gelir-gider ve raporlar.{% else %}Maaş, avans, gelir-gider ve satış kayıtları.{% endif %}</p>
+        </a>
+        {% if user_access.sales %}
+        <a href="{% url 'sales_lead_dashboard' %}" class="group block bg-white rounded-3xl border border-emerald-200 shadow-sm hover:shadow-lg hover:border-emerald-400 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><i data-lucide="badge-dollar-sign" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_ozet }}</h4>
+            <p class="text-sm text-slate-500 mt-2">{% if user_business_mode == 'agency' %}Proje performansı.{% else %}Satış özeti ve performans.{% endif %}</p>
+        </a>
+        <a href="{% url 'sales_lead_list' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="list" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.sb_kayitlar }}</h4>
+            <p class="text-sm text-slate-500 mt-2">{% if user_business_mode == 'agency' %}Proje ve gelir kayıtları.{% else %}Proje ve satış işlemleri.{% endif %}</p>
+        </a>
+        {% endif %}
+        {% if user_perms.contact_payroll %}
+        <a href="{% url 'accounting_payroll' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="wallet" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_maas_avans }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Personel ödeme kayıtları.</p>
+        </a>
+        {% endif %}
+        {% if user_perms.accounting_finance %}
+        <a href="{% url 'accounting_finance' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4"><i data-lucide="receipt" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">{{ gy.mh_gelir_gider }}</h4>
+            <p class="text-sm text-slate-500 mt-2">Genel gelir ve gider hareketleri.</p>
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endif %}

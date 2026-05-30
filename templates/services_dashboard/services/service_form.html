@@ -1,6 +1,6 @@
 {% extends 'services_dashboard/base.html' %}
 
-{% block title %}{% if object %}Servis Düzenle{% else %}Yeni Servis{% endif %} | GÖLGEDE YAŞAM{% endblock %}
+{% block title %}{% if object %}Servis Düzenle{% else %}Yeni Servis{% endif %} | {{ site_settings.site_name }}{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto grid grid-cols-1 {% if object %}lg:grid-cols-3{% endif %} gap-8">

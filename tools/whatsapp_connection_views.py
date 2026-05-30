@@ -284,7 +284,7 @@ def _site_settings_row() -> SiteSettings:
 def whatsapp_location_request_template_api(request):
     if request.method == 'GET':
         template = get_whatsapp_location_request_template()
-        site_name = _site_settings_row().site_name or 'Gölgede Yaşam'
+        site_name = _site_settings_row().site_name or 'CoolOPS'
         return JsonResponse({
             'ok': True,
             'template': template,
@@ -311,7 +311,7 @@ def whatsapp_location_request_template_api(request):
     row.whatsapp_location_request_template = template
     row.save(update_fields=['whatsapp_location_request_template'])
 
-    site_name = row.site_name or 'Gölgede Yaşam'
+    site_name = row.site_name or 'CoolOPS'
     return JsonResponse({
         'ok': True,
         'template': template,

@@ -1,12 +1,12 @@
 {% extends 'services_dashboard/base.html' %}
 
-{% block title %}WA Otomatik Dağıtım | GÖLGEDE YAŞAM{% endblock %}
+{% block title %}Servis Ekibine Otomatik Mesaj Gönder | {{ site_settings.site_name }}{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-4">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
-        <h2 class="text-xl font-bold text-slate-900">WA Otomatik Dağıtım Hazır</h2>
-        <p class="text-sm text-slate-500 mt-1">Ekip ve altındaki personellere göre dağıtım hazır. Göndermeden önce telefon ve mesajı düzenleyebilirsin. Mesajlar bağlı WhatsApp hattından doğrudan gönderilir.</p>
+        <h2 class="text-xl font-bold text-slate-900">Servis Ekibine Otomatik Mesaj Gönder</h2>
+        <p class="text-sm text-slate-500 mt-1">Ekip ve altındaki personellere göre mesajlar hazır. Göndermeden önce telefon ve mesajı düzenleyebilirsin. Mesajlar bağlı WhatsApp hattından doğrudan gönderilir.</p>
         <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
             <span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700">Toplam Servis: {{ total_service_count }}</span>
             <span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700">Alıcı Sayısı: {{ total_receiver_count }}</span>

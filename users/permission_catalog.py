@@ -7,9 +7,7 @@ PERMISSIONS = [
     ('access.home', 'Ana sayfa', 'Genel', PERMISSION_KIND_ACCESS, 10,
      'Portal ana sayfasına giriş.'),
     ('access.accounting', 'Muhasebe modülü', 'Muhasebe', PERMISSION_KIND_ACCESS, 20,
-     'Maaş, avans ve gelir-gider kayıtları (/muhasebe/).'),
-    ('access.sales', 'Satış Birimi modülü', 'Satış Birimi', PERMISSION_KIND_ACCESS, 30,
-     'Satış Birimi paneli ve kayıt listesine erişim.'),
+     'Maaş, avans, gelir-gider ve satış kayıtları (/muhasebe/).'),
     ('access.services', 'Yardım Masası modülü', 'Yardım Masası', PERMISSION_KIND_ACCESS, 40,
      'Yardım Masası özet paneli ve kayıt listesine erişim.'),
     ('access.contact', 'Rehber modülü', 'Rehber', PERMISSION_KIND_ACCESS, 45,
@@ -51,13 +49,13 @@ PERMISSIONS = [
     ('contact.solution', 'Çözüm ağı yönetimi', 'Rehber', PERMISSION_KIND_ACTION, 260,
      'Çözüm ortağı ekleme, düzenleme ve silme.'),
 
-    ('sales.manage', 'Satış kaydı oluştur & düzenle', 'Satış Birimi', PERMISSION_KIND_ACTION, 310,
+    ('sales.manage', 'Satış kaydı oluştur & düzenle', 'Muhasebe', PERMISSION_KIND_ACTION, 310,
      'Yeni satış, düzenleme ve kayıt güncelleme.'),
-    ('sales.delete', 'Satış kaydı sil', 'Satış Birimi', PERMISSION_KIND_ACTION, 320,
+    ('sales.delete', 'Satış kaydı sil', 'Muhasebe', PERMISSION_KIND_ACTION, 320,
      'Satış kaydı silme.'),
-    ('sales.reports', 'Satış raporları', 'Satış Birimi', PERMISSION_KIND_ACTION, 330,
+    ('sales.reports', 'Satış raporları', 'Muhasebe', PERMISSION_KIND_ACTION, 330,
      'Rapor ekranını görüntüleme.'),
-    ('sales.export', 'Satış CSV dışa aktarım', 'Satış Birimi', PERMISSION_KIND_ACTION, 340,
+    ('sales.export', 'Satış CSV dışa aktarım', 'Muhasebe', PERMISSION_KIND_ACTION, 340,
      'Rapor verisini CSV olarak indirme.'),
 
     ('tools.whatsapp', 'WhatsApp bağlan & mesaj', 'Tools', PERMISSION_KIND_ACTION, 410,
@@ -105,10 +103,10 @@ DEFAULT_ROLES = {
     },
     'sales': {
         'name': 'Satış Temsilcisi',
-        'description': 'Satış kayıtları ve müşteri erişimi.',
+        'description': 'Muhasebe modülünde satış kayıtları ve müşteri erişimi.',
         'is_system': True,
         'permissions': [
-            'access.home', 'access.sales', 'access.contact',
+            'access.home', 'access.accounting', 'access.contact',
             'sales.manage', 'sales.reports', 'sales.export',
             'contact.customers_view', 'contact.customers',
             'tools.media',
@@ -116,11 +114,34 @@ DEFAULT_ROLES = {
     },
     'accounting': {
         'name': 'Muhasebe',
-        'description': 'Maaş, avans, gelir-gider ve müşteri görüntüleme (düzenleme yok).',
+        'description': 'Maaş, avans, gelir-gider, satış kayıtları ve müşteri görüntüleme.',
         'is_system': True,
         'permissions': [
             'access.home', 'access.accounting', 'access.contact',
             'contact.customers_view', 'contact.payroll', 'accounting.finance',
+            'sales.manage', 'sales.reports', 'sales.export',
+        ],
+    },
+    'kobi_app': {
+        'name': 'Kobi App üyesi',
+        'description': 'Kayıt: saha operasyonu ve servis odaklı varsayılan izinler.',
+        'is_system': True,
+        'permissions': [
+            'access.home', 'access.services', 'access.contact',
+            'services.manage', 'services.print', 'services.whatsapp',
+            'contact.customers_view', 'contact.customers', 'contact.teams', 'contact.personnel',
+            'tools.media',
+        ],
+    },
+    'agency_app': {
+        'name': 'Agency App üyesi',
+        'description': 'Kayıt: lead, outreach ve proje geliri odaklı varsayılan izinler.',
+        'is_system': True,
+        'permissions': [
+            'access.home', 'access.contact', 'access.outreach', 'access.accounting',
+            'contact.customers_view', 'contact.customers', 'contact.firms',
+            'sales.manage', 'sales.reports',
+            'tools.media',
         ],
     },
 }
@@ -151,7 +172,14 @@ ROUTE_PERMISSIONS = [
     ('/services-dashboard/services/send-whatsapp-auto/', 'services.whatsapp'),
     ('/services-dashboard/services/new/', 'services.manage'),
     ('/services-dashboard/', 'access.services'),
+    ('/muhasebe/satis/raporlar/export-csv/', 'sales.export'),
+    ('/muhasebe/satis/raporlar/', 'sales.reports'),
+    ('/muhasebe/satis/yeni/', 'sales.manage'),
+    ('/muhasebe/satis/', 'access.accounting'),
     ('/muhasebe/gelir-gider/', 'accounting.finance'),
+    ('/muhasebe/raporlar/', 'access.accounting'),
+    ('/muhasebe/maas-avans/raporlar/export-csv/', 'contact.payroll'),
+    ('/muhasebe/maas-avans/raporlar/', 'contact.payroll'),
     ('/muhasebe/maas-avans/', 'contact.payroll'),
     ('/muhasebe/', 'access.accounting'),
     ('/contact/personel/', 'contact.personnel'),
@@ -173,6 +201,7 @@ ROUTE_PERMISSIONS = [
     ('/sales-lead/', None),
     ('/tools/medya/sil/', 'tools.media_delete'),
     ('/tools/medya/', 'tools.media'),
+    ('/tools/whatsapp-api/', 'tools.whatsapp'),
     ('/tools/whatsapp', 'tools.whatsapp'),
     ('/tools/', 'access.tools'),
     ('/admin/', None),
@@ -180,5 +209,5 @@ ROUTE_PERMISSIONS = [
     ('/panel/', 'access.home'),
 ]
 
-LOGIN_EXEMPT_PREFIXES = ('/giris/', '/static/', '/healthz/')
+LOGIN_EXEMPT_PREFIXES = ('/giris/', '/kayit/', '/static/', '/healthz/')
 SUPERUSER_ONLY_PREFIXES = ('/yonetim/',)

@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 
 from analytics.views import ai_chat_view
 from tools.media_views import ToolsMediaDeleteView, ToolsMediaLibraryView
-from tools.views import ToolsHubView, WhatsappBaglanView
+from tools.views import ToolsHubView, WhatsappBaglanView, WhatsappApiSettingsView
 from tools.whatsapp_connection_views import (
     whatsapp_bridge_auto_start_api,
     whatsapp_bridge_ui_log_api,
@@ -24,6 +24,7 @@ from tools.whatsapp_template_views import (
 urlpatterns = [
     path('', ToolsHubView.as_view(), name='tools_hub'),
     path('whatsapp-baglan/', WhatsappBaglanView.as_view(), name='tools_whatsapp_baglan'),
+    path('whatsapp-api/', WhatsappApiSettingsView.as_view(), name='tools_whatsapp_api_settings'),
     path('whatsapp-mesaj-gonderici/', RedirectView.as_view(url='/tools/whatsapp-baglan/', permanent=False)),
     path('toplu-whatsapp-mesaj/', RedirectView.as_view(url='/tools/whatsapp-baglan/', permanent=False)),
     path('google-maps-firma-bulma/', RedirectView.as_view(url='/contact/firma-bul/', permanent=False)),

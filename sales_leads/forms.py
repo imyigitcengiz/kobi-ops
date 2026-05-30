@@ -64,7 +64,7 @@ class SalesLeadForm(forms.Form):
     project = forms.CharField(
         required=True,
         label='Proje',
-        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Örn. Gölgede Yaşam — Villa A'}),
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Örn. Proje adı — Müşteri'}),
     )
     sale_date = forms.DateField(label='Tarih', widget=forms.DateInput(attrs={'type': 'date', 'class': INPUT}))
     sale_amount = forms.DecimalField(

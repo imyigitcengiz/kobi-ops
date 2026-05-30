@@ -54,8 +54,8 @@ for path in [
     '/services-dashboard/services/',
     '/services-dashboard/services/new/',
     '/contact/musteriler/',
-    '/sales-lead/kayitlar/',
-    '/sales-lead/yeni/',
+    '/muhasebe/satis/kayitlar/',
+    '/muhasebe/satis/yeni/',
     '/tools/',
 ]:
     test(f'page {path}', lambda p=path: hit_get(p))
@@ -85,7 +85,7 @@ if customer and status and priority:
 
 # Satış — yeni müşteri
 def sales_new_customer():
-    r = hit_post('/sales-lead/yeni/', {
+    r = hit_post('/muhasebe/satis/yeni/', {
         'name': 'Smoke Test Müşteri',
         'phone': '+905559998877',
         'region': 'İzmir',
@@ -109,7 +109,7 @@ test('sales new customer + products', sales_new_customer)
 # Satış — mevcut müşteri
 if customer:
     def sales_existing():
-        r = hit_post('/sales-lead/yeni/', {
+        r = hit_post('/muhasebe/satis/yeni/', {
             'use_existing_customer': 'on',
             'existing_customer': str(customer.pk),
             'name': customer.name,

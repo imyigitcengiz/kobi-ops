@@ -68,7 +68,7 @@ def _products_catalog():
 
 
 class SalesLeadDashboardView(PermissionRequiredMixin, TemplateView):
-    permission_required = 'access.sales'
+    permission_required = 'access.accounting'
     template_name = 'sales_lead/dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -113,7 +113,7 @@ class SalesLeadDashboardView(PermissionRequiredMixin, TemplateView):
 
 
 class SalesLeadListView(PermissionRequiredMixin, ListView):
-    permission_required = 'access.sales'
+    permission_required = 'access.accounting'
     model = SalesLead
     template_name = 'sales_lead/sales_lead_list.html'
     context_object_name = 'sales_leads'

@@ -1,0 +1,43 @@
+{% if user_access.outreach %}
+{% if outreach_first %}
+{% if user_business_mode == 'agency' %}
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
+        <i data-lucide="messages-square" class="w-4 h-4"></i> İletişim Merkezi
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">Özet</h4>
+            <p class="text-sm text-slate-500 mt-2">Kampanyalar ve mesaj kayıtları.</p>
+        </a>
+        <a href="{% url 'outreach_campaigns' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
+            <p class="text-sm text-slate-500 mt-2">WhatsApp toplu gönderim.</p>
+        </a>
+    </div>
+</section>
+{% endif %}
+{% else %}
+{% if user_business_mode != 'agency' %}
+<section class="mb-10">
+    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
+        <i data-lucide="messages-square" class="w-4 h-4"></i> İletişim Merkezi
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="{% url 'outreach_hub' %}" class="group block bg-white rounded-3xl border border-blue-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">Özet</h4>
+            <p class="text-sm text-slate-500 mt-2">Kampanyalar ve mesaj kayıtları.</p>
+        </a>
+        <a href="{% url 'outreach_campaigns' %}" class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg p-6">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i data-lucide="megaphone" class="w-6 h-6"></i></div>
+            <h4 class="text-lg font-bold text-slate-900">Kampanyalar</h4>
+            <p class="text-sm text-slate-500 mt-2">WhatsApp toplu gönderim.</p>
+        </a>
+    </div>
+</section>
+{% endif %}
+{% endif %}
+{% endif %}

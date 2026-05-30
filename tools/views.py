@@ -4,7 +4,15 @@ import json
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import TemplateView
+
+from core_settings.forms import WhatsappCloudSettingsForm
+from core_settings.models import SiteSettings
+from users.mixins import PermissionRequiredMixin
+from tools.whatsapp_cloud_client import cloud_api_status
 
 from tools.firm_memory import enrich_search_results, register_scrape, serialize_firm
 from tools.google_maps_search import GoogleMapsSearchError, search_businesses
@@ -91,6 +99,39 @@ class WhatsappBaglanView(TemplateView):
 
         context['whatsapp_location_request_template'] = get_whatsapp_location_request_template()
         return context
+
+
+class WhatsappApiSettingsView(PermissionRequiredMixin, View):
+    permission_required = 'tools.whatsapp'
+    template_name = 'tools/whatsapp_api_ayarlari.html'
+
+    def _settings(self):
+        settings = SiteSettings.objects.first()
+        if not settings:
+            settings = SiteSettings.objects.create()
+        return settings
+
+    def get(self, request):
+        from django.shortcuts import render
+
+        return render(request, self.template_name, {
+            'form': WhatsappCloudSettingsForm(instance=self._settings()),
+            'api_status': cloud_api_status(),
+        })
+
+    def post(self, request):
+        from django.shortcuts import render
+
+        settings = self._settings()
+        form = WhatsappCloudSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'WhatsApp Business API ayarları kaydedildi.')
+            return redirect('tools_whatsapp_api_settings')
+        return render(request, self.template_name, {
+            'form': form,
+            'api_status': cloud_api_status(),
+        })
 
 
 def _json_body(request):

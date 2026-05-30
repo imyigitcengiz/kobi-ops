@@ -1,5 +1,7 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
+
+from common.business_modes import MODE_AGENCY, MODE_CHOICES, MODE_KOBI, normalize_mode
 
 from .models import User, UserProfile
 
@@ -23,6 +25,50 @@ class UserLoginForm(AuthenticationForm):
     )
 
 
+class UserRegistrationForm(UserCreationForm):
+    first_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Ad'}),
+    )
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Soyad'}),
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={'class': INPUT, 'placeholder': 'ornek@firma.com'}),
+    )
+    business_mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        widget=forms.RadioSelect,
+        label='İş profiliniz',
+        initial=MODE_KOBI,
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'business_mode', 'password1', 'password2')
+
+    def __init__(self, *args, initial_mode=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ('username', 'password1', 'password2'):
+            self.fields[name].widget.attrs['class'] = INPUT
+        self.fields['username'].widget.attrs['placeholder'] = 'Kullanıcı adı'
+        self.fields['password1'].widget.attrs['placeholder'] = 'Şifre'
+        self.fields['password2'].widget.attrs['placeholder'] = 'Şifre tekrar'
+        if initial_mode:
+            self.fields['business_mode'].initial = normalize_mode(initial_mode)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        user.email = self.cleaned_data.get('email', '')
+        if commit:
+            user.save()
+        return user
+
+
 class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(
         required=False,
@@ -39,8 +85,9 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['avatar', 'phone', 'job_title', 'bio']
+        fields = ['business_mode', 'avatar', 'phone', 'job_title', 'bio']
         widgets = {
+            'business_mode': forms.RadioSelect,
             'phone': forms.TextInput(attrs={'class': INPUT, 'placeholder': '+90 5xx xxx xx xx'}),
             'job_title': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Örn: Operasyon Yöneticisi'}),
             'bio': forms.Textarea(attrs={'class': INPUT, 'rows': 4, 'placeholder': 'Kısa tanıtım...'}),
@@ -54,6 +101,7 @@ class UserProfileForm(forms.ModelForm):
             self.fields['first_name'].initial = user.first_name
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
+        self.fields['business_mode'].widget.attrs.update({'class': 'accent-brand-600'})
 
     def save(self, commit=True):
         profile = super().save(commit=False)

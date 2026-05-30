@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Üye kaydı | {{ gy.app_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mode-card input { position: absolute; opacity: 0; pointer-events: none; }
+        .mode-card:has(input:checked) { border-color: rgb(14 165 233); background: rgb(240 249 255); }
+        .mode-card:has(input:checked) .mode-check { opacity: 1; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 py-8 px-4">
+    <div class="w-full max-w-lg mx-auto">
+        <div class="text-center mb-8">
+            <a href="{% url 'landing' %}" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-brand-600 mb-4">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Tanıtım sayfası
+            </a>
+            <p class="text-xs font-bold uppercase tracking-wider text-brand-600">{{ gy.app_name }}</p>
+            <h1 class="text-2xl font-bold text-slate-900 mt-2">Üye kaydı</h1>
+            <p class="text-sm text-slate-500 mt-2">İş modelinize uygun uygulama profilini seçin.</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl text-sm font-semibold {% if message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-xl p-8">
+            <form method="post" class="space-y-5" id="registerForm">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="space-y-3">
+                    <label class="text-sm font-semibold text-slate-700">Hangi profil size uygun?</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="mode-card relative block rounded-2xl border-2 border-slate-200 p-4 cursor-pointer transition-all hover:border-brand-300">
+                            <input type="radio" name="business_mode" value="kobi" {% if form.business_mode.value == 'kobi' or selected_mode == 'kobi' %}checked{% endif %}>
+                            <i data-lucide="check-circle-2" class="mode-check w-5 h-5 text-brand-600 absolute top-3 right-3 opacity-0"></i>
+                            <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
+                                <i data-lucide="hard-hat" class="w-5 h-5"></i>
+                            </div>
+                            <p class="font-bold text-slate-900">{{ gy.kobi_app }}</p>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Saha, servis ve B2B operasyon</p>
+                        </label>
+                        <label class="mode-card relative block rounded-2xl border-2 border-slate-200 p-4 cursor-pointer transition-all hover:border-violet-300">
+                            <input type="radio" name="business_mode" value="agency" {% if form.business_mode.value == 'agency' or selected_mode == 'agency' %}checked{% endif %}>
+                            <i data-lucide="check-circle-2" class="mode-check w-5 h-5 text-violet-600 absolute top-3 right-3 opacity-0"></i>
+                            <div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            </div>
+                            <p class="font-bold text-slate-900">{{ gy.agency_app }}</p>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">Lead, kampanya ve proje takibi</p>
+                        </label>
+                    </div>
+                    {% if form.business_mode.errors %}<p class="text-xs text-red-600">{{ form.business_mode.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-slate-700">Ad</label>
+                        <div class="mt-1.5">{{ form.first_name }}</div>
+                        {% if form.first_name.errors %}<p class="text-xs text-red-600 mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-slate-700">Soyad</label>
+                        <div class="mt-1.5">{{ form.last_name }}</div>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Kullanıcı adı</label>
+                    <div class="mt-1.5">{{ form.username }}</div>
+                    {% if form.username.errors %}<p class="text-xs text-red-600 mt-1">{{ form.username.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">E-posta <span class="text-slate-400 font-normal">(isteğe bağlı)</span></label>
+                    <div class="mt-1.5">{{ form.email }}</div>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Şifre</label>
+                    <div class="mt-1.5">{{ form.password1 }}</div>
+                    {% if form.password1.errors %}<p class="text-xs text-red-600 mt-1">{{ form.password1.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Şifre tekrar</label>
+                    <div class="mt-1.5">{{ form.password2 }}</div>
+                    {% if form.password2.errors %}<p class="text-xs text-red-600 mt-1">{{ form.password2.errors.0 }}</p>{% endif %}
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">
+                    Hesap oluştur
+                </button>
+            </form>
+        </div>
+        <p class="text-center text-sm text-slate-500 mt-6">
+            Zaten hesabınız var mı?
+            <a href="{% url 'login' %}" class="font-semibold text-brand-600 hover:text-brand-700">Giriş yapın</a>
+        </p>
+    </div>
+    <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>

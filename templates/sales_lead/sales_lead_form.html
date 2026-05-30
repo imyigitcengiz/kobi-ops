@@ -171,7 +171,7 @@
 </form>
 {% endblock %}
 
-{% block extra_js %}
+{% block sales_extra_js %}
 {{ sales_lead_form_js|json_script:"salesLeadFormData" }}
 <script>
 window.SALES_LEAD_FORM = JSON.parse(document.getElementById('salesLeadFormData').textContent);

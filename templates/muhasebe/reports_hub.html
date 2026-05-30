@@ -1,0 +1,34 @@
+{% extends 'muhasebe/base.html' %}
+
+{% block title %}{{ gy.mh_raporlar }}{% endblock %}
+
+{% block header %}
+<h1 class="text-lg font-bold text-slate-900">{{ gy.mh_raporlar }}</h1>
+<p class="text-sm text-slate-500">Maaş avans ve satış raporları tek yerden.</p>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+    {% if show_payroll_report %}
+    <a href="{% url 'accounting_payroll_reports' %}" class="group bg-white rounded-3xl border border-violet-200 shadow-sm p-6 hover:border-violet-400 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+            <i data-lucide="wallet" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Maaş & avans raporu</h2>
+        <p class="text-sm text-slate-500 mt-2">Dönem bazlı brüt, avans ve net ödeme özeti — CSV dışa aktarım.</p>
+    </a>
+    {% endif %}
+    {% if show_sales_report %}
+    <a href="{% url 'sales_lead_reports' %}" class="group bg-white rounded-3xl border border-emerald-200 shadow-sm p-6 hover:border-emerald-400 hover:shadow-md transition-all">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <i data-lucide="badge-dollar-sign" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Satış raporu</h2>
+        <p class="text-sm text-slate-500 mt-2">Ödeme planı, aylık performans ve CSV dışa aktarım.</p>
+    </a>
+    {% endif %}
+</div>
+{% if not show_payroll_report and not show_sales_report %}
+<p class="text-sm text-slate-500 mt-6">Görüntülenecek rapor bulunmuyor.</p>
+{% endif %}
+{% endblock %}

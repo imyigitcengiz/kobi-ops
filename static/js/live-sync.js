@@ -98,6 +98,7 @@
       path.startsWith('/services-dashboard/') ||
       path.startsWith('/contact/') ||
       path.startsWith('/crm/') ||
+      path.startsWith('/muhasebe/satis/') ||
       path.startsWith('/sales-lead/')
     );
   }

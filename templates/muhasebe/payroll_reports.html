@@ -1,0 +1,108 @@
+{% extends 'muhasebe/base.html' %}
+
+{% block title %}Maaş & avans raporu{% endblock %}
+
+{% block header %}
+<div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+        <h1 class="text-lg font-bold text-slate-900">Maaş & avans raporu</h1>
+        <p class="text-sm text-slate-500">Dönem bazlı brüt, avans ve net maaş özeti.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'accounting_reports' %}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200">← {{ gy.mh_raporlar }}</a>
+        <a href="{% url 'accounting_payroll_export' %}?{{ export_query }}" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700">CSV indir</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Başlangıç</label>
+                <input type="month" name="period_from" value="{{ period_from_str }}" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Bitiş</label>
+                <input type="month" name="period_to" value="{{ period_to_str }}" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-500 uppercase">Personel</label>
+                <select name="personnel" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm min-w-[180px]">
+                    <option value="">Tümü</option>
+                    {% for p in all_personnel %}
+                    <option value="{{ p.id }}" {% if filter_personnel == p.id|stringformat:"i" %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-bold">Raporla</button>
+        </form>
+        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3 rounded-xl bg-brand-50 border border-brand-100">
+                <p class="text-[10px] font-bold text-brand-700 uppercase">Brüt toplam</p>
+                <p class="text-lg font-bold text-brand-900">{{ totals.gross }} ₺</p>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <p class="text-[10px] font-bold text-amber-700 uppercase">Avans toplam</p>
+                <p class="text-lg font-bold text-amber-900">{{ totals.advances }} ₺</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <p class="text-[10px] font-bold text-emerald-700 uppercase">Ödenen net</p>
+                <p class="text-lg font-bold text-emerald-900">{{ totals.net_paid }} ₺</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <p class="text-[10px] font-bold text-slate-600 uppercase">Bekleyen net</p>
+                <p class="text-lg font-bold text-slate-900">{{ totals.pending_net }} ₺</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left min-w-[800px]">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-4 py-3 font-bold text-slate-700">Dönem</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Personel</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Brüt</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Avans</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Net (beklenen)</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Net (ödenen)</th>
+                        <th class="px-4 py-3 font-bold text-slate-700">Durum</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in rows %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 whitespace-nowrap font-medium">{{ row.period_label }}</td>
+                        <td class="px-4 py-3 font-semibold">
+                            {{ row.personnel.name }}
+                            {% if row.personnel.team %}<span class="block text-xs text-slate-400">{{ row.personnel.team.name }}</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">{{ row.gross }} ₺</td>
+                        <td class="px-4 py-3">
+                            {{ row.advances_all }} ₺
+                            {% if row.advances_open %}<span class="block text-[10px] text-amber-600">{{ row.advances_open }} ₺ bekliyor</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">{% if row.net_expected is not None %}{{ row.net_expected }} ₺{% else %}—{% endif %}</td>
+                        <td class="px-4 py-3 font-bold">{% if row.net_paid %}{{ row.net_paid }} ₺{% else %}—{% endif %}</td>
+                        <td class="px-4 py-3">
+                            {% if row.status == 'Ödendi' %}
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700">{{ row.status }}</span>
+                            {% elif row.status == 'Bekliyor' %}
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-600">{{ row.status }}</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-red-50 text-red-700">{{ row.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">Seçilen aralıkta kayıt yok.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

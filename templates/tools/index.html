@@ -15,12 +15,26 @@
         <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
             <i data-lucide="smartphone" class="w-6 h-6"></i>
         </div>
-        <h2 class="text-lg font-bold text-slate-900">WhatsApp</h2>
+        <h2 class="text-lg font-bold text-slate-900">WhatsApp QR köprüsü</h2>
         <p class="text-sm text-slate-500 mt-2 leading-relaxed">
-            Birden fazla telefon numarasını isim vererek bağlayın.
+            Servis ekibi hatları — QR ile bağlan, senaryo mesajları.
         </p>
         <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-green-600 group-hover:text-green-700">
-            Aracı aç
+            Bağlan
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </span>
+    </a>
+    <a href="{% url 'tools_whatsapp_api_settings' %}"
+       class="group block bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-violet-200 transition-all p-6">
+        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+            <i data-lucide="cloud" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">WhatsApp Business API</h2>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+            Kazılan firmalara toplu kampanya — Meta Cloud API token ve telefon ID.
+        </p>
+        <span class="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-violet-600 group-hover:text-violet-700">
+            API ayarları
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </span>
     </a>

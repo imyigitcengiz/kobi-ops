@@ -1,4 +1,4 @@
-# KobiOps
+# CoolOPS
 
 **KOBİ’ler için müşteri, satış ve saha servis operasyon paneli.**
 

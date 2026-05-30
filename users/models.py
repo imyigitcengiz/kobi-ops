@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from common.business_modes import MODE_CHOICES, MODE_KOBI
+
 
 class Permission(models.Model):
     KIND_ACCESS = 'access'
@@ -113,6 +115,13 @@ class User(AbstractUser):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    business_mode = models.CharField(
+        max_length=16,
+        choices=MODE_CHOICES,
+        default=MODE_KOBI,
+        verbose_name='İş profili',
+        help_text='CoolOPS içinde Kobi App veya Agency App deneyimi.',
+    )
     avatar = models.ImageField(upload_to='profiles/', null=True, blank=True, verbose_name='Profil fotoğrafı')
     phone = models.CharField(max_length=30, blank=True, verbose_name='Telefon')
     job_title = models.CharField(max_length=120, blank=True, verbose_name='Ünvan')

@@ -7,16 +7,12 @@
 
 
 {% block header_title %}
-
-<h1 class="text-lg font-bold text-slate-900">Satış Raporları</h1>
-
+<h1 class="text-lg font-bold text-slate-900">Satış raporu</h1>
 <p class="text-sm text-slate-500">Ödeme planı detaylı tablo — dinamik ara ödeme sütunları</p>
-
 {% endblock %}
 
-
-
 {% block header_actions %}
+<a href="{% url 'accounting_reports' %}" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200">← {{ gy.mh_raporlar }}</a>
 
 {% if user_perms.sales_export %}
 

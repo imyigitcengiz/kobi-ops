@@ -15,11 +15,12 @@ from .admin_views import (
     RoleUpdateView,
     SuperAdminDashboardView,
 )
-from .views import ProfileSettingsView, UserLoginView, UserLogoutView
+from .views import ProfileSettingsView, UserLoginView, UserLogoutView, UserRegisterView
 
 urlpatterns = [
     path('profil/', ProfileSettingsView.as_view(), name='profile_settings'),
     path('giris/', UserLoginView.as_view(), name='login'),
+    path('kayit/', UserRegisterView.as_view(), name='register'),
     path('cikis/', UserLogoutView.as_view(), name='logout'),
     path('yonetim/', SuperAdminDashboardView.as_view(), name='admin_dashboard'),
     path('yonetim/roller/', RoleListView.as_view(), name='admin_roles'),

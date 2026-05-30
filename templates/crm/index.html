@@ -1,4 +1,4 @@
-﻿{% extends 'crm/base.html' %}
+{% extends 'crm/base.html' %}
 
 {% block title %}{{ gy.rehber }} — Özet{% endblock %}
 
@@ -80,16 +80,7 @@
                 <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i data-lucide="calculator" class="w-5 h-5"></i></span>
                 <h3 class="font-bold text-slate-900">{{ gy.muhasebe }}</h3>
             </div>
-            <p class="text-sm text-slate-500">Maaş, avans ve gelir-gider.</p>
-        </a>
-        {% endif %}
-        {% if user_access.sales %}
-        <a href="{% url 'sales_lead_dashboard' %}" class="group bg-white rounded-3xl border border-amber-200 shadow-sm p-5 hover:border-amber-400 transition-all">
-            <div class="flex items-center gap-3 mb-2">
-                <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="badge-dollar-sign" class="w-5 h-5"></i></span>
-                <h3 class="font-bold text-slate-900">{{ gy.satis_birimi }}</h3>
-            </div>
-            <p class="text-sm text-slate-500">Satış kayıtları ve raporlar.</p>
+            <p class="text-sm text-slate-500">Maaş, avans, gelir-gider ve satış kayıtları.</p>
         </a>
         {% endif %}
         {% if user_access.services %}

@@ -1,4 +1,5 @@
 from django import forms
+from decimal import Decimal
 
 from .color_utils import DEFAULT_HEX
 from .models import (
@@ -41,14 +42,20 @@ class SiteSettingsForm(forms.ModelForm):
 class GeneralSiteSettingsForm(forms.ModelForm):
     class Meta:
         model = SiteSettings
-        fields = [
-            'site_name', 'logo', 'company_phone', 'company_address',
-            'whatsapp_cloud_token', 'whatsapp_cloud_phone_id',
-        ]
+        fields = ['site_name', 'logo', 'company_phone', 'company_address', 'registration_enabled']
         widgets = {
             'site_name': forms.TextInput(attrs={'class': INPUT}),
             'company_phone': forms.TextInput(attrs={'class': INPUT}),
             'company_address': forms.Textarea(attrs={'class': INPUT, 'rows': 2}),
+            'registration_enabled': forms.CheckboxInput(attrs={'class': 'w-5 h-5 accent-amber-600 rounded'}),
+        }
+
+
+class WhatsappCloudSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SiteSettings
+        fields = ['whatsapp_cloud_token', 'whatsapp_cloud_phone_id']
+        widgets = {
             'whatsapp_cloud_token': forms.PasswordInput(
                 attrs={'class': INPUT, 'placeholder': 'EAA…', 'autocomplete': 'off'},
                 render_value=True,
@@ -210,7 +217,179 @@ class ServicePersonnelForm(forms.ModelForm):
         self.fields['product_groups'].queryset = ProductOption.objects.order_by('name')
 
 
+class PayrollPersonnelQuickForm(forms.ModelForm):
+    """Muhasebe panelinden hızlı personel ekleme."""
+
+    class Meta:
+        model = ServicePersonnel
+        fields = ['name', 'team', 'company_phone', 'monthly_salary', 'salary_pay_day', 'notes']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Ad Soyad'}),
+            'team': forms.Select(attrs={'class': INPUT}),
+            'company_phone': forms.TextInput(attrs={'class': INPUT, 'placeholder': '+905…'}),
+            'monthly_salary': forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0', 'placeholder': 'Aylık maaş'}),
+            'salary_pay_day': forms.NumberInput(attrs={'class': INPUT, 'min': '1', 'max': '31', 'placeholder': 'Gün'}),
+            'notes': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Not (opsiyonel)'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['team'].queryset = ServiceTeam.objects.filter(is_active=True).order_by('name')
+        self.fields['team'].required = False
+        self.fields['team'].empty_label = 'Ekip (opsiyonel)'
+        self.fields['monthly_salary'].required = False
+        self.fields['salary_pay_day'].required = False
+
+
+class PayrollQuickAdvanceForm(forms.Form):
+    personnel = forms.ModelChoiceField(
+        queryset=ServicePersonnel.objects.none(),
+        widget=forms.HiddenInput(),
+    )
+    period = forms.CharField(widget=forms.HiddenInput())
+    amount = forms.DecimalField(
+        min_value=Decimal('0.01'),
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0.01'}),
+        label='Tutar',
+    )
+    payment_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+        label='Tarih',
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Not'}),
+        label='Not',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True)
+
+
+class PersonnelAdvanceForm(forms.ModelForm):
+    period = forms.CharField(
+        widget=forms.TextInput(attrs={'class': INPUT, 'type': 'month'}),
+        label='Dönem',
+    )
+
+    class Meta:
+        model = PersonnelPayment
+        fields = ['personnel', 'amount', 'payment_date', 'notes']
+        widgets = {
+            'personnel': forms.Select(attrs={'class': INPUT}),
+            'amount': forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
+            'payment_date': forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+            'notes': forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Opsiyonel not'}),
+        }
+
+    def __init__(self, *args, period_default: str = '', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        self.fields['personnel'].empty_label = 'Personel seçin'
+        if period_default:
+            self.fields['period'].initial = period_default[:7]
+
+    def clean_period(self):
+        from core_settings.payroll import parse_period
+
+        return parse_period(self.cleaned_data['period'])
+
+    def save(self, commit=True):
+        payment = super().save(commit=False)
+        payment.payment_type = PersonnelPayment.TYPE_ADVANCE
+        payment.period = self.cleaned_data['period']
+        if commit:
+            payment.save()
+        return payment
+
+
+class PersonnelSalaryAddForm(forms.Form):
+    personnel = forms.ModelChoiceField(
+        queryset=ServicePersonnel.objects.none(),
+        widget=forms.Select(attrs={'class': INPUT}),
+        label='Personel',
+        empty_label='Personel seçin',
+    )
+    period = forms.CharField(
+        widget=forms.TextInput(attrs={'class': INPUT, 'type': 'month'}),
+        label='Dönem',
+    )
+    payment_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+        label='Ödeme tarihi',
+    )
+    gross_amount = forms.DecimalField(
+        required=False,
+        min_value=Decimal('0.01'),
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0', 'placeholder': 'Boş = aylık maaş'}),
+        label='Brüt maaş (opsiyonel)',
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Opsiyonel not'}),
+        label='Not',
+    )
+
+    def __init__(self, *args, period_default: str = '', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        if period_default:
+            self.fields['period'].initial = period_default[:7]
+
+    def clean_period(self):
+        from core_settings.payroll import parse_period
+
+        return parse_period(self.cleaned_data['period'])
+
+
+class PersonnelSalaryPayForm(forms.Form):
+    personnel = forms.ModelChoiceField(
+        queryset=ServicePersonnel.objects.none(),
+        widget=forms.HiddenInput(),
+    )
+    period = forms.CharField(widget=forms.HiddenInput())
+    payment_date = forms.DateField(
+        widget=forms.DateInput(attrs={'class': INPUT, 'type': 'date'}),
+        label='Ödeme tarihi',
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': INPUT, 'placeholder': 'Opsiyonel not'}),
+        label='Not',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True)
+
+
+class PersonnelMonthlySalaryForm(forms.Form):
+    personnel = forms.ModelChoiceField(
+        queryset=ServicePersonnel.objects.none(),
+        widget=forms.HiddenInput(),
+    )
+    monthly_salary = forms.DecimalField(
+        min_value=Decimal('0'),
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': INPUT, 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
+        label='Aylık maaş',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personnel'].queryset = ServicePersonnel.objects.filter(is_active=True)
+
+
 class PersonnelPaymentForm(forms.ModelForm):
+    """Geriye dönük uyumluluk."""
     class Meta:
         model = PersonnelPayment
         fields = ['personnel', 'payment_type', 'amount', 'payment_date', 'notes']

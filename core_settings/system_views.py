@@ -28,7 +28,7 @@ class SettingsAISettingsView(TemplateView):
     def post(self, request, *args, **kwargs):
         settings = SiteSettings.objects.first()
         if not settings:
-            settings = SiteSettings.objects.create(site_name='GÖLGEDE YAŞAM')
+            settings = SiteSettings.objects.create(site_name='CoolOPS')
         form = AISettingsForm(request.POST, instance=settings)
         if form.is_valid():
             form.save()

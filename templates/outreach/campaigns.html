@@ -11,7 +11,7 @@
     <a href="{% url 'contact_firma_bul' %}" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200">Firma kazıma</a>
 </div>
 <div id="apiOfflineBanner" class="hidden mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm flex items-center justify-between gap-3">
-    <span><strong>WhatsApp API yapılandırılmamış.</strong> <a href="{% url 'settings_genel' %}" class="font-semibold underline">Site ayarları → Genel</a> bölümünden token ve telefon ID girin.</span>
+    <span><strong>WhatsApp API yapılandırılmamış.</strong> <a href="{% url 'tools_whatsapp_api_settings' %}" class="font-semibold underline">Tools → WhatsApp Business API</a> bölümünden token ve telefon ID girin.</span>
     <button type="button" id="retryApiBtn" class="shrink-0 px-3 py-1 bg-amber-700 text-white rounded-lg text-xs font-bold">Tekrar dene</button>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -118,7 +118,7 @@
             <span class="font-bold">API hazır</span>
             <p id="waReadyName" class="text-xs mt-1 opacity-80"></p>
         </div>
-        <a href="{% url 'settings_genel' %}" class="block w-full py-2.5 text-center bg-brand-600 text-white rounded-xl text-sm font-bold hover:bg-brand-700">API ayarları</a>
+        <a href="{% url 'tools_whatsapp_api_settings' %}" class="block w-full py-2.5 text-center bg-brand-600 text-white rounded-xl text-sm font-bold hover:bg-brand-700">API ayarları</a>
         <div id="sendLog" class="h-40 overflow-y-auto rounded-xl bg-slate-900 text-green-400 font-mono text-[10px] p-2.5 space-y-0.5">
             <div class="text-slate-500">Hazır.</div>
         </div>

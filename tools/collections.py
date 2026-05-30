@@ -10,15 +10,7 @@ from tools.phone_utils import is_turkish_landline, is_whatsapp_eligible, normali
 
 DEFAULT_TEMPLATE = """Merhaba {firma},
 
-
-
-Gölgede Yaşam olarak pergola ve bioklimatik sistemler konusunda sizinle iletişime geçmek istedik.
-
-
-
-Uygun olduğunuzda görüşebilir miyiz?
-
-
+Sizinle iletişime geçmek istedik. Uygun olduğunuzda kısaca görüşebilir miyiz?
 
 İyi çalışmalar."""
 

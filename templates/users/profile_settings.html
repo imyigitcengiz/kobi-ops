@@ -69,6 +69,7 @@
                     <p class="text-sky-100 mt-1">{{ profile.subtitle }}</p>
                     <div class="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
                         <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-bold">{{ user.role_label }}</span>
+                        <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-bold">{{ gy.app_profile_name }}</span>
                         <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-bold">@{{ user.username }}</span>
                     </div>
                 </div>
@@ -116,6 +117,11 @@
                         <label class="text-sm font-semibold text-slate-700">Ünvan</label>
                         <div class="mt-1.5">{{ profile_form.job_title }}</div>
                         <p class="text-xs text-slate-400 mt-1">Boş bırakılırsa sistem rolünüz gösterilir.</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-sm font-semibold text-slate-700">İş profili ({{ gy.app_name }})</label>
+                        <p class="text-xs text-slate-400 mt-1 mb-2">Panel düzeni ve modül etiketleri buna göre özelleşir.</p>
+                        <div class="flex flex-wrap gap-4">{{ profile_form.business_mode }}</div>
                     </div>
                     <div class="md:col-span-2">
                         <label class="text-sm font-semibold text-slate-700">Profil fotoğrafı</label>

@@ -1,4 +1,8 @@
+from django.urls import reverse
 from django.views.generic import TemplateView
+from django.views import View
+import csv
+from django.utils import timezone
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from .models import (
@@ -9,7 +13,20 @@ from .models import (
 from .forms import (
     GeneralSiteSettingsForm, SiteSettingsForm, ServiceTypeOptionForm, ProductOptionForm, StatusOptionForm,
     PriorityOptionForm, WhatsAppTemplateForm, SolutionPartnerForm, SolutionPartnerTypeForm,
-    ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm, FinanceRecordForm,
+    ServiceTeamForm, ServicePersonnelForm, PersonnelPaymentForm, PersonnelAdvanceForm,
+    PersonnelSalaryPayForm, PersonnelSalaryAddForm, PayrollPersonnelQuickForm,
+    PayrollQuickAdvanceForm, FinanceRecordForm,
+)
+from .payroll import (
+    build_period_summary,
+    build_payroll_report,
+    bulk_pay_pending_salaries,
+    create_salary_payment,
+    default_report_range,
+    default_salary_payment_date,
+    parse_period,
+    period_label,
+    release_advances_on_salary_delete,
 )
 from common.permissions import (
     can_manage_payroll, can_manage_finance, can_manage_teams, can_manage_personnel,
@@ -442,6 +459,26 @@ class AccountingHubView(TemplateView):
     template_name = 'muhasebe/index.html'
 
 
+class AccountingReportsHubView(TemplateView):
+    template_name = 'muhasebe/reports_hub.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+        can_payroll = can_manage_payroll(user)
+        can_sales = user.is_superuser or user.has_perm_codename('sales.reports')
+        if not can_payroll and not can_sales:
+            messages.error(request, 'Raporlar için yetkiniz yok.')
+            return redirect('accounting_hub')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['show_payroll_report'] = can_manage_payroll(user)
+        context['show_sales_report'] = user.is_superuser or user.has_perm_codename('sales.reports')
+        return context
+
+
 class AccountingPayrollView(TemplateView):
     template_name = 'muhasebe/payroll.html'
 
@@ -451,38 +488,247 @@ class AccountingPayrollView(TemplateView):
             return redirect('accounting_hub')
         return super().dispatch(request, *args, **kwargs)
 
+    def _selected_period(self):
+        return parse_period(self.request.GET.get('period'))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        period = self._selected_period()
+        period_str = period.strftime('%Y-%m')
         payment_personnel = self.request.GET.get('payment_personnel', '').strip()
-        payments = PersonnelPayment.objects.select_related('personnel', 'recorded_by').all()
+
+        personnel_qs = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        if payment_personnel and payment_personnel.isdigit():
+            personnel_qs = personnel_qs.filter(id=int(payment_personnel))
+
+        summary = build_period_summary(period, personnel_qs)
+        payments = PersonnelPayment.objects.select_related(
+            'personnel', 'recorded_by', 'settled_by',
+        ).filter(period=period)
         if payment_personnel and payment_personnel.isdigit():
             payments = payments.filter(personnel_id=int(payment_personnel))
-        context['payment_form'] = PersonnelPaymentForm()
-        context['recent_payments'] = payments.order_by('-payment_date', '-created_at')[:100]
+
+        context['period'] = period
+        context['period_str'] = period_str
+        context['period_label'] = period_label(period)
+        context['payroll_summary'] = summary
+        context['advance_form'] = PersonnelAdvanceForm(period_default=period_str)
+        context['salary_form'] = PersonnelSalaryAddForm(period_default=period_str)
+        context['personnel_form'] = PayrollPersonnelQuickForm()
+        context['teams'] = ServiceTeam.objects.filter(is_active=True).order_by('name')
+        context['pending_pay_count'] = sum(1 for r in summary['rows'] if r['can_pay'])
+        context['recent_payments'] = payments.order_by('-payment_date', '-created_at')
         context['all_personnel'] = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        context['filter_personnel'] = payment_personnel
+        context['personnel_pay_meta'] = {
+            str(p.id): {
+                'due_date': default_salary_payment_date(p, period).isoformat(),
+                'gross': str(p.monthly_salary) if p.monthly_salary else '',
+                'pay_day': p.salary_pay_day or '',
+            }
+            for p in context['all_personnel']
+        }
         return context
 
     def post(self, request, *args, **kwargs):
-        if 'add_payment' in request.POST:
-            if not can_manage_payroll(request.user):
-                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
-                return redirect('accounting_payroll')
-            form = PersonnelPaymentForm(request.POST)
+        period = parse_period(request.POST.get('period') or request.GET.get('period'))
+        period_qs = f'?period={period.strftime("%Y-%m")}'
+        personnel_filter = request.POST.get('payment_personnel') or request.GET.get('payment_personnel', '')
+        if personnel_filter:
+            period_qs += f'&payment_personnel={personnel_filter}'
+
+        if not can_manage_payroll(request.user):
+            messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
+            return redirect('accounting_payroll')
+
+        if 'add_personnel' in request.POST:
+            form = PayrollPersonnelQuickForm(request.POST)
+            if form.is_valid():
+                person = form.save()
+                messages.success(request, f'{person.name} personel listesine eklendi.')
+            else:
+                messages.error(request, 'Personel eklenemedi. Ad soyad zorunludur.')
+        elif 'quick_advance' in request.POST:
+            form = PayrollQuickAdvanceForm(request.POST)
+            if form.is_valid():
+                pay_period = parse_period(form.cleaned_data['period'])
+                payment = PersonnelPayment.objects.create(
+                    personnel=form.cleaned_data['personnel'],
+                    payment_type=PersonnelPayment.TYPE_ADVANCE,
+                    period=pay_period,
+                    amount=form.cleaned_data['amount'],
+                    payment_date=form.cleaned_data.get('payment_date') or timezone.localdate(),
+                    notes=form.cleaned_data.get('notes') or '',
+                    recorded_by=request.user if request.user.is_authenticated else None,
+                )
+                messages.success(request, f'{payment.personnel.name} için {payment.amount} ₺ avans kaydedildi.')
+            else:
+                messages.error(request, 'Hızlı avans kaydedilemedi.')
+        elif 'bulk_pay_salaries' in request.POST:
+            result = bulk_pay_pending_salaries(period, request.user if request.user.is_authenticated else None)
+            if result['paid']:
+                names = ', '.join(result['paid'][:5])
+                if len(result['paid']) > 5:
+                    names += '…'
+                messages.success(request, f"{len(result['paid'])} personelin maaşı ödendi: {names}")
+            for name, reason in result['skipped'][:3]:
+                messages.warning(request, f'{name}: {reason}')
+            if not result['paid'] and not result['skipped']:
+                messages.info(request, 'Bu dönemde ödenecek bekleyen maaş yok.')
+        elif 'add_advance' in request.POST:
+            form = PersonnelAdvanceForm(request.POST, period_default=period.strftime('%Y-%m'))
             if form.is_valid():
                 payment = form.save(commit=False)
                 if request.user.is_authenticated:
                     payment.recorded_by = request.user
                 payment.save()
-                messages.success(request, 'Ödeme kaydı eklendi.')
+                messages.success(request, f'{payment.personnel.name} için avans kaydedildi.')
             else:
-                messages.error(request, 'Ödeme kaydı eklenemedi.')
+                messages.error(request, 'Avans kaydı eklenemedi.')
+        elif 'add_salary' in request.POST:
+            form = PersonnelSalaryAddForm(request.POST, period_default=period.strftime('%Y-%m'))
+            if form.is_valid():
+                personnel = form.cleaned_data['personnel']
+                pay_period = form.cleaned_data['period']
+                try:
+                    create_salary_payment(
+                        personnel=personnel,
+                        period=pay_period,
+                        payment_date=form.cleaned_data['payment_date'],
+                        recorded_by=request.user if request.user.is_authenticated else None,
+                        gross_override=form.cleaned_data.get('gross_amount'),
+                        notes=form.cleaned_data.get('notes') or '',
+                    )
+                    messages.success(request, f'{personnel.name} — {period_label(pay_period)} maaşı kaydedildi.')
+                except ValueError as exc:
+                    messages.error(request, str(exc))
+            else:
+                messages.error(request, 'Maaş kaydı eklenemedi.')
+        elif 'pay_salary' in request.POST:
+            form = PersonnelSalaryPayForm(request.POST)
+            if form.is_valid():
+                personnel = form.cleaned_data['personnel']
+                pay_period = parse_period(form.cleaned_data['period'])
+                try:
+                    create_salary_payment(
+                        personnel=personnel,
+                        period=pay_period,
+                        payment_date=form.cleaned_data['payment_date'],
+                        recorded_by=request.user if request.user.is_authenticated else None,
+                        notes=form.cleaned_data.get('notes') or '',
+                    )
+                    messages.success(request, f'{personnel.name} — {period_label(pay_period)} maaşı net olarak kaydedildi.')
+                except ValueError as exc:
+                    messages.error(request, str(exc))
+            else:
+                messages.error(request, 'Maaş ödemesi kaydedilemedi.')
+        elif 'update_monthly_salary' in request.POST:
+            personnel_id = request.POST.get('personnel')
+            raw_salary = (request.POST.get('monthly_salary') or '').strip().replace(',', '.')
+            raw_pay_day = (request.POST.get('salary_pay_day') or '').strip()
+            person = ServicePersonnel.objects.filter(pk=personnel_id, is_active=True).first()
+            if not person:
+                messages.error(request, 'Personel bulunamadı.')
+            else:
+                from decimal import Decimal
+
+                if raw_salary:
+                    person.monthly_salary = Decimal(raw_salary)
+                else:
+                    person.monthly_salary = None
+                if raw_pay_day:
+                    day = int(raw_pay_day)
+                    if day < 1 or day > 31:
+                        messages.error(request, 'Maaş günü 1–31 arasında olmalı.')
+                        return redirect(f"{reverse('accounting_payroll')}{period_qs}")
+                    person.salary_pay_day = day
+                else:
+                    person.salary_pay_day = None
+                person.save(update_fields=['monthly_salary', 'salary_pay_day'])
+                messages.success(request, f'{person.name} maaş bilgileri güncellendi.')
         elif 'delete_payment' in request.POST:
-            if not can_manage_payroll(request.user):
-                messages.error(request, 'Maaş/avans kaydı için yetkiniz yok.')
-                return redirect('accounting_payroll')
-            PersonnelPayment.objects.filter(id=request.POST.get('id')).delete()
-            messages.info(request, 'Ödeme kaydı silindi.')
-        return redirect('accounting_payroll')
+            payment = PersonnelPayment.objects.filter(id=request.POST.get('id')).first()
+            if not payment:
+                messages.error(request, 'Kayıt bulunamadı.')
+            elif payment.payment_type == PersonnelPayment.TYPE_ADVANCE and payment.settled_by_id:
+                messages.error(request, 'Mahsup edilmiş avans silinemez. Önce ilgili maaş kaydını silin.')
+            else:
+                if payment.payment_type == PersonnelPayment.TYPE_SALARY:
+                    release_advances_on_salary_delete(payment)
+                payment.delete()
+                messages.info(request, 'Ödeme kaydı silindi.')
+        return redirect(f"{reverse('accounting_payroll')}{period_qs}")
+
+
+class AccountingPayrollReportsView(TemplateView):
+    template_name = 'muhasebe/payroll_reports.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not can_manage_payroll(request.user):
+            messages.error(request, 'Maaş raporları için yetkiniz yok.')
+            return redirect('accounting_hub')
+        return super().dispatch(request, *args, **kwargs)
+
+    def _report_params(self):
+        default_from, default_to = default_report_range()
+        period_from = parse_period(self.request.GET.get('period_from') or default_from.strftime('%Y-%m'))
+        period_to = parse_period(self.request.GET.get('period_to') or default_to.strftime('%Y-%m'))
+        personnel_id = self.request.GET.get('personnel', '').strip()
+        personnel_qs = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        if personnel_id.isdigit():
+            personnel_qs = personnel_qs.filter(id=int(personnel_id))
+        return period_from, period_to, personnel_qs, personnel_id
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        period_from, period_to, personnel_qs, personnel_id = self._report_params()
+        report = build_payroll_report(period_from, period_to, personnel_qs)
+        context.update(report)
+        context['period_from_str'] = period_from.strftime('%Y-%m')
+        context['period_to_str'] = period_to.strftime('%Y-%m')
+        context['filter_personnel'] = personnel_id
+        context['all_personnel'] = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        context['export_query'] = self.request.GET.urlencode()
+        return context
+
+
+class AccountingPayrollExportView(View):
+    def get(self, request, *args, **kwargs):
+        if not can_manage_payroll(request.user):
+            messages.error(request, 'Dışa aktarma için yetkiniz yok.')
+            return redirect('accounting_reports')
+
+        default_from, default_to = default_report_range()
+        period_from = parse_period(request.GET.get('period_from') or default_from.strftime('%Y-%m'))
+        period_to = parse_period(request.GET.get('period_to') or default_to.strftime('%Y-%m'))
+        personnel_id = request.GET.get('personnel', '').strip()
+        personnel_qs = ServicePersonnel.objects.filter(is_active=True).order_by('name')
+        if personnel_id.isdigit():
+            personnel_qs = personnel_qs.filter(id=int(personnel_id))
+
+        report = build_payroll_report(period_from, period_to, personnel_qs)
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = (
+            f'attachment; filename="maas-avans-{period_from.strftime("%Y-%m")}-{period_to.strftime("%Y-%m")}.csv"'
+        )
+        response.write('\ufeff')
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow(['Dönem', 'Personel', 'Ekip', 'Brüt', 'Avans (toplam)', 'Bekleyen avans', 'Net (beklenen)', 'Net (ödenen)', 'Durum'])
+        for row in report['rows']:
+            writer.writerow([
+                row['period_label'],
+                row['personnel'].name,
+                row['personnel'].team.name if row['personnel'].team_id else '—',
+                row['gross'],
+                row['advances_all'],
+                row['advances_open'],
+                row['net_expected'] if row['net_expected'] is not None else '',
+                row['net_paid'],
+                row['status'],
+            ])
+        writer.writerow([])
+        writer.writerow(['TOPLAM', '', '', report['totals']['gross'], report['totals']['advances'], '', report['totals']['pending_net'], report['totals']['net_paid'], ''])
+        return response
 
 
 class AccountingFinanceView(TemplateView):

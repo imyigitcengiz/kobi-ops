@@ -1,7 +1,7 @@
 {% extends 'services_dashboard/base.html' %}
 {% load option_colors %}
 
-{% block title %}{{ gy.ym_kayitlar }} | GÖLGEDE YAŞAM{% endblock %}
+{% block title %}{{ gy.ym_kayitlar }} | {{ site_settings.site_name }}{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -132,7 +132,7 @@
             <a href="{% url 'service_send_whatsapp_auto' %}?{{ request.GET.urlencode }}"
                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800">
                 <i data-lucide="send" class="w-4 h-4"></i>
-                WhatsApp otomatik dağıt
+                Servis Ekibine Otomatik Mesaj Gönder
             </a>
         </div>
         {% endif %}

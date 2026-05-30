@@ -2,6 +2,7 @@
 {% with url_name=request.resolver_match.url_name %}
 {% with inactive="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800" %}
 {% with active="flex items-center gap-3 px-3 py-2 rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-900/20" %}
+{% with reports_active="accounting_reports,accounting_payroll_reports,accounting_payroll_export,sales_lead_reports" %}
 
 {% if module == 'accounting' and user_access.accounting %}
 <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-emerald-400/90">{{ gy.muhasebe }}</p>
@@ -18,19 +19,17 @@
     <i data-lucide="receipt" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_gelir_gider }}</span>
 </a>
 {% endif %}
-{% endif %}
-
-{% if module == 'sales' and user_access.sales %}
-<p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-amber-400/90">{{ gy.satis_birimi }}</p>
+{% if user_access.sales %}
 <a href="{% url 'sales_lead_dashboard' %}" class="{% if url_name == 'sales_lead_dashboard' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
-    <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.sb_ozet }}</span>
+    <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.sb_ozet }}</span>
 </a>
 <a href="{% url 'sales_lead_list' %}" class="{% if url_name == 'sales_lead_list' or url_name == 'sales_lead_create' or url_name == 'sales_lead_edit' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
     <i data-lucide="list" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.sb_kayitlar }}</span>
 </a>
-{% if user_perms.sales_reports %}
-<a href="{% url 'sales_lead_reports' %}" class="{% if url_name == 'sales_lead_reports' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
-    <i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="font-medium text-sm">Raporlar</span>
+{% endif %}
+{% if user_perms.contact_payroll or user_perms.sales_reports %}
+<a href="{% url 'accounting_reports' %}" class="{% if url_name == 'accounting_reports' or url_name == 'accounting_payroll_reports' or url_name == 'accounting_payroll_export' or url_name == 'sales_lead_reports' %}{{ active }}{% else %}{{ inactive }}{% endif %}">
+    <i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="font-medium text-sm">{{ gy.mh_raporlar }}</span>
 </a>
 {% endif %}
 {% endif %}
@@ -45,4 +44,4 @@
 </a>
 {% endif %}
 
-{% endwith %}{% endwith %}{% endwith %}
+{% endwith %}{% endwith %}{% endwith %}{% endwith %}
