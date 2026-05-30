@@ -90,7 +90,7 @@ IP="$(detect_ip)"
 SECRET="$(gen_secret)"
 
 HOSTS="localhost,127.0.0.1,${IP}"
-CSRF="http://127.0.0.1:8000,http://localhost:8000,http://${IP}:8000"
+CSRF="http://127.0.0.1:8080,http://localhost:8080,http://${IP}:8080"
 SECURE_SSL=0
 
 if [[ -n "$DOMAIN" ]]; then
@@ -109,7 +109,7 @@ if [[ -n "$DOMAIN" ]]; then
     fi
   else
     HOSTS="${HOSTS},${DOMAIN}"
-    CSRF="${CSRF},http://${DOMAIN}:8000"
+    CSRF="${CSRF},http://${DOMAIN}:8080"
   fi
 fi
 
@@ -121,6 +121,7 @@ DJANGO_CSRF_TRUSTED_ORIGINS=${CSRF}
 DJANGO_SECURE_SSL=${SECURE_SSL}
 DJANGO_DEBUG=0
 DJANGO_ENSURE_SUPERADMIN=1
+PORT=8080
 
 WHATSAPP_BRIDGE_URL=http://whatsapp_bridge:3939
 DJANGO_WHATSAPP_BRIDGE_CAN_SPAWN=0
@@ -149,7 +150,7 @@ if [[ -n "$DOMAIN" ]] && ! is_ipv4 "$DOMAIN"; then
     echo "  Panel: https://${DOMAIN}/giris/"
   fi
 else
-  echo "  Panel: http://${IP}:8000/giris/"
+  echo "  Panel: http://${IP}:8080/giris/  (reverse proxy yoksa compose'a ports: 8080:8080 ekleyin)"
 fi
 echo "  İlk giriş: admin / admin"
 echo "  Sonra .env içinde DJANGO_ENSURE_SUPERADMIN=0 yapıp: docker compose up -d"

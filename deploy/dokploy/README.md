@@ -7,7 +7,7 @@
 1. **Project** → **Docker Compose** → **Create**
 2. **Source:** GitHub → `imyigitcengiz/kobi-ops`, branch `main`  
    **Compose file path:** `docker-compose.yaml`
-3. **Domains** → servis **`app`**, port **`8000`**, Let's Encrypt → **Deploy**
+3. **Domains** → servis **`app`**, URL: `https://domain.com:8080` → **Deploy**
 
 Environment sekmesine `.env` yazmanız **gerekmez** — `bootstrap-env.sh` secret, host ve CSRF'yi otomatik tamamlar.
 

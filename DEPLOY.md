@@ -8,7 +8,7 @@ Panelde 3 adım — `.env` ve Persistent Storage UI **gerekmez**:
 
 1. GitHub: `imyigitcengiz/kobi-ops`
 2. **Docker Compose** build pack (`docker-compose.yaml` — Coolify varsayılan) — **Dockerfile tek başına değil**
-3. Domain → servis **`app`**, port **8000**, HTTPS → Deploy
+3. Domain → servis **`app`**, port **8080**, URL: `https://domain.com:8080` → Deploy
 
 Named volume `kobiops_gy_data` compose ile otomatik oluşur; veri rebuild'lerde kalır.
 
@@ -26,7 +26,7 @@ Named volume `kobiops_gy_data` compose ile otomatik oluşur; veri rebuild'lerde 
 
 | Bileşen | Açıklama |
 |--------|----------|
-| **app** | Django + Daphne (8000), SQLite + medya `/data` |
+| **app** | Django + Daphne (8080), SQLite + medya `/data` |
 | **whatsapp_bridge** | Node + Chromium, WhatsApp QR (3939, iç ağ) |
 
 ## VPS tek komut

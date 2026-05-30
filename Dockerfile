@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=config.settings \
     DAPHNE_HOST=0.0.0.0 \
-    PORT=8000 \
+    PORT=8080 \
     DATA_DIR=/data \
     DJANGO_DB_PATH=/data/db.sqlite3 \
     DJANGO_MEDIA_ROOT=/data/media \
@@ -36,6 +36,6 @@ RUN sed -i 's/\r$//' docker-entrypoint.sh deploy/bootstrap-env.sh \
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=8s --start-period=180s --retries=5 \
-    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz/' % os.environ.get('PORT', '8000'), timeout=5)" || exit 1
+    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz/' % os.environ.get('PORT', '8080'), timeout=5)" || exit 1
 
 CMD ["./docker-entrypoint.sh"]

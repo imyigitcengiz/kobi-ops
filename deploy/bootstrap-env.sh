@@ -133,7 +133,8 @@ if [[ -z "${DJANGO_CSRF_TRUSTED_ORIGINS:-}" ]]; then
   _fqdn=""
   _fqdn="$(_detect_fqdn 2>/dev/null || true)"
   _ip="$(_detect_ip)"
-  _csrf="http://127.0.0.1:8000,http://localhost:8000,http://${_ip}:8000"
+  _app_port="${PORT:-8080}"
+  _csrf="http://127.0.0.1:${_app_port},http://localhost:${_app_port},http://${_ip}:${_app_port}"
   if [[ -n "$_url" ]]; then
     _csrf="${_csrf},${_url}"
     export DJANGO_CSRF_TRUSTED_ORIGINS="$_csrf"
@@ -204,3 +205,9 @@ export DJANGO_MEDIA_ROOT="${DJANGO_MEDIA_ROOT:-${DATA_DIR}/media}"
 export DJANGO_SERVE_MEDIA="${DJANGO_SERVE_MEDIA:-1}"
 export GY_REQUIRE_PERSISTENT_VOLUME="${GY_REQUIRE_PERSISTENT_VOLUME:-1}"
 export DJANGO_DEBUG="${DJANGO_DEBUG:-0}"
+
+_app_port="${PORT:-8080}"
+if _fqdn="$(_detect_fqdn 2>/dev/null || true)" && [[ -n "$_fqdn" ]]; then
+  echo "[gy-dashboard] Coolify domain (port zorunlu): https://${_fqdn}:${_app_port}"
+  echo "[gy-dashboard] Not: Coolify paneli sunucuda :8000 — uygulama konteyneri :${_app_port} (farklı, çakışmaz)."
+fi

@@ -125,6 +125,22 @@ def data_dir_looks_ephemeral(root: Path) -> bool:
     return not data_dir_is_persistent(root)
 
 
+def _orchestrated_compose_stack() -> bool:
+    return os.environ.get('KOBIOPS_COMPOSE_STACK', '').strip().lower() in ('1', 'true', 'yes')
+
+
+def _data_dir_usable_for_production(root: Path) -> bool:
+    """Compose stack: /data yazılabiliyorsa named volume büyük olasılıkla bağlı."""
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        probe = root / '.gy_write_probe'
+        probe.write_text('ok', encoding='utf-8')
+        probe.unlink(missing_ok=True)
+        return True
+    except OSError:
+        return False
+
+
 def _persistence_error_message(root: Path) -> str:
     in_coolify = bool(
         os.environ.get('COOLIFY_RESOURCE_UUID')
@@ -238,7 +254,12 @@ def check_before_migrate() -> None:
     marker = _load_marker(root)
 
     if require_persistent_volume() and data_dir_looks_ephemeral(root):
-        raise DataPersistenceError(_persistence_error_message(root))
+        if _orchestrated_compose_stack() and _data_dir_usable_for_production(root):
+            logger.warning(
+                'Volume mount algısı belirsiz; KOBIOPS_COMPOSE_STACK=1 ve yazılabilir /data — devam.'
+            )
+        else:
+            raise DataPersistenceError(_persistence_error_message(root))
 
     if marker:
         prev_bytes = int(marker.get('db_bytes') or 0)

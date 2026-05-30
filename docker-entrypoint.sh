@@ -18,7 +18,7 @@ export DJANGO_MEDIA_ROOT="${DJANGO_MEDIA_ROOT:-$DATA_DIR/media}"
 export DJANGO_SERVE_MEDIA="${DJANGO_SERVE_MEDIA:-1}"
 
 HOST="${DAPHNE_HOST:-0.0.0.0}"
-PORT="${PORT:-8000}"
+PORT="${PORT:-8080}"
 
 if [ -z "${DJANGO_SECRET_KEY:-}" ]; then
   echo "[gy-dashboard] HATA: DJANGO_SECRET_KEY üretilemedi."
